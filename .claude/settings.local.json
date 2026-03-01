@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter pub:*)",
+      "WebSearch",
+      "Bash(flutter analyze:*)",
+      "Bash(dart doc:*)",
+      "Bash(flutter test:*)"
+    ]
+  }
+}
