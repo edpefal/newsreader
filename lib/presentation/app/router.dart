@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
+import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/add_source_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
@@ -61,18 +63,38 @@ class _ScaffoldWithNavBar extends StatelessWidget {
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) =>
             navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.inbox_outlined),
-            selectedIcon: Icon(Icons.inbox),
+            icon: BlocBuilder<InboxCubit, InboxState>(
+              builder: (context, state) {
+                final count =
+                    state is InboxLoaded ? state.articles.length : 0;
+                if (count == 0) return const Icon(Icons.inbox_outlined);
+                return Badge(
+                  label: Text('$count'),
+                  child: const Icon(Icons.inbox_outlined),
+                );
+              },
+            ),
+            selectedIcon: BlocBuilder<InboxCubit, InboxState>(
+              builder: (context, state) {
+                final count =
+                    state is InboxLoaded ? state.articles.length : 0;
+                if (count == 0) return const Icon(Icons.inbox);
+                return Badge(
+                  label: Text('$count'),
+                  child: const Icon(Icons.inbox),
+                );
+              },
+            ),
             label: 'Inbox',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.star_outline),
             selectedIcon: Icon(Icons.star),
             label: 'Favoritos',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.rss_feed_outlined),
             selectedIcon: Icon(Icons.rss_feed),
             label: 'Fuentes',

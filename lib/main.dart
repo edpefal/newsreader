@@ -5,6 +5,7 @@ import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
+import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/maintenance/domain/usecases/run_maintenance.dart';
 import 'package:newsreader/presentation/app/app.dart';
 
@@ -25,5 +26,8 @@ void main() async {
   // 3. Run maintenance silently on startup
   await getIt<RunMaintenance>().execute();
 
-  runApp(App(themeCubit: getIt()));
+  // 4. Load inbox after maintenance so cleanup runs first
+  getIt<InboxCubit>().loadArticles();
+
+  runApp(App(themeCubit: getIt(), inboxCubit: getIt()));
 }
