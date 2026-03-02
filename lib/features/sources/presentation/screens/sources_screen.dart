@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/features/sources/domain/usecases/delete_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
 import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
+import 'package:newsreader/features/sources/presentation/widgets/delete_source_dialog.dart';
 import 'package:newsreader/features/sources/presentation/widgets/edit_source_name_dialog.dart';
 import 'package:newsreader/features/sources/presentation/widgets/source_icon.dart';
 
@@ -16,7 +18,11 @@ class SourcesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SourcesCubit(getIt<GetSources>(), getIt<UpdateSourceName>())..loadSources(),
+      create: (_) => SourcesCubit(
+            getIt<GetSources>(),
+            getIt<UpdateSourceName>(),
+            getIt<DeleteSource>(),
+          )..loadSources(),
       child: const SourcesView(),
     );
   }
@@ -106,6 +112,8 @@ class _EmptySourcesState extends StatelessWidget {
   }
 }
 
+enum _SourceAction { edit, delete }
+
 class _SourceTile extends StatelessWidget {
   final NewsSource source;
 
@@ -117,17 +125,39 @@ class _SourceTile extends StatelessWidget {
       leading: SourceIcon(iconUrl: source.iconUrl, name: source.name),
       title: Text(source.name),
       subtitle: source.author != null ? Text(source.author!) : null,
-      trailing: IconButton(
-        icon: const Icon(Icons.edit_outlined),
-        tooltip: 'Editar nombre',
-        onPressed: () => showDialog(
-          context: context,
-          builder: (_) => EditSourceNameDialog(
-            initialName: source.name,
-            onSave: (name) =>
-                context.read<SourcesCubit>().updateSourceName(source.id, name),
+      trailing: PopupMenuButton<_SourceAction>(
+        onSelected: (action) {
+          if (action == _SourceAction.edit) {
+            showDialog(
+              context: context,
+              builder: (_) => EditSourceNameDialog(
+                initialName: source.name,
+                onSave: (name) => context
+                    .read<SourcesCubit>()
+                    .updateSourceName(source.id, name),
+              ),
+            );
+          } else {
+            showDialog(
+              context: context,
+              builder: (_) => DeleteSourceDialog(
+                sourceName: source.name,
+                onConfirm: () =>
+                    context.read<SourcesCubit>().deleteSource(source.id),
+              ),
+            );
+          }
+        },
+        itemBuilder: (_) => const [
+          PopupMenuItem(
+            value: _SourceAction.edit,
+            child: Text('Editar nombre'),
           ),
-        ),
+          PopupMenuItem(
+            value: _SourceAction.delete,
+            child: Text('Eliminar'),
+          ),
+        ],
       ),
     );
   }
