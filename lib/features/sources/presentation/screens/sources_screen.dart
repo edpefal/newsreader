@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
+import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
+import 'package:newsreader/features/sources/presentation/widgets/edit_source_name_dialog.dart';
 import 'package:newsreader/features/sources/presentation/widgets/source_icon.dart';
 
 class SourcesScreen extends StatelessWidget {
@@ -14,7 +16,7 @@ class SourcesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SourcesCubit(getIt<GetSources>())..loadSources(),
+      create: (_) => SourcesCubit(getIt<GetSources>(), getIt<UpdateSourceName>())..loadSources(),
       child: const SourcesView(),
     );
   }
@@ -115,6 +117,18 @@ class _SourceTile extends StatelessWidget {
       leading: SourceIcon(iconUrl: source.iconUrl, name: source.name),
       title: Text(source.name),
       subtitle: source.author != null ? Text(source.author!) : null,
+      trailing: IconButton(
+        icon: const Icon(Icons.edit_outlined),
+        tooltip: 'Editar nombre',
+        onPressed: () => showDialog(
+          context: context,
+          builder: (_) => EditSourceNameDialog(
+            initialName: source.name,
+            onSave: (name) =>
+                context.read<SourcesCubit>().updateSourceName(source.id, name),
+          ),
+        ),
+      ),
     );
   }
 }

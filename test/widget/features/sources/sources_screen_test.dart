@@ -88,5 +88,28 @@ void main() {
 
       expect(find.byType(FloatingActionButton), findsOneWidget);
     });
+
+    testWidgets('muestra botón de editar por cada fuente', (tester) async {
+      when(() => cubit.state).thenReturn(SourcesLoaded(tSources));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.byIcon(Icons.edit_outlined), findsNWidgets(tSources.length));
+    });
+
+    testWidgets('al pulsar editar abre el diálogo con el nombre actual',
+        (tester) async {
+      when(() => cubit.state).thenReturn(SourcesLoaded(tSources));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.tap(find.byIcon(Icons.edit_outlined).first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Editar nombre'), findsOneWidget);
+      expect(
+        find.widgetWithText(TextField, tSources.first.name),
+        findsOneWidget,
+      );
+    });
   });
 }

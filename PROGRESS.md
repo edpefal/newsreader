@@ -29,7 +29,7 @@
 | US-01 · Agregar fuente por URL | ✅ | ✅ |
 | US-02 · Identificación automática de metadatos | ✅ | ✅ |
 | US-03 · Ver lista de fuentes activas | ✅ | ✅ |
-| US-04 · Editar nombre de fuente | ⬜ | ⬜ |
+| US-04 · Editar nombre de fuente | ✅ | ✅ |
 | US-05 · Eliminar fuente | ⬜ | ⬜ |
 
 ---
