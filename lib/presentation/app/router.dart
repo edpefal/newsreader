@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
 import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
+import 'package:newsreader/features/sources/presentation/screens/add_source_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
 
 final appRouter = GoRouter(
@@ -33,6 +34,12 @@ final appRouter = GoRouter(
             GoRoute(
               path: '/sources',
               builder: (context, state) => const SourcesScreen(),
+              routes: [
+                GoRoute(
+                  path: 'add',
+                  builder: (context, state) => const AddSourceScreen(),
+                ),
+              ],
             ),
           ],
         ),
