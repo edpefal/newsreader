@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import 'network_image_widget.dart';
+import 'package:newsreader/core/widgets/network_image_widget.dart';
 
 class CachedNetworkImageWidget extends NetworkImageWidget {
   const CachedNetworkImageWidget({

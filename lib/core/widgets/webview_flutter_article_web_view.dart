@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import 'article_web_view.dart';
+import 'package:newsreader/core/widgets/article_web_view.dart';
 
 class WebviewFlutterArticleWebView extends ArticleWebView {
   const WebviewFlutterArticleWebView({

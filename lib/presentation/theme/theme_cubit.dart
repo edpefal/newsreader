@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_ce/hive.dart';
 
-import '../../core/constants/app_constants.dart';
+import 'package:newsreader/core/constants/app_constants.dart';
 
 class ThemeCubit extends Cubit<ThemeMode> {
   final Box<dynamic> _settingsBox;

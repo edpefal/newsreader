@@ -1,4 +1,4 @@
-import '../constants/app_constants.dart';
+import 'package:newsreader/core/constants/app_constants.dart';
 
 class FeedContentChecker {
   const FeedContentChecker._();

@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-import 'app_navigator.dart';
+import 'package:newsreader/core/navigation/app_navigator.dart';
 
 class GoRouterNavigator implements AppNavigator {
   const GoRouterNavigator();

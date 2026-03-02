@@ -1,6 +1,6 @@
 import 'package:uuid/uuid.dart';
 
-import 'id_generator.dart';
+import 'package:newsreader/core/utils/id_generator.dart';
 
 class UuidIdGenerator implements IdGenerator {
   const UuidIdGenerator();

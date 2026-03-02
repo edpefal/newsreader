@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
-import 'html_content_renderer.dart';
+import 'package:newsreader/core/widgets/html_content_renderer.dart';
 
 class FwhHtmlContentRenderer extends HtmlContentRenderer {
   const FwhHtmlContentRenderer({

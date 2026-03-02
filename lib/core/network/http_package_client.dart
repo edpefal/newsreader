@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
-import '../constants/app_constants.dart';
-import '../errors/app_exception.dart';
-import 'http_client.dart';
+import 'package:newsreader/core/constants/app_constants.dart';
+import 'package:newsreader/core/errors/app_exception.dart';
+import 'package:newsreader/core/network/http_client.dart';
 
 class HttpPackageClient implements HttpClient {
   final http.Client _client;

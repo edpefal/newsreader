@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../theme/app_theme.dart';
-import '../theme/theme_cubit.dart';
-import 'router.dart';
+import 'package:newsreader/presentation/theme/app_theme.dart';
+import 'package:newsreader/presentation/theme/theme_cubit.dart';
+import 'package:newsreader/presentation/app/router.dart';
 
 class App extends StatelessWidget {
   final ThemeCubit themeCubit;

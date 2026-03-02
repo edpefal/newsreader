@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 
-import 'core/constants/app_constants.dart';
-import 'core/di/injection.dart';
-import 'data/models/article_model.dart';
-import 'data/models/news_source_model.dart';
-import 'domain/usecases/maintenance/run_maintenance.dart';
-import 'presentation/app/app.dart';
+import 'package:newsreader/core/constants/app_constants.dart';
+import 'package:newsreader/core/di/injection.dart';
+import 'package:newsreader/core/data/models/article_model.dart';
+import 'package:newsreader/core/data/models/news_source_model.dart';
+import 'package:newsreader/features/maintenance/domain/usecases/run_maintenance.dart';
+import 'package:newsreader/presentation/app/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

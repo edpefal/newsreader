@@ -1,8 +1,8 @@
 import 'package:webfeed_plus/webfeed_plus.dart';
 
-import '../errors/app_exception.dart';
-import 'feed_data.dart';
-import 'feed_parser.dart';
+import 'package:newsreader/core/errors/app_exception.dart';
+import 'package:newsreader/core/feed/feed_data.dart';
+import 'package:newsreader/core/feed/feed_parser.dart';
 
 class WebfeedFeedParser implements FeedParser {
   @override

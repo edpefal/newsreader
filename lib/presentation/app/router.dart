@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../screens/favorites/favorites_screen.dart';
-import '../screens/inbox/inbox_screen.dart';
-import '../screens/sources/sources_screen.dart';
+import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
+import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
+import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
