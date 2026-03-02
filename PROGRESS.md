@@ -39,7 +39,7 @@
 | Historia | Estado | Tests |
 |----------|--------|-------|
 | US-06 · Ver artículos no leídos en el Inbox | ✅ | ✅ |
-| US-07 · Primer uso: Inbox vacío (Onboarding) | ⬜ | ⬜ |
+| US-07 · Primer uso: Inbox vacío (Onboarding) | ✅ | ✅ |
 | US-08 · Sincronizar manualmente (pull-to-refresh) | ⬜ | ⬜ |
 | US-09 · Marcar artículo como leído al abrirlo | ⬜ | ⬜ |
 

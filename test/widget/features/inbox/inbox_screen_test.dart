@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
@@ -11,12 +12,22 @@ import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart
 class MockInboxCubit extends MockCubit<InboxState> implements InboxCubit {}
 
 Widget _buildSubject(InboxCubit cubit) {
-  return MaterialApp(
-    home: BlocProvider<InboxCubit>.value(
-      value: cubit,
-      child: const InboxView(),
-    ),
+  final router = GoRouter(
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (_, __) => BlocProvider<InboxCubit>.value(
+          value: cubit,
+          child: const InboxView(),
+        ),
+      ),
+      GoRoute(
+        path: '/sources/add',
+        builder: (_, __) => const Scaffold(body: Text('Agregar')),
+      ),
+    ],
   );
+  return MaterialApp.router(routerConfig: router);
 }
 
 void main() {
@@ -54,17 +65,33 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('muestra estado vacío cuando no hay artículos', (tester) async {
-      when(() => cubit.state).thenReturn(const InboxLoaded([]));
+    testWidgets('muestra onboarding cuando no hay fuentes ni artículos',
+        (tester) async {
+      when(() => cubit.state)
+          .thenReturn(const InboxLoaded([], hasSources: false));
 
       await tester.pumpWidget(_buildSubject(cubit));
 
-      expect(find.text('El inbox está vacío'), findsOneWidget);
+      expect(find.text('Bienvenido a Newsletter Hub'), findsOneWidget);
+      expect(find.text('Agregar tu primer newsletter'), findsOneWidget);
+    });
+
+    testWidgets(
+        'muestra estado al día cuando hay fuentes pero no artículos',
+        (tester) async {
+      when(() => cubit.state)
+          .thenReturn(const InboxLoaded([], hasSources: true));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Estás al día'), findsOneWidget);
+      expect(find.text('Desliza para actualizar.'), findsOneWidget);
     });
 
     testWidgets('muestra lista de artículos cuando hay artículos',
         (tester) async {
-      when(() => cubit.state).thenReturn(InboxLoaded(tArticles));
+      when(() => cubit.state)
+          .thenReturn(InboxLoaded(tArticles, hasSources: true));
 
       await tester.pumpWidget(_buildSubject(cubit));
 
@@ -73,11 +100,24 @@ void main() {
     });
 
     testWidgets('cada artículo muestra el nombre de la fuente', (tester) async {
-      when(() => cubit.state).thenReturn(InboxLoaded(tArticles));
+      when(() => cubit.state)
+          .thenReturn(InboxLoaded(tArticles, hasSources: true));
 
       await tester.pumpWidget(_buildSubject(cubit));
 
       expect(find.textContaining('Newsletter A'), findsWidgets);
+    });
+
+    testWidgets('botón onboarding navega a /sources/add', (tester) async {
+      when(() => cubit.state)
+          .thenReturn(const InboxLoaded([], hasSources: false));
+      when(() => cubit.loadArticles()).thenAnswer((_) async {});
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.tap(find.text('Agregar tu primer newsletter'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Agregar'), findsOneWidget);
     });
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
@@ -25,14 +26,16 @@ class InboxView extends StatelessWidget {
           if (state is InboxLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          final articles = (state as InboxLoaded).articles;
-          if (articles.isEmpty) {
-            return const _EmptyInboxState();
+          final loaded = state as InboxLoaded;
+          if (loaded.articles.isEmpty) {
+            return loaded.hasSources
+                ? const _UpToDateState()
+                : const _OnboardingState();
           }
           return ListView.builder(
-            itemCount: articles.length,
+            itemCount: loaded.articles.length,
             itemBuilder: (context, index) =>
-                ArticleInboxTile(article: articles[index]),
+                ArticleInboxTile(article: loaded.articles[index]),
           );
         },
       ),
@@ -40,8 +43,8 @@ class InboxView extends StatelessWidget {
   }
 }
 
-class _EmptyInboxState extends StatelessWidget {
-  const _EmptyInboxState();
+class _OnboardingState extends StatelessWidget {
+  const _OnboardingState();
 
   @override
   Widget build(BuildContext context) {
@@ -52,18 +55,66 @@ class _EmptyInboxState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.inbox_outlined,
+              Icons.auto_stories_outlined,
               size: 64,
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
             const SizedBox(height: 16),
             Text(
-              'El inbox está vacío',
+              'Bienvenido a Newsletter Hub',
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tu espacio para leer newsletters fuera del email.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () async {
+                await context.push('/sources/add');
+                if (context.mounted) {
+                  context.read<InboxCubit>().loadArticles();
+                }
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Agregar tu primer newsletter'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UpToDateState extends StatelessWidget {
+  const _UpToDateState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.check_circle_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Estás al día',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Desliza hacia abajo para actualizar.',
+              'Desliza para actualizar.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

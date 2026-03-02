@@ -13,9 +13,10 @@ final class InboxLoading extends InboxState {
 
 final class InboxLoaded extends InboxState {
   final List<Article> articles;
+  final bool hasSources;
 
-  const InboxLoaded(this.articles);
+  const InboxLoaded(this.articles, {required this.hasSources});
 
   @override
-  List<Object?> get props => [articles];
+  List<Object?> get props => [articles, hasSources];
 }
