@@ -15,18 +15,71 @@ dart run build_runner build --delete-conflicting-outputs  # si hay conflictos
 
 Correr `flutter analyze` después de cualquier cambio de código. No dejar warnings sin resolver.
 
-## Arquitectura: Clean Architecture
+## Arquitectura: Feature-Based Clean Architecture
 
-Tres capas. Las dependencias solo apuntan hacia adentro:
+El proyecto usa Clean Architecture organizada por features, no por capas globales.
+
+### Estructura de carpetas
 
 ```
-Presentation → Domain ← Data
+lib/
+├── core/                          # infraestructura compartida entre features
+│   ├── constants/
+│   ├── data/                      # capa de datos COMPARTIDA
+│   │   ├── datasources/local/     # interfaces + implementaciones Hive
+│   │   ├── models/                # Hive models + .g.dart generados
+│   │   └── repositories/         # implementaciones concretas
+│   ├── di/                        # injection.dart (único punto de get_it)
+│   ├── domain/                    # dominio COMPARTIDO entre features
+│   │   ├── entities/              # Article, NewsSource
+│   │   └── repositories/         # interfaces (contratos)
+│   ├── errors/
+│   ├── feed/                      # abstracción FeedParser
+│   ├── navigation/                # abstracción AppNavigator
+│   ├── network/                   # abstracción HttpClient
+│   ├── utils/                     # IdGenerator, FeedContentChecker
+│   └── widgets/                   # abstracciones de widgets de terceros
+├── features/
+│   ├── sources/                   # Épica 1: gestión de fuentes
+│   │   ├── domain/usecases/       # AddSource, DeleteSource, GetSources, UpdateSourceName
+│   │   └── presentation/          # SourcesScreen + Bloc/Cubit + widgets propios
+│   ├── inbox/                     # Épica 2: inbox y sincronización
+│   │   ├── domain/usecases/       # SyncSources, GetInboxArticles, MarkArticleAsRead
+│   │   └── presentation/          # InboxScreen + InboxBloc + widgets propios
+│   ├── reader/                    # Épica 3: experiencia de lectura
+│   │   ├── domain/usecases/       # ToggleFavorite
+│   │   └── presentation/          # ReaderScreen + ReaderCubit
+│   ├── favorites/                 # Épica 4a: favoritos
+│   │   ├── domain/usecases/       # GetFavorites
+│   │   └── presentation/          # FavoritesScreen + FavoritesCubit
+│   ├── archive/                   # Épica 4b: archivo
+│   │   ├── domain/usecases/       # GetArchive
+│   │   └── presentation/          # ArchiveScreen + ArchiveCubit
+│   └── maintenance/               # Épica 5: limpieza automática
+│       └── domain/usecases/       # RunMaintenance
+└── presentation/                  # elementos a nivel de app (no de feature)
+    ├── app/                       # App widget + go_router config
+    └── theme/                     # AppTheme + ThemeCubit
 ```
 
-- **`domain/`** — entidades y use cases. Sin Flutter, sin librerías de terceros.
-- **`data/`** — implementaciones de repositorios, modelos Hive, datasources.
-- **`presentation/`** — Blocs/Cubits, pantallas, widgets.
-- **`core/`** — abstracciones de librerías, DI, utilidades sin estado.
+### Reglas de la arquitectura
+
+- Las dependencias apuntan hacia adentro: `presentation → domain ← data`
+- Un feature **nunca** importa de otro feature. Si necesita algo compartido, va a `core/`.
+- `core/domain/` contiene entidades y repos compartidos (`Article`, `NewsSource`).
+- Cada feature tiene sus propios use cases en `domain/usecases/`.
+- Cada feature tiene su propia presentación: Bloc/Cubit, screens y widgets en `presentation/`.
+- Al agregar un nuevo feature: crear `features/<nombre>/domain/usecases/` y `features/<nombre>/presentation/`.
+
+### Flujo de dependencias por feature
+
+```
+features/inbox/presentation/InboxBloc
+    → features/inbox/domain/usecases/GetInboxArticles
+        → core/domain/repositories/ArticleRepository  (interface)
+            ← core/data/repositories/ArticleRepositoryImpl  (implementación)
+                → core/data/datasources/local/HiveArticleDatasource
+```
 
 ## Regla de abstracciones (crítica)
 
@@ -68,7 +121,7 @@ emit(state..articles.add(article)); // mutación
 
 - TypeAdapters generados con `build_runner`. Correr después de cambiar modelos.
 - IDs de tipo reservados: `0` = `NewsSourceModel`, `1` = `ArticleModel`.
-- Nunca llamar `Hive.box()` fuera de las clases datasource en `data/datasources/local/`.
+- Nunca llamar `Hive.box()` fuera de las clases datasource en `core/data/datasources/local/`.
 - Las boxes se abren **una sola vez** en `main.dart` antes de `runApp`.
 
 ## Convenciones de código
