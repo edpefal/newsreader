@@ -149,7 +149,7 @@ void main() {
       );
 
       await tester.pumpWidget(_buildSubject(cubit));
-      await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
+      await tester.fling(find.byType(AnimatedList), const Offset(0, 400), 1000);
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
@@ -173,7 +173,7 @@ void main() {
       );
 
       await tester.pumpWidget(_buildSubject(cubit));
-      await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
+      await tester.fling(find.byType(AnimatedList), const Offset(0, 400), 1000);
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
@@ -187,7 +187,6 @@ void main() {
     testWidgets('tap en artículo navega al reader', (tester) async {
       when(() => cubit.state)
           .thenReturn(InboxLoaded(tArticles, hasSources: true));
-      when(() => cubit.loadArticles()).thenAnswer((_) async {});
 
       await tester.pumpWidget(_buildSubject(cubit));
       await tester.tap(find.text('Artículo de prueba'));
@@ -206,12 +205,38 @@ void main() {
       );
 
       await tester.pumpWidget(_buildSubject(cubit));
-      await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
+      await tester.fling(find.byType(AnimatedList), const Offset(0, 400), 1000);
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
 
       expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('animación de dismiss elimina el artículo leído de la lista',
+        (tester) async {
+      final initialState = InboxLoaded(tArticles, hasSources: true);
+      final afterReadState = InboxLoaded(
+        [tArticles[1]],
+        hasSources: true,
+        readArticleId: '1',
+      );
+
+      whenListen(
+        cubit,
+        Stream.fromIterable([afterReadState]),
+        initialState: initialState,
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      expect(find.text('Artículo de prueba'), findsOneWidget);
+      expect(find.text('Otro artículo'), findsOneWidget);
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Artículo de prueba'), findsNothing);
+      expect(find.text('Otro artículo'), findsOneWidget);
     });
   });
 }

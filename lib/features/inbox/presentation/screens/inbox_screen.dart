@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 
@@ -14,36 +15,91 @@ class InboxScreen extends StatelessWidget {
   }
 }
 
-class InboxView extends StatelessWidget {
+class InboxView extends StatefulWidget {
   const InboxView({super.key});
+
+  @override
+  State<InboxView> createState() => _InboxViewState();
+}
+
+class _InboxViewState extends State<InboxView> {
+  GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  List<Article> _items = [];
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      final state = context.read<InboxCubit>().state;
+      if (state is InboxLoaded && state.readArticleId == null) {
+        _items = List.of(state.articles);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Inbox')),
-      body: BlocBuilder<InboxCubit, InboxState>(
+      body: BlocConsumer<InboxCubit, InboxState>(
+        listenWhen: (_, curr) => curr is InboxLoaded,
+        listener: (context, state) {
+          final loaded = state as InboxLoaded;
+          if (loaded.readArticleId != null) {
+            final index = _items.indexWhere((a) => a.id == loaded.readArticleId);
+            if (index != -1) {
+              final removed = _items.removeAt(index);
+              _listKey.currentState?.removeItem(
+                index,
+                (ctx, animation) => _buildSlidingTile(removed, animation),
+                duration: const Duration(milliseconds: 350),
+              );
+              if (_items.isEmpty) {
+                Future.delayed(const Duration(milliseconds: 400), () {
+                  if (mounted) setState(() {});
+                });
+              }
+            }
+          } else {
+            setState(() {
+              _items = List.of(loaded.articles);
+              _listKey = GlobalKey<AnimatedListState>();
+            });
+          }
+        },
+        buildWhen: (_, curr) =>
+            curr is InboxLoading ||
+            (curr is InboxLoaded && curr.readArticleId == null),
         builder: (context, state) {
           if (state is InboxLoading) {
             return const Center(child: CircularProgressIndicator());
           }
           final loaded = state as InboxLoaded;
 
-          final Widget content;
-          if (loaded.articles.isEmpty) {
+          if (_items.isEmpty) {
             final emptyWidget = loaded.hasSources
                 ? const _UpToDateState()
                 : const _OnboardingState();
-            content = LayoutBuilder(
-              builder: (_, constraints) => SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(height: constraints.maxHeight, child: emptyWidget),
+            return RefreshIndicator(
+              onRefresh: () => _onRefresh(context),
+              child: LayoutBuilder(
+                builder: (_, constraints) => SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(height: constraints.maxHeight, child: emptyWidget),
+                ),
               ),
             );
-          } else {
-            content = ListView.builder(
-              itemCount: loaded.articles.length,
-              itemBuilder: (context, index) {
-                final article = loaded.articles[index];
+          }
+
+          return RefreshIndicator(
+            onRefresh: () => _onRefresh(context),
+            child: AnimatedList(
+              key: _listKey,
+              initialItemCount: _items.length,
+              itemBuilder: (context, index, animation) {
+                final article = _items[index];
                 return ArticleInboxTile(
                   article: article,
                   onTap: () async {
@@ -52,19 +108,27 @@ class InboxView extends StatelessWidget {
                       extra: article,
                     );
                     if (context.mounted) {
-                      context.read<InboxCubit>().loadArticles();
+                      context.read<InboxCubit>().loadArticlesAfterReading(article.id);
                     }
                   },
                 );
               },
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => _onRefresh(context),
-            child: content,
+            ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildSlidingTile(Article article, Animation<double> animation) {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(1.0, 0.0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeIn)),
+      child: FadeTransition(
+        opacity: animation,
+        child: ArticleInboxTile(article: article),
       ),
     );
   }

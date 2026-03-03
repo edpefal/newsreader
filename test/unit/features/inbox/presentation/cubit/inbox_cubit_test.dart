@@ -153,5 +153,21 @@ void main() {
       expect(result.isNetworkError, isFalse);
       expect(result.failedSourceIds.length, 2);
     });
+
+    blocTest<InboxCubit, InboxState>(
+      'loadArticlesAfterReading() emite InboxLoaded con readArticleId sin Loading previo',
+      build: () {
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => [tArticles[0]]);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () => InboxLoaded(tArticles, hasSources: true),
+      act: (cubit) => cubit.loadArticlesAfterReading('2'),
+      expect: () => [
+        InboxLoaded([tArticles[0]], hasSources: true, readArticleId: '2'),
+      ],
+    );
   });
 }

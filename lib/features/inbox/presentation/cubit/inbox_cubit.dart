@@ -21,19 +21,22 @@ class InboxCubit extends Cubit<InboxState> {
     await _reload();
   }
 
+  Future<void> loadArticlesAfterReading(String articleId) =>
+      _reload(readArticleId: articleId);
+
   Future<SyncResult> syncAndReload() async {
     final result = await _syncSources.execute();
     await _reload();
     return result;
   }
 
-  Future<void> _reload() async {
+  Future<void> _reload({String? readArticleId}) async {
     final results = await Future.wait([
       _getInboxArticles.execute(),
       _getSources.execute(),
     ]);
     final articles = results[0] as List<Article>;
     final hasSources = (results[1] as List).isNotEmpty;
-    emit(InboxLoaded(articles, hasSources: hasSources));
+    emit(InboxLoaded(articles, hasSources: hasSources, readArticleId: readArticleId));
   }
 }
