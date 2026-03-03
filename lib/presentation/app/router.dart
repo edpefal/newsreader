@@ -9,6 +9,7 @@ import 'package:newsreader/features/favorites/presentation/screens/favorites_scr
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
+import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 import 'package:newsreader/features/reader/presentation/screens/reader_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/add_source_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
@@ -23,6 +24,7 @@ final appRouter = GoRouter(
         return ReaderScreen(
           article: article,
           markAsRead: GetIt.instance<MarkArticleAsRead>(),
+          toggleFavorite: GetIt.instance<ToggleFavorite>(),
         );
       },
       routes: [

@@ -5,15 +5,18 @@ import 'package:go_router/go_router.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/widgets/source_icon.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
+import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 
 class ReaderScreen extends StatefulWidget {
   final Article article;
   final MarkArticleAsRead markAsRead;
+  final ToggleFavorite toggleFavorite;
 
   const ReaderScreen({
     super.key,
     required this.article,
     required this.markAsRead,
+    required this.toggleFavorite,
   });
 
   @override
@@ -22,11 +25,18 @@ class ReaderScreen extends StatefulWidget {
 
 class _ReaderScreenState extends State<ReaderScreen> {
   bool _isReaderMode = false;
+  late bool _isFavorite;
 
   @override
   void initState() {
     super.initState();
+    _isFavorite = widget.article.isFavorite;
     widget.markAsRead.execute(widget.article.id).ignore();
+  }
+
+  Future<void> _onToggleFavorite() async {
+    await widget.toggleFavorite.execute(widget.article.id);
+    setState(() => _isFavorite = !_isFavorite);
   }
 
   @override
@@ -53,6 +63,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: Icon(_isFavorite ? Icons.star : Icons.star_outline),
+            tooltip: _isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos',
+            onPressed: _onToggleFavorite,
+          ),
           IconButton(
             icon: Icon(
               _isReaderMode
