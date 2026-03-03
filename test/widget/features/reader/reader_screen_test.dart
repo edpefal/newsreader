@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
@@ -23,7 +24,8 @@ void main() {
     sourceName: 'Newsletter A',
     title: 'Un artículo interesante',
     author: 'Juan Pérez',
-    excerpt: 'Este es el resumen del artículo.',
+    contentHtml: '<p>Contenido completo del artículo.</p>',
+    excerpt: 'Este es el resumen.',
     publishedAt: DateTime(2024, 3, 15),
     articleUrl: 'https://example.com/article',
   );
@@ -53,25 +55,48 @@ void main() {
       expect(find.textContaining('15/3/2024'), findsOneWidget);
     });
 
-    testWidgets('muestra el excerpt cuando está disponible', (tester) async {
+    testWidgets('muestra HtmlWidget cuando hay contentHtml', (tester) async {
       await tester.pumpWidget(_buildSubject(tArticle, mockMarkAsRead));
+      await tester.pump();
 
-      expect(find.text('Este es el resumen del artículo.'), findsOneWidget);
+      expect(find.byType(HtmlWidget), findsOneWidget);
     });
 
-    testWidgets('no muestra excerpt cuando es nulo', (tester) async {
-      final articleSinExcerpt = Article(
+    testWidgets('muestra excerpt cuando contentHtml es nulo', (tester) async {
+      final articleSinHtml = Article(
         id: 'a2',
         sourceId: 's1',
         sourceName: 'Newsletter A',
-        title: 'Sin resumen',
+        title: 'Sin HTML',
+        excerpt: 'Solo el resumen.',
         publishedAt: DateTime(2024, 3, 15),
         articleUrl: 'https://example.com/article',
       );
 
-      await tester.pumpWidget(_buildSubject(articleSinExcerpt, mockMarkAsRead));
+      await tester.pumpWidget(_buildSubject(articleSinHtml, mockMarkAsRead));
 
-      expect(find.byType(Divider), findsNothing);
+      expect(find.text('Solo el resumen.'), findsOneWidget);
+      expect(find.byType(HtmlWidget), findsNothing);
+    });
+
+    testWidgets('muestra fallback cuando no hay contentHtml ni excerpt',
+        (tester) async {
+      final articleMinimal = Article(
+        id: 'a3',
+        sourceId: 's1',
+        sourceName: 'Newsletter A',
+        title: 'Sin contenido',
+        publishedAt: DateTime(2024, 3, 15),
+        articleUrl: 'https://example.com/article',
+      );
+
+      await tester.pumpWidget(_buildSubject(articleMinimal, mockMarkAsRead));
+
+      expect(
+        find.text('Contenido no disponible en el feed.'),
+        findsOneWidget,
+      );
+      expect(find.byType(HtmlWidget), findsNothing);
     });
 
     testWidgets('llama a markAsRead con el id del artículo al abrir',

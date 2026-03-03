@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/widgets/source_icon.dart';
@@ -35,7 +36,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
         title: Row(
           spacing: 8,
           children: [
-            SourceIcon(iconUrl: article.sourceIconUrl, name: article.sourceName, size: 24),
+            SourceIcon(
+              iconUrl: article.sourceIconUrl,
+              name: article.sourceName,
+              size: 24,
+            ),
             Expanded(
               child: Text(
                 article.sourceName,
@@ -63,17 +68,31 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            if (article.excerpt != null) ...[
-              const SizedBox(height: 20),
-              const Divider(),
-              const SizedBox(height: 16),
-              Text(
-                article.excerpt!,
-                style: theme.textTheme.bodyMedium,
-              ),
-            ],
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 16),
+            _buildContent(article, theme),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildContent(Article article, ThemeData theme) {
+    if (article.contentHtml != null) {
+      return HtmlWidget(
+        article.contentHtml!,
+        textStyle: theme.textTheme.bodyMedium,
+      );
+    }
+    if (article.excerpt != null) {
+      return Text(article.excerpt!, style: theme.textTheme.bodyMedium);
+    }
+    return Text(
+      'Contenido no disponible en el feed.',
+      style: theme.textTheme.bodyMedium?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+        fontStyle: FontStyle.italic,
       ),
     );
   }
