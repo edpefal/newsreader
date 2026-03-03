@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
@@ -10,9 +11,19 @@ import 'package:newsreader/features/reader/presentation/screens/reader_screen.da
 class MockMarkArticleAsRead extends Mock implements MarkArticleAsRead {}
 
 Widget _buildSubject(Article article, MarkArticleAsRead markAsRead) {
-  return MaterialApp(
-    home: ReaderScreen(article: article, markAsRead: markAsRead),
+  final router = GoRouter(
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (_, __) => ReaderScreen(article: article, markAsRead: markAsRead),
+      ),
+      GoRoute(
+        path: '/article/:id/web',
+        builder: (_, __) => const Scaffold(body: Text('WebView')),
+      ),
+    ],
   );
+  return MaterialApp.router(routerConfig: router);
 }
 
 void main() {
@@ -105,6 +116,20 @@ void main() {
       await tester.pump();
 
       verify(() => mockMarkAsRead.execute('a1')).called(1);
+    });
+
+    testWidgets('muestra botón Ver en navegador en el AppBar', (tester) async {
+      await tester.pumpWidget(_buildSubject(tArticle, mockMarkAsRead));
+
+      expect(find.byIcon(Icons.open_in_browser), findsOneWidget);
+    });
+
+    testWidgets('botón Ver en navegador navega al WebView', (tester) async {
+      await tester.pumpWidget(_buildSubject(tArticle, mockMarkAsRead));
+      await tester.tap(find.byIcon(Icons.open_in_browser));
+      await tester.pumpAndSettle();
+
+      expect(find.text('WebView'), findsOneWidget);
     });
   });
 }

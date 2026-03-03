@@ -50,7 +50,7 @@
 | Historia | Estado | Tests |
 |----------|--------|-------|
 | US-10 · Leer contenido del artículo (Vista Original) | ✅ | ✅ |
-| US-11 · Acceder a contenido de pago via WebView | ⬜ | ⬜ |
+| US-11 · Acceder a contenido de pago via WebView | ✅ | ✅ |
 | US-12 · Activar Modo Reader | ⬜ | ⬜ |
 
 ---

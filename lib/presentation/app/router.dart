@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/widgets/webview_flutter_article_web_view.dart';
 import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
@@ -24,6 +25,15 @@ final appRouter = GoRouter(
           markAsRead: GetIt.instance<MarkArticleAsRead>(),
         );
       },
+      routes: [
+        GoRoute(
+          path: 'web',
+          builder: (context, state) {
+            final article = state.extra as Article;
+            return WebviewFlutterArticleWebView(url: article.articleUrl);
+          },
+        ),
+      ],
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
