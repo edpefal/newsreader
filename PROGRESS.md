@@ -62,7 +62,7 @@
 | US-13 · Marcar artículo como favorito | ✅ | ✅ |
 | US-14 · Desmarcar favorito | ✅ | ✅ |
 | US-15 · Ver sección de Favoritos | ✅ | ✅ |
-| US-16 · Ver artículos archivados | ⬜ | ⬜ |
+| US-16 · Ver artículos archivados | ✅ | ✅ |
 
 ---
 

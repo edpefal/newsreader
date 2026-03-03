@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/widgets/webview_flutter_article_web_view.dart';
+import 'package:newsreader/features/archive/presentation/screens/archive_screen.dart';
 import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
@@ -54,6 +55,14 @@ final appRouter = GoRouter(
             GoRoute(
               path: '/favorites',
               builder: (context, state) => const FavoritesScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/archive',
+              builder: (context, state) => const ArchiveScreen(),
             ),
           ],
         ),
@@ -119,6 +128,11 @@ class _ScaffoldWithNavBar extends StatelessWidget {
             icon: Icon(Icons.star_outline),
             selectedIcon: Icon(Icons.star),
             label: 'Favoritos',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.archive_outlined),
+            selectedIcon: Icon(Icons.archive),
+            label: 'Archivados',
           ),
           const NavigationDestination(
             icon: Icon(Icons.rss_feed_outlined),
