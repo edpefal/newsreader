@@ -61,3 +61,8 @@ macos/.symlinks/
 
 # Coverage
 coverage/
+
+# Docs
+PROGRESS.md
+SOLUTION_SPEC.md
+USER_STORIES.md
