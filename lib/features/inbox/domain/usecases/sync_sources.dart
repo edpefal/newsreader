@@ -1,3 +1,4 @@
+import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
 import 'package:newsreader/core/network/http_client.dart';
 import 'package:newsreader/core/utils/id_generator.dart';
@@ -8,8 +9,13 @@ import 'package:newsreader/core/domain/repositories/source_repository.dart';
 class SyncResult {
   final int synced;
   final List<String> failedSourceIds;
+  final bool isNetworkError;
 
-  const SyncResult({required this.synced, required this.failedSourceIds});
+  const SyncResult({
+    required this.synced,
+    required this.failedSourceIds,
+    this.isNetworkError = false,
+  });
 }
 
 class SyncSources {
@@ -31,6 +37,7 @@ class SyncSources {
     final sources = await _sourceRepository.getSources();
     int synced = 0;
     final failedSourceIds = <String>[];
+    bool networkErrorOccurred = false;
 
     await Future.wait(
       sources.map((source) async {
@@ -63,13 +70,20 @@ class SyncSources {
           await _sourceRepository.updateSource(
             source.copyWith(lastSyncedAt: DateTime.now(), hasError: false),
           );
-        } catch (_) {
+        } catch (e) {
           failedSourceIds.add(source.id);
+          if (e is NetworkException || e is TimeoutException) {
+            networkErrorOccurred = true;
+          }
           await _sourceRepository.updateSource(source.copyWith(hasError: true));
         }
       }),
     );
 
-    return SyncResult(synced: synced, failedSourceIds: failedSourceIds);
+    return SyncResult(
+      synced: synced,
+      failedSourceIds: failedSourceIds,
+      isNetworkError: networkErrorOccurred,
+    );
   }
 }

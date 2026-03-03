@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/features/inbox/domain/usecases/sync_sources.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
 
@@ -118,6 +119,83 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Agregar'), findsOneWidget);
+    });
+
+    testWidgets('muestra RefreshIndicator cuando el estado es InboxLoaded',
+        (tester) async {
+      when(() => cubit.state)
+          .thenReturn(InboxLoaded(tArticles, hasSources: true));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.byType(RefreshIndicator), findsOneWidget);
+    });
+
+    testWidgets(
+        'pull-to-refresh llama a syncAndReload y muestra snackbar de red',
+        (tester) async {
+      when(() => cubit.state)
+          .thenReturn(InboxLoaded(tArticles, hasSources: true));
+      when(() => cubit.syncAndReload()).thenAnswer(
+        (_) async => const SyncResult(
+          synced: 0,
+          failedSourceIds: ['s1'],
+          isNetworkError: true,
+        ),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Sin conexión. Los artículos descargados siguen disponibles.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'pull-to-refresh muestra snackbar de fallos parciales',
+        (tester) async {
+      when(() => cubit.state)
+          .thenReturn(InboxLoaded(tArticles, hasSources: true));
+      when(() => cubit.syncAndReload()).thenAnswer(
+        (_) async => const SyncResult(
+          synced: 1,
+          failedSourceIds: ['s1', 's2'],
+        ),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('2 fuente(s) no pudieron sincronizarse.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'pull-to-refresh no muestra snackbar cuando sync es exitoso',
+        (tester) async {
+      when(() => cubit.state)
+          .thenReturn(InboxLoaded(tArticles, hasSources: true));
+      when(() => cubit.syncAndReload()).thenAnswer(
+        (_) async => const SyncResult(synced: 3, failedSourceIds: []),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SnackBar), findsNothing);
     });
   });
 }

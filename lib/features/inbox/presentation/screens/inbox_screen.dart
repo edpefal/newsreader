@@ -27,17 +27,51 @@ class InboxView extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           final loaded = state as InboxLoaded;
+
+          final Widget content;
           if (loaded.articles.isEmpty) {
-            return loaded.hasSources
+            final emptyWidget = loaded.hasSources
                 ? const _UpToDateState()
                 : const _OnboardingState();
+            content = LayoutBuilder(
+              builder: (_, constraints) => SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(height: constraints.maxHeight, child: emptyWidget),
+              ),
+            );
+          } else {
+            content = ListView.builder(
+              itemCount: loaded.articles.length,
+              itemBuilder: (context, index) =>
+                  ArticleInboxTile(article: loaded.articles[index]),
+            );
           }
-          return ListView.builder(
-            itemCount: loaded.articles.length,
-            itemBuilder: (context, index) =>
-                ArticleInboxTile(article: loaded.articles[index]),
+
+          return RefreshIndicator(
+            onRefresh: () => _onRefresh(context),
+            child: content,
           );
         },
+      ),
+    );
+  }
+}
+
+Future<void> _onRefresh(BuildContext context) async {
+  final result = await context.read<InboxCubit>().syncAndReload();
+  if (!context.mounted) return;
+  if (result.isNetworkError) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Sin conexión. Los artículos descargados siguen disponibles.'),
+      ),
+    );
+  } else if (result.failedSourceIds.isNotEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${result.failedSourceIds.length} fuente(s) no pudieron sincronizarse.',
+        ),
       ),
     );
   }

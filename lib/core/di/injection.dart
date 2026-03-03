@@ -88,5 +88,5 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<ThemeCubit>(
     ThemeCubit(Hive.box<dynamic>(AppConstants.hiveSettingsBox)),
   );
-  getIt.registerSingleton<InboxCubit>(InboxCubit(getIt(), getIt()));
+  getIt.registerSingleton<InboxCubit>(InboxCubit(getIt(), getIt(), getIt()));
 }
