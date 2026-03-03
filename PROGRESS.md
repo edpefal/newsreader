@@ -70,8 +70,8 @@
 
 | Historia | Estado | Tests |
 |----------|--------|-------|
-| US-17 · Limpieza automática de artículos leídos | ⬜ | ⬜ |
-| US-18 · Archivo automático de artículos no leídos | ⬜ | ⬜ |
+| US-17 · Limpieza automática de artículos leídos | ✅ | ✅ |
+| US-18 · Archivo automático de artículos no leídos | ✅ | ✅ |
 
 ---
 
