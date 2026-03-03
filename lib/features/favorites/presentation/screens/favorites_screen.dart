@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:newsreader/features/favorites/domain/usecases/get_favorites.dart';
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 
@@ -11,13 +9,7 @@ class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) =>
-          FavoritesCubit(GetIt.instance<GetFavorites>())..loadFavorites(),
-      child: const FavoritesView(),
-    );
-  }
+  Widget build(BuildContext context) => const FavoritesView();
 }
 
 class FavoritesView extends StatelessWidget {

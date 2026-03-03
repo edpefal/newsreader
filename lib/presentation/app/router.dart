@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/widgets/webview_flutter_article_web_view.dart';
 import 'package:newsreader/features/archive/presentation/screens/archive_screen.dart';
+import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
+import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
@@ -96,8 +98,14 @@ class _ScaffoldWithNavBar extends StatelessWidget {
       body: navigationShell,
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) =>
-            navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex),
+        onDestinationSelected: (index) {
+          if (index == 1) context.read<FavoritesCubit>().loadFavorites();
+          if (index == 2) context.read<ArchiveCubit>().loadArchive();
+          navigationShell.goBranch(
+            index,
+            initialLocation: index == navigationShell.currentIndex,
+          );
+        },
         destinations: [
           NavigationDestination(
             icon: BlocBuilder<InboxCubit, InboxState>(

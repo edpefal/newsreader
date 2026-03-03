@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:newsreader/features/archive/domain/usecases/get_archive.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 
@@ -11,12 +9,7 @@ class ArchiveScreen extends StatelessWidget {
   const ArchiveScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ArchiveCubit(GetIt.instance<GetArchive>())..loadArchive(),
-      child: const ArchiveView(),
-    );
-  }
+  Widget build(BuildContext context) => const ArchiveView();
 }
 
 class ArchiveView extends StatelessWidget {

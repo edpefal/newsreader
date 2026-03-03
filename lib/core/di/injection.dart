@@ -21,7 +21,9 @@ import 'package:newsreader/core/data/repositories/source_repository_impl.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/features/archive/domain/usecases/get_archive.dart';
+import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
 import 'package:newsreader/features/favorites/domain/usecases/get_favorites.dart';
+import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/domain/usecases/get_inbox_articles.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/inbox/domain/usecases/sync_sources.dart';
@@ -89,4 +91,6 @@ Future<void> setupDependencies() async {
     ThemeCubit(Hive.box<dynamic>(AppConstants.hiveSettingsBox)),
   );
   getIt.registerSingleton<InboxCubit>(InboxCubit(getIt(), getIt(), getIt()));
+  getIt.registerSingleton<FavoritesCubit>(FavoritesCubit(getIt()));
+  getIt.registerSingleton<ArchiveCubit>(ArchiveCubit(getIt()));
 }
