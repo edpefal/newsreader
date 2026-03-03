@@ -1,16 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
+import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
+import 'package:newsreader/features/reader/presentation/screens/reader_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/add_source_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
+    GoRoute(
+      path: '/article/:id',
+      builder: (context, state) {
+        final article = state.extra as Article;
+        return ReaderScreen(
+          article: article,
+          markAsRead: GetIt.instance<MarkArticleAsRead>(),
+        );
+      },
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
           _ScaffoldWithNavBar(navigationShell: navigationShell),

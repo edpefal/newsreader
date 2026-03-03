@@ -26,6 +26,10 @@ Widget _buildSubject(InboxCubit cubit) {
         path: '/sources/add',
         builder: (_, __) => const Scaffold(body: Text('Agregar')),
       ),
+      GoRoute(
+        path: '/article/:id',
+        builder: (_, __) => const Scaffold(body: Text('Reader')),
+      ),
     ],
   );
   return MaterialApp.router(routerConfig: router);
@@ -178,6 +182,18 @@ void main() {
         find.textContaining('2 fuente(s) no pudieron sincronizarse.'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('tap en artículo navega al reader', (tester) async {
+      when(() => cubit.state)
+          .thenReturn(InboxLoaded(tArticles, hasSources: true));
+      when(() => cubit.loadArticles()).thenAnswer((_) async {});
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.tap(find.text('Artículo de prueba'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Reader'), findsOneWidget);
     });
 
     testWidgets(

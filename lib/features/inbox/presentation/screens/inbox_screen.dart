@@ -42,8 +42,21 @@ class InboxView extends StatelessWidget {
           } else {
             content = ListView.builder(
               itemCount: loaded.articles.length,
-              itemBuilder: (context, index) =>
-                  ArticleInboxTile(article: loaded.articles[index]),
+              itemBuilder: (context, index) {
+                final article = loaded.articles[index];
+                return ArticleInboxTile(
+                  article: article,
+                  onTap: () async {
+                    await context.push(
+                      '/article/${article.id}',
+                      extra: article,
+                    );
+                    if (context.mounted) {
+                      context.read<InboxCubit>().loadArticles();
+                    }
+                  },
+                );
+              },
             );
           }
 
