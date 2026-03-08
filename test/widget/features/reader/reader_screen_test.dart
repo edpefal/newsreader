@@ -244,7 +244,7 @@ void main() {
           _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
 
       await tester.tap(find.byIcon(Icons.star_outline));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       verify(() => mockToggleFavorite.execute('a1')).called(1);
       expect(find.byIcon(Icons.star), findsOneWidget);
@@ -257,7 +257,7 @@ void main() {
           _buildSubject(tArticleFavorito, mockMarkAsRead, mockToggleFavorite));
 
       await tester.tap(find.byIcon(Icons.star));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       verify(() => mockToggleFavorite.execute('a1')).called(1);
       expect(find.byIcon(Icons.star_outline), findsOneWidget);

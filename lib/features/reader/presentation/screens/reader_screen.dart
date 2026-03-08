@@ -23,20 +23,38 @@ class ReaderScreen extends StatefulWidget {
   State<ReaderScreen> createState() => _ReaderScreenState();
 }
 
-class _ReaderScreenState extends State<ReaderScreen> {
+class _ReaderScreenState extends State<ReaderScreen>
+    with SingleTickerProviderStateMixin {
   bool _isReaderMode = false;
   late bool _isFavorite;
+  late AnimationController _popController;
+  late Animation<double> _popScale;
 
   @override
   void initState() {
     super.initState();
     _isFavorite = widget.article.isFavorite;
     widget.markAsRead.execute(widget.article.id).ignore();
+    _popController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _popScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 45),
+      TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 55),
+    ]).animate(CurvedAnimation(parent: _popController, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _popController.dispose();
+    super.dispose();
   }
 
   Future<void> _onToggleFavorite() async {
-    await widget.toggleFavorite.execute(widget.article.id);
+    _popController.forward(from: 0);
     setState(() => _isFavorite = !_isFavorite);
+    await widget.toggleFavorite.execute(widget.article.id);
   }
 
   @override
@@ -63,10 +81,23 @@ class _ReaderScreenState extends State<ReaderScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: Icon(_isFavorite ? Icons.star : Icons.star_outline),
-            tooltip: _isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos',
-            onPressed: _onToggleFavorite,
+          AnimatedBuilder(
+            animation: _popScale,
+            builder: (context, child) =>
+                Transform.scale(scale: _popScale.value, child: child),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: IconButton(
+                key: ValueKey(_isFavorite),
+                icon: Icon(
+                  _isFavorite ? Icons.star : Icons.star_outline,
+                  color: _isFavorite ? Colors.amber : null,
+                ),
+                tooltip:
+                    _isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos',
+                onPressed: _onToggleFavorite,
+              ),
+            ),
           ),
           IconButton(
             icon: Icon(
