@@ -107,6 +107,40 @@ void main() {
       expect(find.text('Reader'), findsOneWidget);
     });
 
+    testWidgets('muestra separadores de fecha agrupando artículos por día',
+        (tester) async {
+      final now = DateTime.now();
+      final yesterday = now.subtract(const Duration(days: 1));
+      final articles = [
+        Article(
+          id: 'hoy',
+          sourceId: 's1',
+          sourceName: 'Newsletter A',
+          title: 'Archivado de hoy',
+          publishedAt: DateTime(now.year, now.month, now.day, 10),
+          articleUrl: 'https://example.com/hoy',
+          isArchived: true,
+        ),
+        Article(
+          id: 'ayer',
+          sourceId: 's1',
+          sourceName: 'Newsletter A',
+          title: 'Archivado de ayer',
+          publishedAt:
+              DateTime(yesterday.year, yesterday.month, yesterday.day, 10),
+          articleUrl: 'https://example.com/ayer',
+          isArchived: true,
+        ),
+      ];
+
+      when(() => cubit.state).thenReturn(ArchiveLoaded(articles));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Hoy'), findsOneWidget);
+      expect(find.text('Ayer'), findsOneWidget);
+    });
+
     testWidgets('al volver del reader llama a loadArchive', (tester) async {
       when(() => cubit.state).thenReturn(ArchiveLoaded(tArticles));
       when(() => cubit.loadArchive()).thenAnswer((_) async {});

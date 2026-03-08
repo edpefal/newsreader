@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 
@@ -14,6 +16,24 @@ class FavoritesScreen extends StatelessWidget {
 
 class FavoritesView extends StatelessWidget {
   const FavoritesView({super.key});
+
+  static List<Object> _buildGroupedItems(List<Article> articles) {
+    final result = <Object>[];
+    DateTime? lastDay;
+    for (final article in articles) {
+      final day = DateTime(
+        article.publishedAt.year,
+        article.publishedAt.month,
+        article.publishedAt.day,
+      );
+      if (lastDay == null || day != lastDay) {
+        result.add(day);
+        lastDay = day;
+      }
+      result.add(article);
+    }
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,10 +48,15 @@ class FavoritesView extends StatelessWidget {
           if (loaded.articles.isEmpty) {
             return const _EmptyFavoritesState();
           }
+          final items = _buildGroupedItems(loaded.articles);
           return ListView.builder(
-            itemCount: loaded.articles.length,
+            itemCount: items.length,
             itemBuilder: (context, index) {
-              final article = loaded.articles[index];
+              final item = items[index];
+              if (item is DateTime) {
+                return DateSeparator(day: item);
+              }
+              final article = item as Article;
               return ArticleInboxTile(
                 article: article,
                 onTap: () async {

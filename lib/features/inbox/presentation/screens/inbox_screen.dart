@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 
@@ -127,7 +128,7 @@ class _InboxViewState extends State<InboxView> {
               itemBuilder: (context, index, animation) {
                 final item = _flatItems[index];
                 if (item is _DateHeaderItem) {
-                  return _DateSeparator(day: item.day);
+                  return DateSeparator(day: item.day);
                 }
                 final article = (item as _ArticleListItem).article;
                 return ArticleInboxTile(
@@ -239,43 +240,6 @@ Future<void> _onRefresh(BuildContext context) async {
 // ---------------------------------------------------------------------------
 // Widgets internos
 // ---------------------------------------------------------------------------
-
-class _DateSeparator extends StatelessWidget {
-  final DateTime day;
-
-  const _DateSeparator({required this.day});
-
-  static const _months = [
-    'ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.',
-    'jul.', 'ago.', 'sep.', 'oct.', 'nov.', 'dic.',
-  ];
-
-  String _label() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final diff = today.difference(day).inDays;
-    if (diff == 0) return 'Hoy';
-    if (diff == 1) return 'Ayer';
-    final month = _months[day.month - 1];
-    if (day.year != now.year) return '${day.day} $month ${day.year}';
-    return '${day.day} $month';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Text(
-        _label(),
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-      ),
-    );
-  }
-}
 
 class _OnboardingState extends StatelessWidget {
   const _OnboardingState();
