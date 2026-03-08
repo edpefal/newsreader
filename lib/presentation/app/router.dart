@@ -140,7 +140,7 @@ class _ScaffoldWithNavBar extends StatelessWidget {
           const NavigationDestination(
             icon: Icon(Icons.archive_outlined),
             selectedIcon: Icon(Icons.archive),
-            label: 'Archivados',
+            label: 'Leídos',
           ),
           const NavigationDestination(
             icon: Icon(Icons.rss_feed_outlined),

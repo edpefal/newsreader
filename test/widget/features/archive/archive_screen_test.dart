@@ -74,7 +74,7 @@ void main() {
 
       await tester.pumpWidget(_buildSubject(cubit));
 
-      expect(find.text('Sin artículos archivados'), findsOneWidget);
+      expect(find.text('Sin artículos leídos'), findsOneWidget);
       expect(find.byIcon(Icons.archive_outlined), findsOneWidget);
     });
 
@@ -88,12 +88,12 @@ void main() {
       expect(find.text('Artículo archivado dos'), findsOneWidget);
     });
 
-    testWidgets('muestra el título del AppBar "Archivados"', (tester) async {
+    testWidgets('muestra el título del AppBar "Leídos"', (tester) async {
       when(() => cubit.state).thenReturn(const ArchiveLoaded([]));
 
       await tester.pumpWidget(_buildSubject(cubit));
 
-      expect(find.text('Archivados'), findsOneWidget);
+      expect(find.text('Leídos'), findsOneWidget);
     });
 
     testWidgets('tap en artículo navega al reader', (tester) async {

@@ -38,7 +38,7 @@ class ArchiveView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Archivados')),
+      appBar: AppBar(title: const Text('Leídos')),
       body: BlocBuilder<ArchiveCubit, ArchiveState>(
         builder: (context, state) {
           if (state is ArchiveLoading) {
@@ -95,7 +95,7 @@ class _EmptyArchiveState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sin artículos archivados',
+              'Sin artículos leídos',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
