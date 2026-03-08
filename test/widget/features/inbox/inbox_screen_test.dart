@@ -213,6 +213,64 @@ void main() {
       expect(find.byType(SnackBar), findsNothing);
     });
 
+    testWidgets('muestra separadores de fecha con "Hoy" y "Ayer"', (tester) async {
+      final now = DateTime.now();
+      final yesterday = now.subtract(const Duration(days: 1));
+      final todayArticle = Article(
+        id: 'today',
+        sourceId: 's1',
+        sourceName: 'Newsletter A',
+        title: 'Artículo de hoy',
+        publishedAt: DateTime(now.year, now.month, now.day, 10),
+        articleUrl: 'https://example.com/today',
+      );
+      final yesterdayArticle = Article(
+        id: 'yesterday',
+        sourceId: 's1',
+        sourceName: 'Newsletter A',
+        title: 'Artículo de ayer',
+        publishedAt: DateTime(yesterday.year, yesterday.month, yesterday.day, 10),
+        articleUrl: 'https://example.com/yesterday',
+      );
+
+      when(() => cubit.state).thenReturn(
+        InboxLoaded([todayArticle, yesterdayArticle], hasSources: true),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Hoy'), findsOneWidget);
+      expect(find.text('Ayer'), findsOneWidget);
+    });
+
+    testWidgets('agrupa artículos del mismo día bajo un único separador',
+        (tester) async {
+      final now = DateTime.now();
+      final article1 = Article(
+        id: 'a1',
+        sourceId: 's1',
+        sourceName: 'Newsletter A',
+        title: 'Artículo A',
+        publishedAt: DateTime(now.year, now.month, now.day, 9),
+        articleUrl: 'https://example.com/a1',
+      );
+      final article2 = Article(
+        id: 'a2',
+        sourceId: 's1',
+        sourceName: 'Newsletter A',
+        title: 'Artículo B',
+        publishedAt: DateTime(now.year, now.month, now.day, 8),
+        articleUrl: 'https://example.com/a2',
+      );
+
+      when(() => cubit.state)
+          .thenReturn(InboxLoaded([article1, article2], hasSources: true));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Hoy'), findsOneWidget);
+    });
+
     testWidgets('animación de dismiss elimina el artículo leído de la lista',
         (tester) async {
       final initialState = InboxLoaded(tArticles, hasSources: true);

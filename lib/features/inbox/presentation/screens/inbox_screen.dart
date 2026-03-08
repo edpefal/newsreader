@@ -6,6 +6,26 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 
+// ---------------------------------------------------------------------------
+// Modelo interno de la lista plana (artículos + separadores de fecha)
+// ---------------------------------------------------------------------------
+
+sealed class _InboxListItem {}
+
+final class _DateHeaderItem extends _InboxListItem {
+  final DateTime day; // normalizado a medianoche
+  _DateHeaderItem(this.day);
+}
+
+final class _ArticleListItem extends _InboxListItem {
+  final Article article;
+  _ArticleListItem(this.article);
+}
+
+// ---------------------------------------------------------------------------
+// Screen / View
+// ---------------------------------------------------------------------------
+
 class InboxScreen extends StatelessWidget {
   const InboxScreen({super.key});
 
@@ -24,7 +44,7 @@ class InboxView extends StatefulWidget {
 
 class _InboxViewState extends State<InboxView> {
   GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
-  List<Article> _items = [];
+  List<_InboxListItem> _flatItems = [];
   bool _initialized = false;
 
   @override
@@ -34,9 +54,28 @@ class _InboxViewState extends State<InboxView> {
       _initialized = true;
       final state = context.read<InboxCubit>().state;
       if (state is InboxLoaded && state.readArticleId == null) {
-        _items = List.of(state.articles);
+        _flatItems = _buildFlatItems(state.articles);
       }
     }
+  }
+
+  // Construye la lista plana intercalando separadores de fecha.
+  static List<_InboxListItem> _buildFlatItems(List<Article> articles) {
+    final result = <_InboxListItem>[];
+    DateTime? lastDay;
+    for (final article in articles) {
+      final day = DateTime(
+        article.publishedAt.year,
+        article.publishedAt.month,
+        article.publishedAt.day,
+      );
+      if (lastDay == null || day != lastDay) {
+        result.add(_DateHeaderItem(day));
+        lastDay = day;
+      }
+      result.add(_ArticleListItem(article));
+    }
+    return result;
   }
 
   @override
@@ -48,23 +87,10 @@ class _InboxViewState extends State<InboxView> {
         listener: (context, state) {
           final loaded = state as InboxLoaded;
           if (loaded.readArticleId != null) {
-            final index = _items.indexWhere((a) => a.id == loaded.readArticleId);
-            if (index != -1) {
-              final removed = _items.removeAt(index);
-              _listKey.currentState?.removeItem(
-                index,
-                (ctx, animation) => _buildSlidingTile(removed, animation),
-                duration: const Duration(milliseconds: 350),
-              );
-              if (_items.isEmpty) {
-                Future.delayed(const Duration(milliseconds: 400), () {
-                  if (mounted) setState(() {});
-                });
-              }
-            }
+            _animateDismiss(loaded.readArticleId!);
           } else {
             setState(() {
-              _items = List.of(loaded.articles);
+              _flatItems = _buildFlatItems(loaded.articles);
               _listKey = GlobalKey<AnimatedListState>();
             });
           }
@@ -78,7 +104,7 @@ class _InboxViewState extends State<InboxView> {
           }
           final loaded = state as InboxLoaded;
 
-          if (_items.isEmpty) {
+          if (_flatItems.isEmpty) {
             final emptyWidget = loaded.hasSources
                 ? const _UpToDateState()
                 : const _OnboardingState();
@@ -97,9 +123,13 @@ class _InboxViewState extends State<InboxView> {
             onRefresh: () => _onRefresh(context),
             child: AnimatedList(
               key: _listKey,
-              initialItemCount: _items.length,
+              initialItemCount: _flatItems.length,
               itemBuilder: (context, index, animation) {
-                final article = _items[index];
+                final item = _flatItems[index];
+                if (item is _DateHeaderItem) {
+                  return _DateSeparator(day: item.day);
+                }
+                final article = (item as _ArticleListItem).article;
                 return ArticleInboxTile(
                   article: article,
                   onTap: () async {
@@ -120,6 +150,54 @@ class _InboxViewState extends State<InboxView> {
     );
   }
 
+  void _animateDismiss(String articleId) {
+    // Buscar el artículo en la lista plana.
+    final articleIdx = _flatItems.indexWhere(
+      (item) => item is _ArticleListItem && item.article.id == articleId,
+    );
+    if (articleIdx == -1) return;
+
+    final removedArticle = (_flatItems[articleIdx] as _ArticleListItem).article;
+
+    // El header precede al artículo: si no hay otro artículo en el mismo
+    // grupo después de este, el header queda huérfano y también se elimina.
+    int? headerIdx;
+    if (articleIdx > 0 && _flatItems[articleIdx - 1] is _DateHeaderItem) {
+      final nextIsArticleInSameGroup = articleIdx + 1 < _flatItems.length &&
+          _flatItems[articleIdx + 1] is _ArticleListItem;
+      if (!nextIsArticleInSameGroup) {
+        headerIdx = articleIdx - 1;
+      }
+    }
+
+    // Actualizar la lista plana primero (índice mayor → menor para no desplazar).
+    _flatItems.removeAt(articleIdx);
+    if (headerIdx != null) _flatItems.removeAt(headerIdx);
+
+    // Animar la salida del artículo (deslizamiento lateral).
+    _listKey.currentState?.removeItem(
+      articleIdx,
+      (ctx, anim) => _buildSlidingTile(removedArticle, anim),
+      duration: const Duration(milliseconds: 350),
+    );
+
+    // Eliminar el header sin animación (si quedó huérfano).
+    if (headerIdx != null) {
+      _listKey.currentState?.removeItem(
+        headerIdx,
+        (_, __) => const SizedBox.shrink(),
+        duration: Duration.zero,
+      );
+    }
+
+    // Si ya no quedan artículos, disparar rebuild para mostrar estado vacío.
+    if (_flatItems.isEmpty) {
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
   Widget _buildSlidingTile(Article article, Animation<double> animation) {
     return SlideTransition(
       position: Tween<Offset>(
@@ -133,6 +211,10 @@ class _InboxViewState extends State<InboxView> {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 Future<void> _onRefresh(BuildContext context) async {
   final result = await context.read<InboxCubit>().syncAndReload();
@@ -149,6 +231,47 @@ Future<void> _onRefresh(BuildContext context) async {
         content: Text(
           '${result.failedSourceIds.length} fuente(s) no pudieron sincronizarse.',
         ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Widgets internos
+// ---------------------------------------------------------------------------
+
+class _DateSeparator extends StatelessWidget {
+  final DateTime day;
+
+  const _DateSeparator({required this.day});
+
+  static const _months = [
+    'ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.',
+    'jul.', 'ago.', 'sep.', 'oct.', 'nov.', 'dic.',
+  ];
+
+  String _label() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final diff = today.difference(day).inDays;
+    if (diff == 0) return 'Hoy';
+    if (diff == 1) return 'Ayer';
+    final month = _months[day.month - 1];
+    if (day.year != now.year) return '${day.day} $month ${day.year}';
+    return '${day.day} $month';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Text(
+        _label(),
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
       ),
     );
   }
