@@ -125,6 +125,7 @@ class _SourceTile extends StatelessWidget {
       leading: SourceIcon(iconUrl: source.iconUrl, name: source.name),
       title: Text(source.name),
       subtitle: source.author != null ? Text(source.author!) : null,
+      onTap: () => context.push('/sources/${source.id}', extra: source),
       trailing: PopupMenuButton<_SourceAction>(
         onSelected: (action) {
           if (action == _SourceAction.edit) {

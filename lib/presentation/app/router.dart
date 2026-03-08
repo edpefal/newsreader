@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/widgets/webview_flutter_article_web_view.dart';
 import 'package:newsreader/features/archive/presentation/screens/archive_screen.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
@@ -14,7 +15,9 @@ import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 import 'package:newsreader/features/reader/presentation/screens/reader_screen.dart';
+import 'package:newsreader/features/sources/domain/usecases/get_source_articles.dart';
 import 'package:newsreader/features/sources/presentation/screens/add_source_screen.dart';
+import 'package:newsreader/features/sources/presentation/screens/source_detail_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
 
 final appRouter = GoRouter(
@@ -77,6 +80,16 @@ final appRouter = GoRouter(
                 GoRoute(
                   path: 'add',
                   builder: (context, state) => const AddSourceScreen(),
+                ),
+                GoRoute(
+                  path: ':id',
+                  builder: (context, state) {
+                    final source = state.extra as NewsSource;
+                    return SourceDetailScreen(
+                      source: source,
+                      getSourceArticles: GetIt.instance<GetSourceArticles>(),
+                    );
+                  },
                 ),
               ],
             ),

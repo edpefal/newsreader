@@ -26,6 +26,10 @@ Widget _buildSubject(SourcesCubit cubit) {
         path: '/sources/add',
         builder: (_, __) => const Scaffold(body: Text('Agregar')),
       ),
+      GoRoute(
+        path: '/sources/:id',
+        builder: (_, __) => const Scaffold(body: Text('Detalle')),
+      ),
     ],
   );
   return MaterialApp.router(routerConfig: router);
@@ -98,6 +102,16 @@ void main() {
         find.byWidgetPredicate((w) => w is PopupMenuButton),
         findsNWidgets(tSources.length),
       );
+    });
+
+    testWidgets('tap en fuente navega al detalle de la fuente', (tester) async {
+      when(() => cubit.state).thenReturn(SourcesLoaded(tSources));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.tap(find.text('Newsletter A'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Detalle'), findsOneWidget);
     });
 
     testWidgets('el menú muestra opciones Editar y Eliminar', (tester) async {

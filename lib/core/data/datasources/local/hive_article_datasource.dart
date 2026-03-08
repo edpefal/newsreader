@@ -39,7 +39,8 @@ class HiveArticleDatasource implements ArticleLocalDataSource {
 
   @override
   Future<List<ArticleModel>> getArticlesBySource(String sourceId) async =>
-      _box.values.where((a) => a.sourceId == sourceId).toList();
+      _box.values.where((a) => a.sourceId == sourceId).toList()
+        ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
 
   @override
   Future<ArticleModel?> getArticleById(String id) async => _box.get(id);

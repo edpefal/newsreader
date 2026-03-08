@@ -32,6 +32,7 @@ import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart'
 import 'package:newsreader/features/maintenance/domain/usecases/run_maintenance.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/delete_source.dart';
+import 'package:newsreader/features/sources/domain/usecases/get_source_articles.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
 import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
@@ -72,6 +73,7 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton(() => DeleteSource(getIt(), getIt()));
   getIt.registerLazySingleton(() => UpdateSourceName(getIt()));
   getIt.registerLazySingleton(() => GetSources(getIt()));
+  getIt.registerLazySingleton(() => GetSourceArticles(getIt()));
 
   // Use cases — Articles
   getIt.registerLazySingleton(
