@@ -1,4 +1,4 @@
-package com.newsreader.newsreader
+package com.artlab.reevo
 
 import io.flutter.embedding.android.FlutterActivity
 
