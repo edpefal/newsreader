@@ -66,3 +66,6 @@ coverage/
 PROGRESS.md
 SOLUTION_SPEC.md
 USER_STORIES.md
+
+# Claude Code local config
+.claude/
