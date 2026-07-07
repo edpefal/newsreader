@@ -69,3 +69,9 @@ USER_STORIES.md
 
 # Claude Code local config
 .claude/
+
+# AI tool configs (local only)
+.gemini/
+.cursor/
+.codex/
+.github/
