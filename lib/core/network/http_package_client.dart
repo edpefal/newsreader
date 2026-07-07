@@ -1,3 +1,4 @@
+import 'dart:async' as dart_async;
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -23,7 +24,7 @@ class HttpPackageClient implements HttpClient {
       throw const NetworkException();
     } on http.ClientException {
       throw const NetworkException();
-    } on TimeoutException {
+    } on dart_async.TimeoutException {
       throw const TimeoutException();
     }
   }

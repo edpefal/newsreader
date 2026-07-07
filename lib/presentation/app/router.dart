@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/widgets/webview_flutter_article_web_view.dart';
@@ -16,7 +16,10 @@ import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 import 'package:newsreader/features/reader/presentation/screens/reader_screen.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_source_articles.dart';
+import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
+import 'package:newsreader/features/sources/presentation/cubit/import_opml_cubit.dart';
 import 'package:newsreader/features/sources/presentation/screens/add_source_screen.dart';
+import 'package:newsreader/features/sources/presentation/screens/import_opml_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/source_detail_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
 
@@ -29,8 +32,8 @@ final appRouter = GoRouter(
         final article = state.extra as Article;
         return ReaderScreen(
           article: article,
-          markAsRead: GetIt.instance<MarkArticleAsRead>(),
-          toggleFavorite: GetIt.instance<ToggleFavorite>(),
+          markAsRead: getIt<MarkArticleAsRead>(),
+          toggleFavorite: getIt<ToggleFavorite>(),
         );
       },
       routes: [
@@ -82,12 +85,22 @@ final appRouter = GoRouter(
                   builder: (context, state) => const AddSourceScreen(),
                 ),
                 GoRoute(
+                  path: 'import-opml',
+                  builder: (context, state) {
+                    final xmlContent = state.extra as String;
+                    return BlocProvider(
+                      create: (_) => ImportOpmlCubit(getIt<ImportOpml>()),
+                      child: ImportOpmlScreen(xmlContent: xmlContent),
+                    );
+                  },
+                ),
+                GoRoute(
                   path: ':id',
                   builder: (context, state) {
                     final source = state.extra as NewsSource;
                     return SourceDetailScreen(
                       source: source,
-                      getSourceArticles: GetIt.instance<GetSourceArticles>(),
+                      getSourceArticles: getIt<GetSourceArticles>(),
                     );
                   },
                 ),

@@ -30,10 +30,13 @@ import 'package:newsreader/features/inbox/domain/usecases/sync_sources.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 import 'package:newsreader/features/maintenance/domain/usecases/run_maintenance.dart';
+import 'package:newsreader/core/opml/opml_parser.dart';
+import 'package:newsreader/core/opml/xml_opml_parser.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/delete_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_source_articles.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
+import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
 
@@ -45,6 +48,7 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton<FeedParser>(() => WebfeedFeedParser());
   getIt.registerLazySingleton<IdGenerator>(() => const UuidIdGenerator());
   getIt.registerLazySingleton<AppNavigator>(() => const GoRouterNavigator());
+  getIt.registerLazySingleton<OPMLParser>(() => const XmlOpmlParser());
 
   // Data sources
   getIt.registerLazySingleton<SourceLocalDataSource>(
@@ -74,6 +78,9 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton(() => UpdateSourceName(getIt()));
   getIt.registerLazySingleton(() => GetSources(getIt()));
   getIt.registerLazySingleton(() => GetSourceArticles(getIt()));
+  getIt.registerLazySingleton(
+    () => ImportOpml(getIt(), getIt(), getIt(), getIt(), getIt()),
+  );
 
   // Use cases — Articles
   getIt.registerLazySingleton(

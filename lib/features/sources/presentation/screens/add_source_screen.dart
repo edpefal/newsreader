@@ -1,5 +1,7 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
@@ -100,6 +102,12 @@ class _AddSourceViewState extends State<AddSourceView> {
                   );
                 },
               ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => _importOpml(context),
+                icon: const Icon(Icons.upload_file_outlined),
+                label: const Text('Importar desde OPML'),
+              ),
             ],
           ),
         ),
@@ -109,5 +117,24 @@ class _AddSourceViewState extends State<AddSourceView> {
 
   void _submit(BuildContext context) {
     context.read<AddSourceCubit>().addSource(_controller.text);
+  }
+
+  Future<void> _importOpml(BuildContext context) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['opml', 'xml'],
+      withData: true,
+    );
+
+    if (result == null || result.files.isEmpty) return;
+
+    final bytes = result.files.first.bytes;
+    if (bytes == null) return;
+
+    final xmlContent = String.fromCharCodes(bytes);
+
+    if (context.mounted) {
+      context.push('/sources/import-opml', extra: xmlContent);
+    }
   }
 }
