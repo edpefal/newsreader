@@ -19,7 +19,7 @@ void main() {
       title: 'Artículo archivado',
       publishedAt: DateTime(2024, 1, 15),
       articleUrl: 'https://example.com/1',
-      isArchived: true,
+      isRead: true,
     ),
   ];
 

@@ -11,6 +11,5 @@ abstract class ArticleLocalDataSource {
   Future<void> deleteArticle(String id);
   Future<void> deleteArticlesBySource(String sourceId, {bool keepFavorites = true});
   Future<bool> articleExists(String articleUrl);
-  Future<List<ArticleModel>> getReadArticlesOlderThan(DateTime date);
-  Future<List<ArticleModel>> getUnreadNonArchivedArticlesOlderThan(DateTime date);
+  Future<List<ArticleModel>> getArchivedArticles();
 }

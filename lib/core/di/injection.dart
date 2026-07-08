@@ -29,7 +29,7 @@ import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.d
 import 'package:newsreader/features/inbox/domain/usecases/sync_sources.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
-import 'package:newsreader/features/maintenance/domain/usecases/run_maintenance.dart';
+import 'package:newsreader/features/maintenance/domain/usecases/migrate_archived_articles.dart';
 import 'package:newsreader/core/opml/opml_parser.dart';
 import 'package:newsreader/core/opml/xml_opml_parser.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
@@ -93,7 +93,7 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton(() => GetArchive(getIt()));
 
   // Use cases — Maintenance
-  getIt.registerLazySingleton(() => RunMaintenance(getIt()));
+  getIt.registerLazySingleton(() => MigrateArchivedArticles(getIt()));
 
   // Presentation
   getIt.registerSingleton<ThemeCubit>(

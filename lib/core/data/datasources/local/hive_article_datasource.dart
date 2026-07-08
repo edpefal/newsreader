@@ -10,9 +10,7 @@ class HiveArticleDatasource implements ArticleLocalDataSource {
 
   @override
   Future<List<ArticleModel>> getInboxArticles() async {
-    final articles = _box.values
-        .where((a) => !a.isRead && !a.isArchived)
-        .toList()
+    final articles = _box.values.where((a) => !a.isRead).toList()
       ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
     return articles;
   }
@@ -30,10 +28,12 @@ class HiveArticleDatasource implements ArticleLocalDataSource {
 
   @override
   Future<List<ArticleModel>> getArchive() async {
-    final articles = _box.values
-        .where((a) => a.isArchived && !a.isRead)
-        .toList()
-      ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+    final articles = _box.values.where((a) => a.isRead).toList()
+      ..sort((a, b) {
+        final aDate = a.readAt ?? a.publishedAt;
+        final bDate = b.readAt ?? b.publishedAt;
+        return bDate.compareTo(aDate);
+      });
     return articles;
   }
 
@@ -75,18 +75,6 @@ class HiveArticleDatasource implements ArticleLocalDataSource {
       _box.values.any((a) => a.articleUrl == articleUrl);
 
   @override
-  Future<List<ArticleModel>> getReadArticlesOlderThan(DateTime date) async =>
-      _box.values
-          .where((a) => a.isRead && !a.isFavorite && a.publishedAt.isBefore(date))
-          .toList();
-
-  @override
-  Future<List<ArticleModel>> getUnreadNonArchivedArticlesOlderThan(
-    DateTime date,
-  ) async =>
-      _box.values
-          .where(
-            (a) => !a.isRead && !a.isArchived && a.publishedAt.isBefore(date),
-          )
-          .toList();
+  Future<List<ArticleModel>> getArchivedArticles() async =>
+      _box.values.where((a) => a.isArchived).toList();
 }

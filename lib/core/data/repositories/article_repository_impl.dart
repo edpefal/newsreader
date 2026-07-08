@@ -64,17 +64,8 @@ class ArticleRepositoryImpl implements ArticleRepository {
       _localDataSource.articleExists(articleUrl);
 
   @override
-  Future<List<Article>> getReadArticlesOlderThan(DateTime date) async {
-    final models = await _localDataSource.getReadArticlesOlderThan(date);
-    return models.map((m) => m.toEntity()).toList();
-  }
-
-  @override
-  Future<List<Article>> getUnreadNonArchivedArticlesOlderThan(
-    DateTime date,
-  ) async {
-    final models =
-        await _localDataSource.getUnreadNonArchivedArticlesOlderThan(date);
+  Future<List<Article>> getArchivedArticles() async {
+    final models = await _localDataSource.getArchivedArticles();
     return models.map((m) => m.toEntity()).toList();
   }
 }

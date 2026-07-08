@@ -42,7 +42,7 @@ void main() {
       title: 'Artículo archivado uno',
       publishedAt: DateTime(2024, 1, 15),
       articleUrl: 'https://example.com/1',
-      isArchived: true,
+      isRead: true,
     ),
     Article(
       id: 'a2',
@@ -51,7 +51,7 @@ void main() {
       title: 'Artículo archivado dos',
       publishedAt: DateTime(2024, 1, 14),
       articleUrl: 'https://example.com/2',
-      isArchived: true,
+      isRead: true,
     ),
   ];
 
@@ -119,7 +119,7 @@ void main() {
           title: 'Archivado de hoy',
           publishedAt: DateTime(now.year, now.month, now.day, 10),
           articleUrl: 'https://example.com/hoy',
-          isArchived: true,
+          isRead: true,
         ),
         Article(
           id: 'ayer',
@@ -129,7 +129,7 @@ void main() {
           publishedAt:
               DateTime(yesterday.year, yesterday.month, yesterday.day, 10),
           articleUrl: 'https://example.com/ayer',
-          isArchived: true,
+          isRead: true,
         ),
       ];
 

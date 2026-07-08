@@ -11,6 +11,5 @@ abstract class ArticleRepository {
   Future<void> deleteArticle(String id);
   Future<void> deleteArticlesBySource(String sourceId, {bool keepFavorites = true});
   Future<bool> articleExists(String articleUrl);
-  Future<List<Article>> getReadArticlesOlderThan(DateTime date);
-  Future<List<Article>> getUnreadNonArchivedArticlesOlderThan(DateTime date);
+  Future<List<Article>> getArchivedArticles();
 }

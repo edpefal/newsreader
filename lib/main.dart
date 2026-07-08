@@ -8,7 +8,7 @@ import 'package:newsreader/core/data/models/news_source_model.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
-import 'package:newsreader/features/maintenance/domain/usecases/run_maintenance.dart';
+import 'package:newsreader/features/maintenance/domain/usecases/migrate_archived_articles.dart';
 import 'package:newsreader/presentation/app/app.dart';
 
 void main() async {
@@ -25,8 +25,8 @@ void main() async {
   // 2. Setup dependency injection
   await setupDependencies();
 
-  // 3. Run maintenance silently on startup
-  await getIt<RunMaintenance>().execute();
+  // 3. One-time migration: remove auto-archived articles from previous behavior
+  await getIt<MigrateArchivedArticles>().execute();
 
   // 4. Load data after maintenance so cleanup runs first
   getIt<InboxCubit>().loadArticles();
