@@ -59,35 +59,38 @@ void main() {
   });
 
   group('validateFeeds', () {
-    test('retorna valid para feed nuevo y accesible', () async {
+    test('llama onResult con valid para feed nuevo y accesible', () async {
       when(() => mockRepo.sourceExists(any())).thenAnswer((_) async => false);
       when(() => mockHttp.get(any())).thenAnswer((_) async => '<xml/>');
       when(() => mockFeedParser.parse(any())).thenReturn(_tFeedData);
 
-      final result = await sut.validateFeeds(['https://a.com/feed']);
+      final results = <OpmlFeedValidation>[];
+      await sut.validateFeeds(['https://a.com/feed'], onResult: results.add);
 
-      expect(result.first.status, OpmlFeedValidationStatus.valid);
-      expect(result.first.name, 'Feed A');
+      expect(results.first.status, OpmlFeedValidationStatus.valid);
+      expect(results.first.name, 'Feed A');
     });
 
-    test('retorna duplicate para URL ya existente', () async {
+    test('llama onResult con duplicate para URL ya existente', () async {
       when(() => mockRepo.sourceExists('https://a.com/feed'))
           .thenAnswer((_) async => true);
 
-      final result = await sut.validateFeeds(['https://a.com/feed']);
+      final results = <OpmlFeedValidation>[];
+      await sut.validateFeeds(['https://a.com/feed'], onResult: results.add);
 
-      expect(result.first.status, OpmlFeedValidationStatus.duplicate);
+      expect(results.first.status, OpmlFeedValidationStatus.duplicate);
     });
 
-    test('retorna error cuando el HTTP falla', () async {
+    test('llama onResult con error cuando el HTTP falla', () async {
       when(() => mockRepo.sourceExists(any())).thenAnswer((_) async => false);
       when(() => mockHttp.get(any()))
           .thenThrow(const NetworkException('Sin conexión'));
 
-      final result = await sut.validateFeeds(['https://a.com/feed']);
+      final results = <OpmlFeedValidation>[];
+      await sut.validateFeeds(['https://a.com/feed'], onResult: results.add);
 
-      expect(result.first.status, OpmlFeedValidationStatus.error);
-      expect(result.first.errorMessage, 'Sin conexión');
+      expect(results.first.status, OpmlFeedValidationStatus.error);
+      expect(results.first.errorMessage, 'Sin conexión');
     });
 
     test('clasifica correctamente una combinación de feeds mixtos', () async {
@@ -103,15 +106,24 @@ void main() {
       when(() => mockHttp.get('https://c.com/feed'))
           .thenThrow(const TimeoutException());
 
-      final results = await sut.validateFeeds([
-        'https://a.com/feed',
-        'https://b.com/feed',
-        'https://c.com/feed',
-      ]);
+      final results = <OpmlFeedValidation>[];
+      await sut.validateFeeds(
+        ['https://a.com/feed', 'https://b.com/feed', 'https://c.com/feed'],
+        onResult: results.add,
+      );
 
-      expect(results[0].status, OpmlFeedValidationStatus.valid);
-      expect(results[1].status, OpmlFeedValidationStatus.duplicate);
-      expect(results[2].status, OpmlFeedValidationStatus.error);
+      expect(
+        results.firstWhere((r) => r.url == 'https://a.com/feed').status,
+        OpmlFeedValidationStatus.valid,
+      );
+      expect(
+        results.firstWhere((r) => r.url == 'https://b.com/feed').status,
+        OpmlFeedValidationStatus.duplicate,
+      );
+      expect(
+        results.firstWhere((r) => r.url == 'https://c.com/feed').status,
+        OpmlFeedValidationStatus.error,
+      );
     });
   });
 

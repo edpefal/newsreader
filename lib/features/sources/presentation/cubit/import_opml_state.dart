@@ -51,8 +51,11 @@ final class ImportOpmlValidating extends ImportOpmlState {
 
 final class ImportOpmlPreview extends ImportOpmlState {
   final List<OpmlFeedItem> feeds;
+  final int pendingCount;
 
-  const ImportOpmlPreview(this.feeds);
+  const ImportOpmlPreview(this.feeds, {this.pendingCount = 0});
+
+  bool get isValidating => pendingCount > 0;
 
   List<OpmlFeedItem> get selectedFeeds =>
       feeds.where((f) => f.status == OpmlFeedStatus.valid && f.selected).toList();
@@ -60,7 +63,7 @@ final class ImportOpmlPreview extends ImportOpmlState {
   bool get hasSelection => selectedFeeds.isNotEmpty;
 
   @override
-  List<Object?> get props => [feeds];
+  List<Object?> get props => [feeds, pendingCount];
 }
 
 final class ImportOpmlImporting extends ImportOpmlState {

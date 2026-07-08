@@ -53,15 +53,18 @@ class ImportOpml {
 
   List<String> parseUrls(String xmlContent) => _opmlParser.parse(xmlContent);
 
-  Future<List<OpmlFeedValidation>> validateFeeds(List<String> urls) async {
-    const batchSize = 5;
-    final results = <OpmlFeedValidation>[];
+  Future<void> validateFeeds(
+    List<String> urls, {
+    required void Function(OpmlFeedValidation) onResult,
+    int batchSize = 5,
+  }) async {
     for (var i = 0; i < urls.length; i += batchSize) {
       final batch = urls.skip(i).take(batchSize).toList();
-      final batchResults = await Future.wait(batch.map(_validateSingle));
-      results.addAll(batchResults);
+      await Future.wait(batch.map((url) async {
+        final result = await _validateSingle(url);
+        onResult(result);
+      }));
     }
-    return results;
   }
 
   Future<OpmlFeedValidation> _validateSingle(String url) async {

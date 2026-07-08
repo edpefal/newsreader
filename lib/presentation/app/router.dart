@@ -18,6 +18,7 @@ import 'package:newsreader/features/reader/presentation/screens/reader_screen.da
 import 'package:newsreader/features/sources/domain/usecases/get_source_articles.dart';
 import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 import 'package:newsreader/features/sources/presentation/cubit/import_opml_cubit.dart';
+import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/features/sources/presentation/screens/add_source_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/import_opml_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/source_detail_screen.dart';
@@ -127,6 +128,7 @@ class _ScaffoldWithNavBar extends StatelessWidget {
         onDestinationSelected: (index) {
           if (index == 1) context.read<FavoritesCubit>().loadFavorites();
           if (index == 2) context.read<ArchiveCubit>().loadArchive();
+          if (index == 3) context.read<SourcesCubit>().loadSources();
           navigationShell.goBranch(
             index,
             initialLocation: index == navigationShell.currentIndex,

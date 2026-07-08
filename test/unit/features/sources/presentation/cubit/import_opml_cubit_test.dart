@@ -27,28 +27,66 @@ void main() {
 
   group('loadPreview', () {
     blocTest<ImportOpmlCubit, ImportOpmlState>(
-      'emite Validating → Preview con feeds cuando todo va bien',
+      'emite Validating → Preview intermedio → Preview final con pendingCount 0',
       build: buildCubit,
       setUp: () {
         when(() => mockImportOpml.parseUrls(any()))
             .thenReturn(['https://a.com/feed']);
-        when(() => mockImportOpml.validateFeeds(any()))
-            .thenAnswer((_) async => [
-                  OpmlFeedValidation(
-                    url: 'https://a.com/feed',
-                    name: 'Feed A',
-                    status: OpmlFeedValidationStatus.valid,
-                  ),
-                ]);
+        when(() => mockImportOpml.validateFeeds(
+              any(),
+              onResult: any(named: 'onResult'),
+            )).thenAnswer((invocation) async {
+          final onResult = invocation.namedArguments[const Symbol('onResult')]
+              as void Function(OpmlFeedValidation);
+          onResult(OpmlFeedValidation(
+            url: 'https://a.com/feed',
+            name: 'Feed A',
+            status: OpmlFeedValidationStatus.valid,
+          ));
+        });
       },
       act: (cubit) => cubit.loadPreview('<opml/>'),
       expect: () => [
         const ImportOpmlValidating(),
-        isA<ImportOpmlPreview>().having(
-          (s) => s.feeds.length,
-          'feeds count',
-          1,
-        ),
+        isA<ImportOpmlPreview>()
+            .having((s) => s.feeds.length, 'feeds count', 1)
+            .having((s) => s.pendingCount, 'pendingCount', 0),
+      ],
+    );
+
+    blocTest<ImportOpmlCubit, ImportOpmlState>(
+      'emite estados intermedios con pendingCount decreciente',
+      build: buildCubit,
+      setUp: () {
+        when(() => mockImportOpml.parseUrls(any()))
+            .thenReturn(['https://a.com/feed', 'https://b.com/feed']);
+        when(() => mockImportOpml.validateFeeds(
+              any(),
+              onResult: any(named: 'onResult'),
+            )).thenAnswer((invocation) async {
+          final onResult = invocation.namedArguments[const Symbol('onResult')]
+              as void Function(OpmlFeedValidation);
+          onResult(OpmlFeedValidation(
+            url: 'https://a.com/feed',
+            name: 'Feed A',
+            status: OpmlFeedValidationStatus.valid,
+          ));
+          onResult(OpmlFeedValidation(
+            url: 'https://b.com/feed',
+            name: 'Feed B',
+            status: OpmlFeedValidationStatus.duplicate,
+          ));
+        });
+      },
+      act: (cubit) => cubit.loadPreview('<opml/>'),
+      expect: () => [
+        const ImportOpmlValidating(),
+        isA<ImportOpmlPreview>()
+            .having((s) => s.feeds.length, 'feeds count', 1)
+            .having((s) => s.pendingCount, 'pendingCount', 1),
+        isA<ImportOpmlPreview>()
+            .having((s) => s.feeds.length, 'feeds count', 2)
+            .having((s) => s.pendingCount, 'pendingCount', 0),
       ],
     );
 
@@ -85,25 +123,31 @@ void main() {
       setUp: () {
         when(() => mockImportOpml.parseUrls(any()))
             .thenReturn(['https://a.com/feed', 'https://b.com/feed']);
-        when(() => mockImportOpml.validateFeeds(any()))
-            .thenAnswer((_) async => [
-                  OpmlFeedValidation(
-                    url: 'https://a.com/feed',
-                    name: 'Feed A',
-                    status: OpmlFeedValidationStatus.valid,
-                  ),
-                  OpmlFeedValidation(
-                    url: 'https://b.com/feed',
-                    name: 'Feed B',
-                    status: OpmlFeedValidationStatus.duplicate,
-                  ),
-                ]);
+        when(() => mockImportOpml.validateFeeds(
+              any(),
+              onResult: any(named: 'onResult'),
+            )).thenAnswer((invocation) async {
+          final onResult = invocation.namedArguments[const Symbol('onResult')]
+              as void Function(OpmlFeedValidation);
+          onResult(OpmlFeedValidation(
+            url: 'https://a.com/feed',
+            name: 'Feed A',
+            status: OpmlFeedValidationStatus.valid,
+          ));
+          onResult(OpmlFeedValidation(
+            url: 'https://b.com/feed',
+            name: 'Feed B',
+            status: OpmlFeedValidationStatus.duplicate,
+          ));
+        });
       },
       act: (cubit) => cubit.loadPreview('<opml/>'),
       verify: (cubit) {
         final state = cubit.state as ImportOpmlPreview;
-        expect(state.feeds[0].selected, isTrue);
-        expect(state.feeds[1].selected, isFalse);
+        final feedA = state.feeds.firstWhere((f) => f.url == 'https://a.com/feed');
+        final feedB = state.feeds.firstWhere((f) => f.url == 'https://b.com/feed');
+        expect(feedA.selected, isTrue);
+        expect(feedB.selected, isFalse);
       },
     );
   });

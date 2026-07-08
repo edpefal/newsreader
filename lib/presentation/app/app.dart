@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
+import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/presentation/app/router.dart';
 import 'package:newsreader/presentation/theme/app_theme.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
@@ -13,6 +14,7 @@ class App extends StatelessWidget {
   final InboxCubit inboxCubit;
   final FavoritesCubit favoritesCubit;
   final ArchiveCubit archiveCubit;
+  final SourcesCubit sourcesCubit;
 
   const App({
     super.key,
@@ -20,6 +22,7 @@ class App extends StatelessWidget {
     required this.inboxCubit,
     required this.favoritesCubit,
     required this.archiveCubit,
+    required this.sourcesCubit,
   });
 
   @override
@@ -30,6 +33,7 @@ class App extends StatelessWidget {
         BlocProvider.value(value: inboxCubit),
         BlocProvider.value(value: favoritesCubit),
         BlocProvider.value(value: archiveCubit),
+        BlocProvider.value(value: sourcesCubit),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (context, themeMode) {

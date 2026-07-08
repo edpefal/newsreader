@@ -22,20 +22,21 @@ class ImportOpmlCubit extends Cubit<ImportOpmlState> {
         return;
       }
 
-      final validations = await _importOpml.validateFeeds(urls);
+      final items = <OpmlFeedItem>[];
+      var pending = urls.length;
 
-      final items = validations.map((v) {
-        return OpmlFeedItem(
+      await _importOpml.validateFeeds(urls, onResult: (v) {
+        items.add(OpmlFeedItem(
           url: v.url,
           name: v.name,
           iconUrl: v.iconUrl,
           status: _toItemStatus(v.status),
           errorMessage: v.errorMessage,
           selected: v.status == OpmlFeedValidationStatus.valid,
-        );
-      }).toList();
-
-      emit(ImportOpmlPreview(items));
+        ));
+        pending--;
+        emit(ImportOpmlPreview(List.unmodifiable(items), pendingCount: pending));
+      });
     } on ParseException catch (e) {
       emit(ImportOpmlError(e.message));
     } catch (_) {

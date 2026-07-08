@@ -4,16 +4,24 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:newsreader/features/inbox/domain/usecases/sync_sources.dart';
+import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/presentation/cubit/import_opml_cubit.dart';
 import 'package:newsreader/features/sources/presentation/screens/import_opml_screen.dart';
 
 class MockImportOpmlCubit extends MockCubit<ImportOpmlState>
     implements ImportOpmlCubit {}
 
-Widget _buildSubject(ImportOpmlCubit cubit) {
+class MockInboxCubit extends MockCubit<InboxState> implements InboxCubit {}
+
+Widget _buildSubject(ImportOpmlCubit cubit, {InboxCubit? inboxCubit}) {
   return MaterialApp(
-    home: BlocProvider<ImportOpmlCubit>.value(
-      value: cubit,
+    home: MultiBlocProvider(
+      providers: [
+        BlocProvider<ImportOpmlCubit>.value(value: cubit),
+        if (inboxCubit != null)
+          BlocProvider<InboxCubit>.value(value: inboxCubit),
+      ],
       child: const ImportOpmlScreen(xmlContent: '<opml/>'),
     ),
   );
@@ -21,17 +29,23 @@ Widget _buildSubject(ImportOpmlCubit cubit) {
 
 void main() {
   late MockImportOpmlCubit cubit;
+  late MockInboxCubit inboxCubit;
 
   setUp(() {
     cubit = MockImportOpmlCubit();
+    inboxCubit = MockInboxCubit();
     when(() => cubit.loadPreview(any())).thenAnswer((_) async {});
+    when(() => inboxCubit.syncAndReload()).thenAnswer(
+      (_) async => const SyncResult(synced: 0, failedSourceIds: []),
+    );
+    when(() => inboxCubit.state).thenReturn(const InboxLoading());
   });
 
   group('ImportOpmlScreen', () {
     testWidgets('muestra spinner en estado Validating', (tester) async {
       when(() => cubit.state).thenReturn(const ImportOpmlValidating());
 
-      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.pumpWidget(_buildSubject(cubit, inboxCubit: inboxCubit));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.text('Validando feeds…'), findsOneWidget);
@@ -49,7 +63,7 @@ void main() {
         ]),
       );
 
-      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.pumpWidget(_buildSubject(cubit, inboxCubit: inboxCubit));
 
       expect(find.byType(CheckboxListTile), findsOneWidget);
       expect(find.text('Feed A'), findsOneWidget);
@@ -68,7 +82,7 @@ void main() {
         ]),
       );
 
-      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.pumpWidget(_buildSubject(cubit, inboxCubit: inboxCubit));
 
       expect(find.text('Ya suscrito'), findsOneWidget);
       expect(find.byType(CheckboxListTile), findsNothing);
@@ -86,7 +100,7 @@ void main() {
         ]),
       );
 
-      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.pumpWidget(_buildSubject(cubit, inboxCubit: inboxCubit));
 
       final button = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(button.onPressed, isNotNull);
@@ -105,7 +119,7 @@ void main() {
         ]),
       );
 
-      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.pumpWidget(_buildSubject(cubit, inboxCubit: inboxCubit));
 
       final button = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(button.onPressed, isNull);
@@ -117,9 +131,26 @@ void main() {
         const ImportOpmlError('El archivo no es un OPML válido'),
       );
 
-      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.pumpWidget(_buildSubject(cubit, inboxCubit: inboxCubit));
 
       expect(find.text('El archivo no es un OPML válido'), findsOneWidget);
+    });
+
+    testWidgets('llama syncAndReload en InboxCubit al completar importación',
+        (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable([
+          const ImportOpmlImporting(),
+          const ImportOpmlDone(importedCount: 2, failedCount: 0),
+        ]),
+        initialState: const ImportOpmlImporting(),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit, inboxCubit: inboxCubit));
+      await tester.pump();
+
+      verify(() => inboxCubit.syncAndReload()).called(1);
     });
   });
 }

@@ -9,6 +9,7 @@ import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dar
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/maintenance/domain/usecases/migrate_archived_articles.dart';
+import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/presentation/app/app.dart';
 
 void main() async {
@@ -32,11 +33,13 @@ void main() async {
   getIt<InboxCubit>().loadArticles();
   getIt<FavoritesCubit>().loadFavorites();
   getIt<ArchiveCubit>().loadArchive();
+  getIt<SourcesCubit>().loadSources();
 
   runApp(App(
     themeCubit: getIt(),
     inboxCubit: getIt(),
     favoritesCubit: getIt(),
     archiveCubit: getIt(),
+    sourcesCubit: getIt(),
   ));
 }

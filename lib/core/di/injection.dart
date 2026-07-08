@@ -38,6 +38,7 @@ import 'package:newsreader/features/sources/domain/usecases/get_source_articles.
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
 import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
+import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
 
 final getIt = GetIt.instance;
@@ -102,4 +103,7 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<InboxCubit>(InboxCubit(getIt(), getIt(), getIt()));
   getIt.registerSingleton<FavoritesCubit>(FavoritesCubit(getIt()));
   getIt.registerSingleton<ArchiveCubit>(ArchiveCubit(getIt()));
+  getIt.registerSingleton<SourcesCubit>(
+    SourcesCubit(getIt(), getIt(), getIt()),
+  );
 }

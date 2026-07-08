@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/widgets/source_icon.dart';
+import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/presentation/cubit/import_opml_cubit.dart';
 
 class ImportOpmlScreen extends StatefulWidget {
@@ -31,6 +32,7 @@ class _ImportOpmlScreenState extends State<ImportOpmlScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(message)),
           );
+          context.read<InboxCubit>().syncAndReload();
           Navigator.of(context).pop(true);
         }
       },
@@ -128,10 +130,30 @@ class _PreviewView extends StatelessWidget {
 
     return Column(
       children: [
+        if (state.isValidating)
+          LinearProgressIndicator(
+            backgroundColor:
+                Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
         Expanded(
           child: ListView.builder(
-            itemCount: state.feeds.length,
+            itemCount: state.feeds.length +
+                (state.isValidating ? 1 : 0),
             itemBuilder: (context, index) {
+              if (index == state.feeds.length) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
+                  child: Text(
+                    'Validando ${state.pendingCount} feed${state.pendingCount == 1 ? '' : 's'} más…',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant,
+                        ),
+                  ),
+                );
+              }
               final item = state.feeds[index];
               return switch (item.status) {
                 OpmlFeedStatus.valid => _ValidFeedTile(item: item),

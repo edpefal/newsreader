@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
-import 'package:newsreader/features/sources/domain/usecases/delete_source.dart';
-import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
-import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/features/sources/presentation/widgets/delete_source_dialog.dart';
 import 'package:newsreader/features/sources/presentation/widgets/edit_source_name_dialog.dart';
@@ -16,16 +12,7 @@ class SourcesScreen extends StatelessWidget {
   const SourcesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => SourcesCubit(
-            getIt<GetSources>(),
-            getIt<UpdateSourceName>(),
-            getIt<DeleteSource>(),
-          )..loadSources(),
-      child: const SourcesView(),
-    );
-  }
+  Widget build(BuildContext context) => const SourcesView();
 }
 
 class SourcesView extends StatelessWidget {
