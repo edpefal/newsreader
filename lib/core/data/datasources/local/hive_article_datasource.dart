@@ -29,11 +29,7 @@ class HiveArticleDatasource implements ArticleLocalDataSource {
   @override
   Future<List<ArticleModel>> getArchive() async {
     final articles = _box.values.where((a) => a.isRead).toList()
-      ..sort((a, b) {
-        final aDate = a.readAt ?? a.publishedAt;
-        final bDate = b.readAt ?? b.publishedAt;
-        return bDate.compareTo(aDate);
-      });
+      ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
     return articles;
   }
 

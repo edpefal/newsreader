@@ -131,17 +131,23 @@ class _InboxViewState extends State<InboxView> {
                   return DateSeparator(day: item.day);
                 }
                 final article = (item as _ArticleListItem).article;
-                return ArticleInboxTile(
-                  article: article,
-                  onTap: () async {
-                    await context.push(
-                      '/article/${article.id}',
-                      extra: article,
-                    );
-                    if (context.mounted) {
-                      context.read<InboxCubit>().loadArticlesAfterReading(article.id);
-                    }
-                  },
+                return Dismissible(
+                  key: ValueKey(article.id),
+                  direction: DismissDirection.endToStart,
+                  background: const _SwipeReadBackground(),
+                  onDismissed: (_) => _onSwipeDismiss(context, article),
+                  child: ArticleInboxTile(
+                    article: article,
+                    onTap: () async {
+                      await context.push(
+                        '/article/${article.id}',
+                        extra: article,
+                      );
+                      if (context.mounted) {
+                        context.read<InboxCubit>().loadArticlesAfterReading(article.id);
+                      }
+                    },
+                  ),
                 );
               },
             ),
@@ -149,6 +155,48 @@ class _InboxViewState extends State<InboxView> {
         },
       ),
     );
+  }
+
+  void _onSwipeDismiss(BuildContext context, Article article) {
+    final articleIdx = _flatItems.indexWhere(
+      (item) => item is _ArticleListItem && item.article.id == article.id,
+    );
+    if (articleIdx == -1) return;
+
+    int? headerIdx;
+    if (articleIdx > 0 && _flatItems[articleIdx - 1] is _DateHeaderItem) {
+      final nextIsArticleInSameGroup = articleIdx + 1 < _flatItems.length &&
+          _flatItems[articleIdx + 1] is _ArticleListItem;
+      if (!nextIsArticleInSameGroup) {
+        headerIdx = articleIdx - 1;
+      }
+    }
+
+    _flatItems.removeAt(articleIdx);
+    if (headerIdx != null) _flatItems.removeAt(headerIdx);
+
+    // Dismissible ya animó la salida horizontal; solo sincronizamos el conteo
+    // del AnimatedList sin animación visible.
+    _listKey.currentState?.removeItem(
+      articleIdx,
+      (_, __) => const SizedBox.shrink(),
+      duration: Duration.zero,
+    );
+    if (headerIdx != null) {
+      _listKey.currentState?.removeItem(
+        headerIdx,
+        (_, __) => const SizedBox.shrink(),
+        duration: Duration.zero,
+      );
+    }
+
+    if (_flatItems.isEmpty) {
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted) setState(() {});
+      });
+    }
+
+    context.read<InboxCubit>().markAsRead(article.id);
   }
 
   void _animateDismiss(String articleId) {
@@ -283,6 +331,24 @@ class _OnboardingState extends StatelessWidget {
               label: const Text('Agregar tu primer newsletter'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SwipeReadBackground extends StatelessWidget {
+  const _SwipeReadBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Colors.teal,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Padding(
+          padding: EdgeInsets.only(right: 20),
+          child: Icon(Icons.check, color: Colors.white),
         ),
       ),
     );

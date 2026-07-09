@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/features/inbox/domain/usecases/get_inbox_articles.dart';
+import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/inbox/domain/usecases/sync_sources.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
@@ -15,10 +16,13 @@ class MockGetSources extends Mock implements GetSources {}
 
 class MockSyncSources extends Mock implements SyncSources {}
 
+class MockMarkArticleAsRead extends Mock implements MarkArticleAsRead {}
+
 void main() {
   late MockGetInboxArticles mockGetInboxArticles;
   late MockGetSources mockGetSources;
   late MockSyncSources mockSyncSources;
+  late MockMarkArticleAsRead mockMarkArticleAsRead;
 
   final tArticles = [
     Article(
@@ -40,13 +44,18 @@ void main() {
     ),
   ];
 
-  InboxCubit buildCubit() =>
-      InboxCubit(mockGetInboxArticles, mockGetSources, mockSyncSources);
+  InboxCubit buildCubit() => InboxCubit(
+        mockGetInboxArticles,
+        mockGetSources,
+        mockSyncSources,
+        mockMarkArticleAsRead,
+      );
 
   setUp(() {
     mockGetInboxArticles = MockGetInboxArticles();
     mockGetSources = MockGetSources();
     mockSyncSources = MockSyncSources();
+    mockMarkArticleAsRead = MockMarkArticleAsRead();
   });
 
   group('InboxCubit', () {
@@ -168,6 +177,25 @@ void main() {
       expect: () => [
         InboxLoaded([tArticles[0]], hasSources: true, readArticleId: '2'),
       ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'markAsRead() marca el artículo y emite InboxLoaded con readArticleId',
+      build: () {
+        when(() => mockMarkArticleAsRead.execute(any()))
+            .thenAnswer((_) async {});
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => []);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () => InboxLoaded(tArticles, hasSources: true),
+      act: (cubit) => cubit.markAsRead('1'),
+      expect: () => [
+        const InboxLoaded([], hasSources: true, readArticleId: '1'),
+      ],
+      verify: (_) => verify(() => mockMarkArticleAsRead.execute('1')).called(1),
     );
   });
 }
