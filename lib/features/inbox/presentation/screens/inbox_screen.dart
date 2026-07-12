@@ -82,7 +82,6 @@ class _InboxViewState extends State<InboxView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Inbox')),
       body: BlocConsumer<InboxCubit, InboxState>(
         listenWhen: (_, curr) => curr is InboxLoaded,
         listener: (context, state) {

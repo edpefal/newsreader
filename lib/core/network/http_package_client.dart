@@ -28,4 +28,26 @@ class HttpPackageClient implements HttpClient {
       throw const TimeoutException();
     }
   }
+
+  @override
+  Future<String> post(
+    String url, {
+    required String body,
+    Map<String, String>? headers,
+    Duration? timeout,
+  }) async {
+    final effectiveTimeout = timeout ?? AppConstants.feedFetchTimeout;
+    try {
+      final response = await _client
+          .post(Uri.parse(url), headers: headers, body: body)
+          .timeout(effectiveTimeout);
+      return response.body;
+    } on SocketException {
+      throw const NetworkException();
+    } on http.ClientException {
+      throw const NetworkException();
+    } on dart_async.TimeoutException {
+      throw const TimeoutException();
+    }
+  }
 }

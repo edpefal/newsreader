@@ -23,6 +23,10 @@ import 'package:newsreader/features/sources/presentation/screens/add_source_scre
 import 'package:newsreader/features/sources/presentation/screens/import_opml_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/source_detail_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
+import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
+import 'package:newsreader/features/summaries/presentation/screens/summaries_screen.dart';
+import 'package:newsreader/features/summaries/presentation/screens/summary_detail_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -109,6 +113,23 @@ final appRouter = GoRouter(
             ),
           ],
         ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/summaries',
+              builder: (context, state) => const SummariesScreen(),
+              routes: [
+                GoRoute(
+                  path: ':date',
+                  builder: (context, state) {
+                    final summary = state.extra as DailySummary;
+                    return SummaryDetailScreen(summary: summary);
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ],
     ),
   ],
@@ -119,27 +140,39 @@ class _ScaffoldWithNavBar extends StatelessWidget {
 
   const _ScaffoldWithNavBar({required this.navigationShell});
 
+  static const _titles = ['Inbox', 'Favoritos', 'Leídos', 'Fuentes', 'Resúmenes'];
+
+  void _onDestinationSelected(BuildContext context, int index) {
+    if (index == 1) context.read<FavoritesCubit>().loadFavorites();
+    if (index == 2) context.read<ArchiveCubit>().loadArchive();
+    if (index == 3) context.read<SourcesCubit>().loadSources();
+    if (index == 4) context.read<SummariesCubit>().loadSummaries();
+    Navigator.pop(context);
+    navigationShell.goBranch(
+      index,
+      initialLocation: index == navigationShell.currentIndex,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: Text(_titles[navigationShell.currentIndex])),
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
+      drawer: NavigationDrawer(
         selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) {
-          if (index == 1) context.read<FavoritesCubit>().loadFavorites();
-          if (index == 2) context.read<ArchiveCubit>().loadArchive();
-          if (index == 3) context.read<SourcesCubit>().loadSources();
-          navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
-          );
-        },
-        destinations: [
-          NavigationDestination(
+        onDestinationSelected: (index) => _onDestinationSelected(context, index),
+        children: [
+          const DrawerHeader(
+            child: Text(
+              'Newsletter Hub',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+          NavigationDrawerDestination(
             icon: BlocBuilder<InboxCubit, InboxState>(
               builder: (context, state) {
-                final count =
-                    state is InboxLoaded ? state.articles.length : 0;
+                final count = state is InboxLoaded ? state.articles.length : 0;
                 if (count == 0) return const Icon(Icons.inbox_outlined);
                 return Badge(
                   label: Text('$count'),
@@ -149,8 +182,7 @@ class _ScaffoldWithNavBar extends StatelessWidget {
             ),
             selectedIcon: BlocBuilder<InboxCubit, InboxState>(
               builder: (context, state) {
-                final count =
-                    state is InboxLoaded ? state.articles.length : 0;
+                final count = state is InboxLoaded ? state.articles.length : 0;
                 if (count == 0) return const Icon(Icons.inbox);
                 return Badge(
                   label: Text('$count'),
@@ -158,22 +190,27 @@ class _ScaffoldWithNavBar extends StatelessWidget {
                 );
               },
             ),
-            label: 'Inbox',
+            label: const Text('Inbox'),
           ),
-          const NavigationDestination(
+          const NavigationDrawerDestination(
             icon: Icon(Icons.star_outline),
             selectedIcon: Icon(Icons.star),
-            label: 'Favoritos',
+            label: Text('Favoritos'),
           ),
-          const NavigationDestination(
+          const NavigationDrawerDestination(
             icon: Icon(Icons.archive_outlined),
             selectedIcon: Icon(Icons.archive),
-            label: 'Leídos',
+            label: Text('Leídos'),
           ),
-          const NavigationDestination(
+          const NavigationDrawerDestination(
             icon: Icon(Icons.rss_feed_outlined),
             selectedIcon: Icon(Icons.rss_feed),
-            label: 'Fuentes',
+            label: Text('Fuentes'),
+          ),
+          const NavigationDrawerDestination(
+            icon: Icon(Icons.auto_awesome_outlined),
+            selectedIcon: Icon(Icons.auto_awesome),
+            label: Text('Resúmenes'),
           ),
         ],
       ),

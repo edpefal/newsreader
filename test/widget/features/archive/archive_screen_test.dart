@@ -88,14 +88,6 @@ void main() {
       expect(find.text('Artículo archivado dos'), findsOneWidget);
     });
 
-    testWidgets('muestra el título del AppBar "Leídos"', (tester) async {
-      when(() => cubit.state).thenReturn(const ArchiveLoaded([]));
-
-      await tester.pumpWidget(_buildSubject(cubit));
-
-      expect(find.text('Leídos'), findsOneWidget);
-    });
-
     testWidgets('tap en artículo navega al reader', (tester) async {
       when(() => cubit.state).thenReturn(ArchiveLoaded(tArticles));
       when(() => cubit.loadArchive()).thenAnswer((_) async {});

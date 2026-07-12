@@ -88,14 +88,6 @@ void main() {
       expect(find.text('Artículo favorito dos'), findsOneWidget);
     });
 
-    testWidgets('muestra el título del AppBar "Favoritos"', (tester) async {
-      when(() => cubit.state).thenReturn(const FavoritesLoaded([]));
-
-      await tester.pumpWidget(_buildSubject(cubit));
-
-      expect(find.text('Favoritos'), findsOneWidget);
-    });
-
     testWidgets('tap en artículo navega al reader', (tester) async {
       when(() => cubit.state).thenReturn(FavoritesLoaded(tArticles));
       when(() => cubit.loadFavorites()).thenAnswer((_) async {});

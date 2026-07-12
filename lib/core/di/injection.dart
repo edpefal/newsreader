@@ -1,6 +1,8 @@
 import 'package:get_it/get_it.dart';
 import 'package:hive_ce/hive.dart';
 
+import 'package:newsreader/core/ai/gemini_summary_generator.dart';
+import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
 import 'package:newsreader/core/feed/webfeed_feed_parser.dart';
@@ -13,13 +15,18 @@ import 'package:newsreader/core/utils/uuid_id_generator.dart';
 import 'package:newsreader/core/data/datasources/local/article_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_article_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_source_datasource.dart';
+import 'package:newsreader/core/data/datasources/local/hive_summary_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/source_local_datasource.dart';
+import 'package:newsreader/core/data/datasources/local/summary_local_datasource.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
+import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
 import 'package:newsreader/core/data/repositories/article_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/source_repository_impl.dart';
+import 'package:newsreader/core/data/repositories/summary_repository_impl.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
+import 'package:newsreader/core/domain/repositories/summary_repository.dart';
 import 'package:newsreader/features/archive/domain/usecases/get_archive.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
 import 'package:newsreader/features/favorites/domain/usecases/get_favorites.dart';
@@ -39,6 +46,9 @@ import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
 import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
+import 'package:newsreader/features/summaries/domain/usecases/generate_daily_summary.dart';
+import 'package:newsreader/features/summaries/domain/usecases/get_daily_summaries.dart';
+import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
 
 final getIt = GetIt.instance;
@@ -50,6 +60,9 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton<IdGenerator>(() => const UuidIdGenerator());
   getIt.registerLazySingleton<AppNavigator>(() => const GoRouterNavigator());
   getIt.registerLazySingleton<OPMLParser>(() => const XmlOpmlParser());
+  getIt.registerLazySingleton<SummaryGenerator>(
+    () => GeminiSummaryGenerator(getIt()),
+  );
 
   // Data sources
   getIt.registerLazySingleton<SourceLocalDataSource>(
@@ -62,6 +75,11 @@ Future<void> setupDependencies() async {
       Hive.box<ArticleModel>(AppConstants.hiveArticlesBox),
     ),
   );
+  getIt.registerLazySingleton<SummaryLocalDataSource>(
+    () => HiveSummaryDatasource(
+      Hive.box<DailySummaryModel>(AppConstants.hiveSummariesBox),
+    ),
+  );
 
   // Repositories
   getIt.registerLazySingleton<SourceRepository>(
@@ -69,6 +87,9 @@ Future<void> setupDependencies() async {
   );
   getIt.registerLazySingleton<ArticleRepository>(
     () => ArticleRepositoryImpl(getIt()),
+  );
+  getIt.registerLazySingleton<SummaryRepository>(
+    () => SummaryRepositoryImpl(getIt()),
   );
 
   // Use cases — Sources
@@ -96,6 +117,12 @@ Future<void> setupDependencies() async {
   // Use cases — Maintenance
   getIt.registerLazySingleton(() => MigrateArchivedArticles(getIt()));
 
+  // Use cases — Summaries
+  getIt.registerLazySingleton(() => GetDailySummaries(getIt()));
+  getIt.registerLazySingleton(
+    () => GenerateDailySummary(getIt(), getIt(), getIt()),
+  );
+
   // Presentation
   getIt.registerSingleton<ThemeCubit>(
     ThemeCubit(Hive.box<dynamic>(AppConstants.hiveSettingsBox)),
@@ -105,5 +132,8 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<ArchiveCubit>(ArchiveCubit(getIt()));
   getIt.registerSingleton<SourcesCubit>(
     SourcesCubit(getIt(), getIt(), getIt()),
+  );
+  getIt.registerSingleton<SummariesCubit>(
+    SummariesCubit(getIt(), getIt()),
   );
 }

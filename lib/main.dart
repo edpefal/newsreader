@@ -4,12 +4,14 @@ import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
+import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/maintenance/domain/usecases/migrate_archived_articles.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
+import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/presentation/app/app.dart';
 
 void main() async {
@@ -19,9 +21,11 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(NewsSourceModelAdapter());
   Hive.registerAdapter(ArticleModelAdapter());
+  Hive.registerAdapter(DailySummaryModelAdapter());
   await Hive.openBox<NewsSourceModel>(AppConstants.hiveSourcesBox);
   await Hive.openBox<ArticleModel>(AppConstants.hiveArticlesBox);
   await Hive.openBox<dynamic>(AppConstants.hiveSettingsBox);
+  await Hive.openBox<DailySummaryModel>(AppConstants.hiveSummariesBox);
 
   // 2. Setup dependency injection
   await setupDependencies();
@@ -34,6 +38,7 @@ void main() async {
   getIt<FavoritesCubit>().loadFavorites();
   getIt<ArchiveCubit>().loadArchive();
   getIt<SourcesCubit>().loadSources();
+  getIt<SummariesCubit>().loadSummaries();
 
   runApp(App(
     themeCubit: getIt(),
@@ -41,5 +46,6 @@ void main() async {
     favoritesCubit: getIt(),
     archiveCubit: getIt(),
     sourcesCubit: getIt(),
+    summariesCubit: getIt(),
   ));
 }

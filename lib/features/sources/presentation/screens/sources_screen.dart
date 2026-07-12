@@ -21,7 +21,6 @@ class SourcesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Fuentes')),
       body: BlocBuilder<SourcesCubit, SourcesState>(
         builder: (context, state) {
           if (state is SourcesLoading) {

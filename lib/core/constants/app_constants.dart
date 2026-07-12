@@ -9,4 +9,5 @@ class AppConstants {
   static const String hiveSourcesBox = 'sources';
   static const String hiveArticlesBox = 'articles';
   static const String hiveSettingsBox = 'settings';
+  static const String hiveSummariesBox = 'summaries';
 }

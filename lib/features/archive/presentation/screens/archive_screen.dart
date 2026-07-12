@@ -38,7 +38,6 @@ class ArchiveView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Leídos')),
       body: BlocBuilder<ArchiveCubit, ArchiveState>(
         builder: (context, state) {
           if (state is ArchiveLoading) {
