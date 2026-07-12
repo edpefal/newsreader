@@ -2,7 +2,7 @@ name: newsreader
 description: Newsletter Hub — centralize your newsletters outside of email.
 publish_to: 'none'
 
-version: 1.2.0+3
+version: 1.3.0+4
 
 environment:
   sdk: ^3.8.1
@@ -54,6 +54,12 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # file_picker 8.3.7 declara mal su dependencia de Swift Package Manager
+  # (pide la rama "4.3.9" de DKImagePickerController, que no existe como
+  # rama, solo como tag), lo que rompe `flutter build ipa`. Se desactiva
+  # SPM para este proyecto y se usa CocoaPods, que ya funciona bien.
+  config:
+    enable-swift-package-manager: false
 
 flutter_launcher_icons:
   android: true
