@@ -5,6 +5,7 @@ import 'package:newsreader/core/ai/gemini_summary_generator.dart';
 import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
+import 'package:newsreader/core/feed/feed_url_resolver.dart';
 import 'package:newsreader/core/feed/webfeed_feed_parser.dart';
 import 'package:newsreader/core/navigation/app_navigator.dart';
 import 'package:newsreader/core/navigation/go_router_navigator.dart';
@@ -57,6 +58,7 @@ Future<void> setupDependencies() async {
   // Core — abstractions
   getIt.registerLazySingleton<HttpClient>(() => HttpPackageClient());
   getIt.registerLazySingleton<FeedParser>(() => WebfeedFeedParser());
+  getIt.registerLazySingleton<FeedUrlResolver>(() => FeedUrlResolver());
   getIt.registerLazySingleton<IdGenerator>(() => const UuidIdGenerator());
   getIt.registerLazySingleton<AppNavigator>(() => const GoRouterNavigator());
   getIt.registerLazySingleton<OPMLParser>(() => const XmlOpmlParser());
@@ -94,7 +96,7 @@ Future<void> setupDependencies() async {
 
   // Use cases — Sources
   getIt.registerLazySingleton(
-    () => AddSource(getIt(), getIt(), getIt(), getIt()),
+    () => AddSource(getIt(), getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerLazySingleton(() => DeleteSource(getIt(), getIt()));
   getIt.registerLazySingleton(() => UpdateSourceName(getIt()));

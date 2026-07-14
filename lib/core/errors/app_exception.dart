@@ -22,3 +22,11 @@ class DuplicateSourceException extends AppException {
 class NotFoundException extends AppException {
   const NotFoundException([super.message = 'No encontrado']);
 }
+
+class FeedDiscoveryException extends AppException {
+  const FeedDiscoveryException([
+    super.message =
+        'No pudimos detectar el feed automáticamente. Pega la URL exacta '
+            'del feed RSS (por ejemplo, que termine en /feed o .xml).',
+  ]);
+}

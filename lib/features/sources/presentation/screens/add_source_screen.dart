@@ -63,7 +63,7 @@ class _AddSourceViewState extends State<AddSourceView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Pega la URL del feed RSS o Atom de tu newsletter.',
+                'Pega el link de tu newsletter (o la URL del feed RSS si la tienes).',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -77,7 +77,7 @@ class _AddSourceViewState extends State<AddSourceView> {
                 autofocus: true,
                 decoration: const InputDecoration(
                   labelText: 'URL del feed',
-                  hintText: 'https://autor.substack.com/feed',
+                  hintText: 'https://autor.substack.com',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.rss_feed),
                 ),
