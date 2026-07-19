@@ -89,5 +89,62 @@ void main() {
 
       verify(() => cubit.addSource('https://example.com/feed')).called(1);
     });
+
+    testWidgets(
+        'muestra snackbar con acción "Generar email" cuando falla la detección',
+        (tester) async {
+      when(() => cubit.generateEmailFeed(label: any(named: 'label')))
+          .thenAnswer((_) async {});
+
+      whenListen(
+        cubit,
+        Stream.fromIterable([
+          const AddSourceValidating(),
+          const AddSourceFeedDiscoveryFailed(
+            'No pudimos detectar el feed automáticamente.',
+            'https://sin-feed.com',
+          ),
+        ]),
+        initialState: const AddSourceInitial(),
+      );
+
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('No pudimos detectar el feed automáticamente.'),
+        findsOneWidget,
+      );
+      expect(find.text('Generar email'), findsOneWidget);
+
+      await tester.tap(find.text('Generar email'));
+
+      verify(() => cubit.generateEmailFeed()).called(1);
+    });
+
+    testWidgets('muestra diálogo con la dirección generada', (tester) async {
+      const feed = (
+        email: 'abc-123@dominio.com',
+        feedUrl: 'https://x.supabase.co/functions/v1/feed/abc-123',
+      );
+
+      whenListen(
+        cubit,
+        Stream.fromIterable([
+          const AddSourceGeneratingEmailFeed(),
+          const AddSourceEmailFeedGenerated(feed),
+        ]),
+        initialState: const AddSourceInitial(),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.pump();
+
+      expect(find.text('abc-123@dominio.com'), findsOneWidget);
+      expect(find.text('Ya me suscribí'), findsOneWidget);
+    });
   });
 }

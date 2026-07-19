@@ -4,6 +4,8 @@ import 'package:hive_ce/hive.dart';
 import 'package:newsreader/core/ai/gemini_summary_generator.dart';
 import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
+import 'package:newsreader/core/email_feed/email_feed_generator.dart';
+import 'package:newsreader/core/email_feed/supabase_email_feed_generator.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
 import 'package:newsreader/core/feed/feed_url_resolver.dart';
 import 'package:newsreader/core/feed/webfeed_feed_parser.dart';
@@ -43,6 +45,7 @@ import 'package:newsreader/core/opml/xml_opml_parser.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/delete_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_source_articles.dart';
+import 'package:newsreader/features/sources/domain/usecases/generate_email_feed.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
 import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
@@ -64,6 +67,9 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton<OPMLParser>(() => const XmlOpmlParser());
   getIt.registerLazySingleton<SummaryGenerator>(
     () => GeminiSummaryGenerator(getIt()),
+  );
+  getIt.registerLazySingleton<EmailFeedGenerator>(
+    () => SupabaseEmailFeedGenerator(getIt()),
   );
 
   // Data sources
@@ -98,6 +104,7 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton(
     () => AddSource(getIt(), getIt(), getIt(), getIt(), getIt()),
   );
+  getIt.registerLazySingleton(() => GenerateEmailFeed(getIt()));
   getIt.registerLazySingleton(() => DeleteSource(getIt(), getIt()));
   getIt.registerLazySingleton(() => UpdateSourceName(getIt()));
   getIt.registerLazySingleton(() => GetSources(getIt()));

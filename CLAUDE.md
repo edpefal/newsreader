@@ -155,7 +155,6 @@ emit(state..articles.add(article)); // mutación
 ## Reglas de negocio clave
 
 - Artículo se marca como leído automáticamente al abrirlo.
-- Artículos leídos > 30 días se eliminan (salvo favoritos).
 - Artículos no leídos > 30 días se archivan (no se eliminan).
 - Favoritos nunca se eliminan automáticamente.
 - Contenido truncado: `contentHtml == null || contentHtml.length < 500`.

@@ -1,10 +1,13 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/di/injection.dart';
+import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
+import 'package:newsreader/features/sources/domain/usecases/generate_email_feed.dart';
 import 'package:newsreader/features/sources/presentation/cubit/add_source_cubit.dart';
 
 class AddSourceScreen extends StatelessWidget {
@@ -13,7 +16,10 @@ class AddSourceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AddSourceCubit(getIt<AddSource>()),
+      create: (_) => AddSourceCubit(
+        getIt<AddSource>(),
+        getIt<GenerateEmailFeed>(),
+      ),
       child: const AddSourceView(),
     );
   }
@@ -53,6 +59,19 @@ class _AddSourceViewState extends State<AddSourceView> {
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
+        } else if (state is AddSourceFeedDiscoveryFailed) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              action: SnackBarAction(
+                label: 'Generar email',
+                onPressed: () => context.read<AddSourceCubit>().generateEmailFeed(),
+              ),
+            ),
+          );
+        } else if (state is AddSourceEmailFeedGenerated) {
+          _showGeneratedEmailDialog(context, state.feed);
         }
       },
       child: Scaffold(
@@ -136,5 +155,62 @@ class _AddSourceViewState extends State<AddSourceView> {
     if (context.mounted) {
       context.push('/sources/import-opml', extra: xmlContent);
     }
+  }
+
+  Future<void> _showGeneratedEmailDialog(
+    BuildContext context,
+    GeneratedEmailFeed feed,
+  ) async {
+    final cubit = context.read<AddSourceCubit>();
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Dirección generada'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Suscribí el newsletter usando esta dirección. El primer '
+              'correo puede tardar unos minutos en aparecer.',
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: SelectableText(
+                    feed.email,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.copy_outlined),
+                  tooltip: 'Copiar',
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: feed.email));
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      const SnackBar(content: Text('Dirección copiada.')),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              cubit.addSource(feed.feedUrl);
+            },
+            child: const Text('Ya me suscribí'),
+          ),
+        ],
+      ),
+    );
   }
 }
