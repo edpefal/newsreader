@@ -37,7 +37,15 @@
       "Bash(deno check *)",
       "Bash(supabase migration *)",
       "Bash(supabase secrets *)",
-      "Bash(supabase functions *)"
+      "Bash(supabase functions *)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 72 210)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 264 1241)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 exec-out screencap -p)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 540 388)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 72 356)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 213 649)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input swipe 450 500 450 1400 300)",
+      "Bash(kill %1)"
     ]
   }
 }

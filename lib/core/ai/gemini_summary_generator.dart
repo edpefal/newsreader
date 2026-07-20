@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:newsreader/core/ai/summary_generator.dart';
+import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
 /// Genera resúmenes vía una Supabase Edge Function que hace de proxy a la
@@ -26,6 +27,10 @@ class GeminiSummaryGenerator implements SummaryGenerator {
     try {
       final responseBody = await _httpClient.post(
         _summarizeFunctionUrl,
+        // El default de HttpClient (feedFetchTimeout, 10s) está pensado para
+        // fetch de feeds RSS; resumir varios artículos con contenido completo
+        // vía Gemini puede tardar más.
+        timeout: AppConstants.summaryGenerationTimeout,
         headers: const {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_supabaseAnonKey',

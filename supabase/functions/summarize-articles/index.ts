@@ -94,8 +94,11 @@ Deno.serve(async (req) => {
       contents: [{ role: "user", parts: [{ text: buildPrompt(articles) }] }],
       generationConfig: {
         temperature: 0.7,
-        // Cubre varios párrafos (uno por fuente) en una sola respuesta.
-        maxOutputTokens: 2048,
+        // Cubre varios párrafos (uno por fuente) en una sola respuesta. Con
+        // contenido completo por artículo (no solo excerpt) y varias fuentes,
+        // los párrafos generados son más largos; 2048 se quedaba corto y
+        // cortaba a mitad de oración la última fuente.
+        maxOutputTokens: 8192,
         // Sin esto, gemini-2.5-flash gasta parte de maxOutputTokens en
         // "thinking" interno antes de la respuesta visible, cortando el
         // texto a mitad de oración. No necesitamos razonamiento para

@@ -4,6 +4,8 @@ import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
 import 'package:newsreader/core/utils/date_key.dart';
+import 'package:newsreader/core/utils/feed_content_checker.dart';
+import 'package:newsreader/core/utils/html_to_plain_text.dart';
 
 /// Lanzada al intentar generar un resumen sin artículos del inbox de hoy.
 class NoArticlesTodayException implements Exception {
@@ -33,6 +35,16 @@ class GenerateDailySummary {
 
   Future<int> countTodayArticles() async => (await _todayInboxArticles()).length;
 
+  /// Usa el texto completo de `contentHtml` cuando el artículo no está
+  /// truncado (mismo criterio que decide el modo lector vs WebView); si
+  /// está truncado o vacío, cae a `excerpt` como antes.
+  static String _articleContentFor(Article article) {
+    if (!FeedContentChecker.isTruncated(article.contentHtml)) {
+      return HtmlToPlainText.convert(article.contentHtml!);
+    }
+    return article.excerpt ?? '';
+  }
+
   Future<DailySummary> execute() async {
     final todayArticles = await _todayInboxArticles();
     if (todayArticles.isEmpty) {
@@ -47,7 +59,7 @@ class GenerateDailySummary {
       todayArticles
           .map((a) => (
                 title: a.title,
-                excerpt: a.excerpt ?? '',
+                excerpt: _articleContentFor(a),
                 sourceName: a.sourceName,
               ))
           .toList(),

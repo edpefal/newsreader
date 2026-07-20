@@ -4,6 +4,7 @@ class AppConstants {
   static const int articleTruncatedThreshold = 500;
   static const int cleanupDays = 30;
   static const Duration feedFetchTimeout = Duration(seconds: 10);
+  static const Duration summaryGenerationTimeout = Duration(seconds: 45);
   static const String settingsThemeModeKey = 'theme_mode';
   static const String settingsReaderModeKey = 'reader_mode_enabled';
   static const String hiveSourcesBox = 'sources';

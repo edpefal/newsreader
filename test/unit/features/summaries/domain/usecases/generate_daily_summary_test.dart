@@ -19,6 +19,7 @@ Article _article({
   required String id,
   required DateTime publishedAt,
   String? excerpt,
+  String? contentHtml,
   String sourceId = 's1',
   String sourceName = 'Newsletter A',
 }) =>
@@ -29,6 +30,7 @@ Article _article({
       title: 'Título $id',
       publishedAt: publishedAt,
       excerpt: excerpt,
+      contentHtml: contentHtml,
       articleUrl: 'https://example.com/$id',
     );
 
@@ -167,6 +169,85 @@ void main() {
       );
 
       expect(await sut.countTodayArticles(), 1);
+    });
+  });
+
+  group('contenido enviado al generador por artículo', () {
+    test('artículo con contentHtml completo usa el texto extraído, no el excerpt', () async {
+      final now = DateTime.now();
+      final longHtml = '<p>${'Contenido completo real. ' * 30}</p>';
+      when(() => mockArticleRepository.getInboxArticles()).thenAnswer(
+        (_) async => [
+          _article(
+            id: 'a1',
+            publishedAt: now,
+            excerpt: 'Extracto corto',
+            contentHtml: longHtml,
+          ),
+        ],
+      );
+      when(() => mockSummaryGenerator.summarize(any()))
+          .thenAnswer((_) async => 'Resumen');
+      when(() => mockSummaryRepository.save(any())).thenAnswer((_) async {});
+
+      await sut.execute();
+
+      final captured = verify(
+        () => mockSummaryGenerator.summarize(captureAny()),
+      ).captured.single as List<ArticleExcerpt>;
+
+      expect(captured.single.excerpt, contains('Contenido completo real.'));
+      expect(captured.single.excerpt, isNot('Extracto corto'));
+      expect(captured.single.excerpt, isNot(contains('<p>')));
+    });
+
+    test('artículo con contentHtml truncado usa excerpt como fallback', () async {
+      final now = DateTime.now();
+      when(() => mockArticleRepository.getInboxArticles()).thenAnswer(
+        (_) async => [
+          _article(
+            id: 'a1',
+            publishedAt: now,
+            excerpt: 'Extracto de respaldo',
+            contentHtml: '<p>corto</p>',
+          ),
+        ],
+      );
+      when(() => mockSummaryGenerator.summarize(any()))
+          .thenAnswer((_) async => 'Resumen');
+      when(() => mockSummaryRepository.save(any())).thenAnswer((_) async {});
+
+      await sut.execute();
+
+      final captured = verify(
+        () => mockSummaryGenerator.summarize(captureAny()),
+      ).captured.single as List<ArticleExcerpt>;
+
+      expect(captured.single.excerpt, 'Extracto de respaldo');
+    });
+
+    test('artículo sin contentHtml usa excerpt como fallback', () async {
+      final now = DateTime.now();
+      when(() => mockArticleRepository.getInboxArticles()).thenAnswer(
+        (_) async => [
+          _article(
+            id: 'a1',
+            publishedAt: now,
+            excerpt: 'Extracto único disponible',
+          ),
+        ],
+      );
+      when(() => mockSummaryGenerator.summarize(any()))
+          .thenAnswer((_) async => 'Resumen');
+      when(() => mockSummaryRepository.save(any())).thenAnswer((_) async {});
+
+      await sut.execute();
+
+      final captured = verify(
+        () => mockSummaryGenerator.summarize(captureAny()),
+      ).captured.single as List<ArticleExcerpt>;
+
+      expect(captured.single.excerpt, 'Extracto único disponible');
     });
   });
 }

@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/ai/gemini_summary_generator.dart';
 import 'package:newsreader/core/ai/summary_generator.dart';
+import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
@@ -39,6 +40,7 @@ void main() {
         any(),
         body: any(named: 'body'),
         headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
       ),
     ).thenAnswer((_) async => '{"summary": "Resumen generado"}');
 
@@ -53,10 +55,36 @@ void main() {
         any(),
         body: any(named: 'body'),
         headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
       ),
     ).thenAnswer((_) async => '{"error": "Backend mal configurado"}');
 
     expect(sut.summarize(tArticles), throwsA(isA<SummaryGenerationException>()));
+  });
+
+  test('usa un timeout más largo que el default de fetch de feeds', () async {
+    when(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
+      ),
+    ).thenAnswer((_) async => '{"summary": "Resumen generado"}');
+
+    await sut.summarize(tArticles);
+
+    final captured = verify(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: any(named: 'headers'),
+        timeout: captureAny(named: 'timeout'),
+      ),
+    ).captured.single as Duration;
+
+    expect(captured, AppConstants.summaryGenerationTimeout);
+    expect(captured, greaterThan(AppConstants.feedFetchTimeout));
   });
 
   test('lanza SummaryGenerationException si falla la request HTTP', () async {
@@ -65,6 +93,7 @@ void main() {
         any(),
         body: any(named: 'body'),
         headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
       ),
     ).thenThrow(const NetworkException());
 
