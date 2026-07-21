@@ -45,7 +45,9 @@
       "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 72 356)",
       "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 213 649)",
       "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input swipe 450 500 450 1400 300)",
-      "Bash(kill %1)"
+      "Bash(kill %1)",
+      "Bash(curl -s -X POST https://avyaxzhdilhufyimrzzb.supabase.co/functions/v1/summarize-articles -H 'Content-Type: application/json' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2eWF4emhkaWxodWZ5aW1yenpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3OTE1MTMsImV4cCI6MjA5OTM2NzUxM30.LfgL2Arsth-br6qoAUzbAYhMFtiVCXnrnpoWU59Xzh0' -d '{ *)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input swipe 450 1800 450 300 200)"
     ]
   }
 }
