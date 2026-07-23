@@ -47,7 +47,20 @@
       "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input swipe 450 500 450 1400 300)",
       "Bash(kill %1)",
       "Bash(curl -s -X POST https://avyaxzhdilhufyimrzzb.supabase.co/functions/v1/summarize-articles -H 'Content-Type: application/json' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2eWF4emhkaWxodWZ5aW1yenpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3OTE1MTMsImV4cCI6MjA5OTM2NzUxM30.LfgL2Arsth-br6qoAUzbAYhMFtiVCXnrnpoWU59Xzh0' -d '{ *)",
-      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input swipe 450 1800 450 300 200)"
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input swipe 450 1800 450 300 200)",
+      "Bash(grep *)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d['artifacts'], indent=2\\)\\)\")",
+      "Bash(openspec --help)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 264 1116)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 72 297)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 803 1735)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 964 1785)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input keyevent 4)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell input tap 964 2060)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell uiautomator dump /sdcard/dump.xml)",
+      "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell cat /sdcard/dump.xml)",
+      "Read(//tmp/**)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

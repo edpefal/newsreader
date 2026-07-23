@@ -51,6 +51,37 @@ final appRouter = GoRouter(
         ),
       ],
     ),
+    GoRoute(
+      path: '/sources/add',
+      builder: (context, state) => const AddSourceScreen(),
+    ),
+    GoRoute(
+      path: '/sources/import-opml',
+      builder: (context, state) {
+        final xmlContent = state.extra as String;
+        return BlocProvider(
+          create: (_) => ImportOpmlCubit(getIt<ImportOpml>()),
+          child: ImportOpmlScreen(xmlContent: xmlContent),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/sources/:id',
+      builder: (context, state) {
+        final source = state.extra as NewsSource;
+        return SourceDetailScreen(
+          source: source,
+          getSourceArticles: getIt<GetSourceArticles>(),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/summaries/:date',
+      builder: (context, state) {
+        final summary = state.extra as DailySummary;
+        return SummaryDetailScreen(summary: summary);
+      },
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
           _ScaffoldWithNavBar(navigationShell: navigationShell),
@@ -84,32 +115,6 @@ final appRouter = GoRouter(
             GoRoute(
               path: '/sources',
               builder: (context, state) => const SourcesScreen(),
-              routes: [
-                GoRoute(
-                  path: 'add',
-                  builder: (context, state) => const AddSourceScreen(),
-                ),
-                GoRoute(
-                  path: 'import-opml',
-                  builder: (context, state) {
-                    final xmlContent = state.extra as String;
-                    return BlocProvider(
-                      create: (_) => ImportOpmlCubit(getIt<ImportOpml>()),
-                      child: ImportOpmlScreen(xmlContent: xmlContent),
-                    );
-                  },
-                ),
-                GoRoute(
-                  path: ':id',
-                  builder: (context, state) {
-                    final source = state.extra as NewsSource;
-                    return SourceDetailScreen(
-                      source: source,
-                      getSourceArticles: getIt<GetSourceArticles>(),
-                    );
-                  },
-                ),
-              ],
             ),
           ],
         ),
@@ -118,15 +123,6 @@ final appRouter = GoRouter(
             GoRoute(
               path: '/summaries',
               builder: (context, state) => const SummariesScreen(),
-              routes: [
-                GoRoute(
-                  path: ':date',
-                  builder: (context, state) {
-                    final summary = state.extra as DailySummary;
-                    return SummaryDetailScreen(summary: summary);
-                  },
-                ),
-              ],
             ),
           ],
         ),
