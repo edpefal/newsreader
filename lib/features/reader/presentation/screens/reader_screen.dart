@@ -25,7 +25,6 @@ class ReaderScreen extends StatefulWidget {
 
 class _ReaderScreenState extends State<ReaderScreen>
     with SingleTickerProviderStateMixin {
-  bool _isReaderMode = false;
   late bool _isFavorite;
   late AnimationController _popController;
   late Animation<double> _popScale;
@@ -100,15 +99,6 @@ class _ReaderScreenState extends State<ReaderScreen>
             ),
           ),
           IconButton(
-            icon: Icon(
-              _isReaderMode
-                  ? Icons.chrome_reader_mode
-                  : Icons.chrome_reader_mode_outlined,
-            ),
-            tooltip: _isReaderMode ? 'Vista original' : 'Modo Reader',
-            onPressed: () => setState(() => _isReaderMode = !_isReaderMode),
-          ),
-          IconButton(
             icon: const Icon(Icons.open_in_browser),
             tooltip: 'Ver en navegador',
             onPressed: () => context.push(
@@ -147,9 +137,6 @@ class _ReaderScreenState extends State<ReaderScreen>
   }
 
   Widget _buildContent(Article article, ThemeData theme) {
-    if (_isReaderMode) {
-      return _buildReaderContent(article, theme);
-    }
     if (article.contentHtml != null) {
       return HtmlWidget(
         article.contentHtml!,
@@ -166,37 +153,6 @@ class _ReaderScreenState extends State<ReaderScreen>
         fontStyle: FontStyle.italic,
       ),
     );
-  }
-
-  Widget _buildReaderContent(Article article, ThemeData theme) {
-    final readerStyle = theme.textTheme.bodyLarge?.copyWith(height: 1.7);
-
-    final text = article.contentHtml != null
-        ? _stripHtml(article.contentHtml!)
-        : article.excerpt;
-
-    if (text != null && text.isNotEmpty) {
-      return Text(text, style: readerStyle);
-    }
-    return Text(
-      'Contenido no disponible en el feed.',
-      style: theme.textTheme.bodyMedium?.copyWith(
-        color: theme.colorScheme.onSurfaceVariant,
-        fontStyle: FontStyle.italic,
-      ),
-    );
-  }
-
-  static String _stripHtml(String html) {
-    return html
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll('&nbsp;', ' ')
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
-        .trim();
   }
 
   String _buildMeta(Article article) {

@@ -6,7 +6,6 @@ class AppConstants {
   static const Duration feedFetchTimeout = Duration(seconds: 10);
   static const Duration summaryGenerationTimeout = Duration(seconds: 45);
   static const String settingsThemeModeKey = 'theme_mode';
-  static const String settingsReaderModeKey = 'reader_mode_enabled';
   static const String hiveSourcesBox = 'sources';
   static const String hiveArticlesBox = 'articles';
   static const String hiveSettingsBox = 'settings';

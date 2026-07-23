@@ -6,7 +6,7 @@ Una app Flutter para centralizar newsletters fuera del correo electrónico. Agre
 
 - **Inbox** — artículos no leídos ordenados por fecha, con badge de conteo en la barra de navegación
 - **Sincronización** — pull-to-refresh con feedback de errores de red o fuentes fallidas
-- **Lector** — vista de contenido HTML, modo reader (texto plano) y acceso vía WebView
+- **Lector** — vista de contenido HTML y acceso vía WebView
 - **Favoritos** — marca/desmarca artículos con la estrella; sección dedicada con recarga automática al cambiar de tab
 - **Archivados** — artículos archivados automáticamente por el proceso de mantenimiento
 - **Gestión de fuentes** — agregar por URL (auto-detección de metadatos), editar nombre, eliminar

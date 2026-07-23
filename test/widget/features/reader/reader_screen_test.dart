@@ -162,62 +162,6 @@ void main() {
       expect(find.text('WebView'), findsOneWidget);
     });
 
-    testWidgets('muestra botón de Modo Reader en el AppBar', (tester) async {
-      await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
-
-      expect(find.byIcon(Icons.chrome_reader_mode_outlined), findsOneWidget);
-    });
-
-    testWidgets('activar Modo Reader oculta HtmlWidget y muestra texto plano',
-        (tester) async {
-      await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
-      await tester.pump();
-
-      expect(find.byType(HtmlWidget), findsOneWidget);
-
-      await tester.tap(find.byIcon(Icons.chrome_reader_mode_outlined));
-      await tester.pump();
-
-      expect(find.byType(HtmlWidget), findsNothing);
-      expect(find.byIcon(Icons.chrome_reader_mode), findsOneWidget);
-    });
-
-    testWidgets('desactivar Modo Reader vuelve a mostrar HtmlWidget',
-        (tester) async {
-      await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
-      await tester.pump();
-
-      await tester.tap(find.byIcon(Icons.chrome_reader_mode_outlined));
-      await tester.pump();
-      await tester.tap(find.byIcon(Icons.chrome_reader_mode));
-      await tester.pump();
-
-      expect(find.byType(HtmlWidget), findsOneWidget);
-    });
-
-    testWidgets('Modo Reader con excerpt (sin contentHtml) muestra el excerpt',
-        (tester) async {
-      final articleSoloExcerpt = Article(
-        id: 'a4',
-        sourceId: 's1',
-        sourceName: 'Newsletter A',
-        title: 'Solo excerpt',
-        excerpt: 'Resumen del artículo.',
-        publishedAt: DateTime(2024, 3, 15),
-        articleUrl: 'https://example.com/article',
-      );
-
-      await tester.pumpWidget(
-          _buildSubject(articleSoloExcerpt, mockMarkAsRead, mockToggleFavorite));
-      await tester.tap(find.byIcon(Icons.chrome_reader_mode_outlined));
-      await tester.pump();
-
-      expect(find.text('Resumen del artículo.'), findsOneWidget);
-    });
-
     // --- US-13/14: Favoritos ---
 
     testWidgets('muestra star_outline cuando el artículo no es favorito',
