@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/di/injection.dart';
@@ -27,13 +28,21 @@ void main() async {
   await Hive.openBox<dynamic>(AppConstants.hiveSettingsBox);
   await Hive.openBox<DailySummaryModel>(AppConstants.hiveSummariesBox);
 
-  // 2. Setup dependency injection
+  // 2. Initialize Supabase (usado por AuthClient; el resto de la app sigue
+  // llamando a las edge functions vía HttpClient, sin el SDK de Supabase).
+  await Supabase.initialize(
+    url: 'https://avyaxzhdilhufyimrzzb.supabase.co',
+    publishableKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2eWF4emhkaWxodWZ5aW1yenpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3OTE1MTMsImV4cCI6MjA5OTM2NzUxM30.LfgL2Arsth-br6qoAUzbAYhMFtiVCXnrnpoWU59Xzh0',
+  );
+
+  // 3. Setup dependency injection
   await setupDependencies();
 
-  // 3. One-time migration: remove auto-archived articles from previous behavior
+  // 4. One-time migration: remove auto-archived articles from previous behavior
   await getIt<MigrateArchivedArticles>().execute();
 
-  // 4. Load data after maintenance so cleanup runs first
+  // 5. Load data after maintenance so cleanup runs first
   getIt<InboxCubit>().loadArticles();
   getIt<FavoritesCubit>().loadFavorites();
   getIt<ArchiveCubit>().loadArchive();

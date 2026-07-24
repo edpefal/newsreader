@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
+import 'package:newsreader/features/auth/presentation/screens/login_screen.dart';
 import 'package:newsreader/core/widgets/webview_flutter_article_web_view.dart';
 import 'package:newsreader/features/archive/presentation/screens/archive_screen.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
@@ -28,9 +33,43 @@ import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit
 import 'package:newsreader/features/summaries/presentation/screens/summaries_screen.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summary_detail_screen.dart';
 
+/// Convierte el stream de cambios de sesión de [AuthClient] en un
+/// [Listenable], que es lo que espera `refreshListenable` de go_router para
+/// reevaluar `redirect` cada vez que cambia el estado de auth (login,
+/// logout, expiración de sesión) sin necesitar navegación manual.
+class _AuthChangeNotifier extends ChangeNotifier {
+  late final StreamSubscription<bool> _subscription;
+
+  _AuthChangeNotifier(AuthClient authClient) {
+    _subscription = authClient.authStateChanges.listen((_) => notifyListeners());
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
 final appRouter = GoRouter(
   initialLocation: '/',
+  refreshListenable: _AuthChangeNotifier(getIt<AuthClient>()),
+  redirect: (context, state) {
+    final isSignedIn = getIt<AuthClient>().isSignedIn;
+    final isOnLoginScreen = state.matchedLocation == '/login';
+
+    if (!isSignedIn && !isOnLoginScreen) return '/login';
+    if (isSignedIn && isOnLoginScreen) return '/';
+    return null;
+  },
   routes: [
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => BlocProvider(
+        create: (_) => getIt<LoginCubit>(),
+        child: const LoginScreen(),
+      ),
+    ),
     GoRoute(
       path: '/article/:id',
       builder: (context, state) {
@@ -207,6 +246,12 @@ class _ScaffoldWithNavBar extends StatelessWidget {
             icon: Icon(Icons.auto_awesome_outlined),
             selectedIcon: Icon(Icons.auto_awesome),
             label: Text('Resúmenes'),
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Cerrar sesión'),
+            onTap: () => getIt<AuthClient>().signOut(),
           ),
         ],
       ),

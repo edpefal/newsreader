@@ -1,3 +1,6 @@
+# Secrets — nunca commitear private keys
+*.p8
+
 # Miscellaneous
 *.class
 *.log

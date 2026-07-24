@@ -3,6 +3,8 @@ import 'package:hive_ce/hive.dart';
 
 import 'package:newsreader/core/ai/gemini_summary_generator.dart';
 import 'package:newsreader/core/ai/summary_generator.dart';
+import 'package:newsreader/core/auth/auth_client.dart';
+import 'package:newsreader/core/auth/supabase_auth_client.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/core/email_feed/supabase_email_feed_generator.dart';
@@ -42,6 +44,7 @@ import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart'
 import 'package:newsreader/features/maintenance/domain/usecases/migrate_archived_articles.dart';
 import 'package:newsreader/core/opml/opml_parser.dart';
 import 'package:newsreader/core/opml/xml_opml_parser.dart';
+import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/delete_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_source_articles.dart';
@@ -59,6 +62,7 @@ final getIt = GetIt.instance;
 
 Future<void> setupDependencies() async {
   // Core — abstractions
+  getIt.registerLazySingleton<AuthClient>(() => SupabaseAuthClient());
   getIt.registerLazySingleton<HttpClient>(() => HttpPackageClient());
   getIt.registerLazySingleton<FeedParser>(() => WebfeedFeedParser());
   getIt.registerLazySingleton<FeedUrlResolver>(() => FeedUrlResolver());
@@ -133,6 +137,7 @@ Future<void> setupDependencies() async {
   );
 
   // Presentation
+  getIt.registerFactory<LoginCubit>(() => LoginCubit(getIt()));
   getIt.registerSingleton<ThemeCubit>(
     ThemeCubit(Hive.box<dynamic>(AppConstants.hiveSettingsBox)),
   );

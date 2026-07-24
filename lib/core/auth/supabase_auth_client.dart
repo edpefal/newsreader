@@ -1,0 +1,101 @@
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
+
+import 'package:newsreader/core/auth/auth_client.dart';
+
+/// client ID "web" de Google configurado en Supabase Auth. Se usa como
+/// serverClientId para que Google emita un ID token válido para el
+/// intercambio con Supabase (`signInWithIdToken`), además del client ID
+/// nativo de cada plataforma configurado en Google Cloud Console.
+const _googleServerClientId =
+    '804701846700-7tqci3mkk2m56v8ph5vaac3ap10jlm3i.apps.googleusercontent.com';
+
+class SupabaseAuthClient implements AuthClient {
+  final sb.SupabaseClient _supabase;
+  final GoogleSignIn _googleSignIn;
+
+  SupabaseAuthClient({
+    sb.SupabaseClient? supabase,
+    GoogleSignIn? googleSignIn,
+  })  : _supabase = supabase ?? sb.Supabase.instance.client,
+        _googleSignIn = googleSignIn ??
+            GoogleSignIn(
+              serverClientId: _googleServerClientId,
+              scopes: ['email'],
+            );
+
+  @override
+  Stream<bool> get authStateChanges => _supabase.auth.onAuthStateChange
+      .map((event) => event.session != null);
+
+  @override
+  bool get isSignedIn => _supabase.auth.currentSession != null;
+
+  @override
+  Future<AuthResult> signInWithGoogle() async {
+    try {
+      final account = await _googleSignIn.signIn();
+      if (account == null) return AuthResult.cancelled;
+
+      final googleAuth = await account.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        throw const AuthException(
+          'Google no devolvió un token válido. Intentá de nuevo.',
+        );
+      }
+
+      await _supabase.auth.signInWithIdToken(
+        provider: sb.OAuthProvider.google,
+        idToken: idToken,
+        accessToken: googleAuth.accessToken,
+      );
+      return AuthResult.success;
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw AuthException(e.toString());
+    }
+  }
+
+  @override
+  Future<AuthResult> signInWithApple() async {
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final idToken = credential.identityToken;
+      if (idToken == null) {
+        throw const AuthException(
+          'Apple no devolvió un token válido. Intentá de nuevo.',
+        );
+      }
+
+      await _supabase.auth.signInWithIdToken(
+        provider: sb.OAuthProvider.apple,
+        idToken: idToken,
+      );
+      return AuthResult.success;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        return AuthResult.cancelled;
+      }
+      throw AuthException(e.message);
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw AuthException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+    await _supabase.auth.signOut();
+  }
+}

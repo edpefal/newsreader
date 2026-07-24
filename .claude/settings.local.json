@@ -61,7 +61,9 @@
       "Bash(/Users/eder/Library/Android/sdk/platform-tools/adb -s emulator-5554 shell cat /sdcard/dump.xml)",
       "Read(//tmp/**)",
       "Bash(git commit -m ' *)",
-      "Bash(cd *)"
+      "Bash(cd *)",
+      "Bash(tee /tmp/flutter_run_ios4.log)",
+      "Bash(disown)"
     ]
   }
 }
