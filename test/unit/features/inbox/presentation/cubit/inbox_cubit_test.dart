@@ -4,25 +4,29 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/features/inbox/domain/usecases/get_inbox_articles.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
-import 'package:newsreader/features/inbox/domain/usecases/sync_sources.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
+import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 
 class MockGetInboxArticles extends Mock implements GetInboxArticles {}
 
 class MockGetSources extends Mock implements GetSources {}
 
-class MockSyncSources extends Mock implements SyncSources {}
+class MockFeedSyncTrigger extends Mock implements FeedSyncTrigger {}
 
 class MockMarkArticleAsRead extends Mock implements MarkArticleAsRead {}
+
+class MockSyncUserData extends Mock implements SyncUserData {}
 
 void main() {
   late MockGetInboxArticles mockGetInboxArticles;
   late MockGetSources mockGetSources;
-  late MockSyncSources mockSyncSources;
+  late MockFeedSyncTrigger mockFeedSyncTrigger;
   late MockMarkArticleAsRead mockMarkArticleAsRead;
+  late MockSyncUserData mockSyncUserData;
 
   final tArticles = [
     Article(
@@ -47,15 +51,18 @@ void main() {
   InboxCubit buildCubit() => InboxCubit(
         mockGetInboxArticles,
         mockGetSources,
-        mockSyncSources,
+        mockFeedSyncTrigger,
         mockMarkArticleAsRead,
+        mockSyncUserData,
       );
 
   setUp(() {
     mockGetInboxArticles = MockGetInboxArticles();
     mockGetSources = MockGetSources();
-    mockSyncSources = MockSyncSources();
+    mockFeedSyncTrigger = MockFeedSyncTrigger();
     mockMarkArticleAsRead = MockMarkArticleAsRead();
+    mockSyncUserData = MockSyncUserData();
+    when(() => mockSyncUserData.execute()).thenAnswer((_) async {});
   });
 
   group('InboxCubit', () {
@@ -111,10 +118,10 @@ void main() {
     );
 
     blocTest<InboxCubit, InboxState>(
-      'syncAndReload() llama a SyncSources y emite Loaded sin Loading',
+      'syncAndReload() llama a FeedSyncTrigger y emite Loaded sin Loading',
       build: () {
-        when(() => mockSyncSources.execute()).thenAnswer(
-          (_) async => const SyncResult(synced: 1, failedSourceIds: []),
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer(
+          (_) async => const FeedSyncResult(synced: 1, failedSourceIds: []),
         );
         when(() => mockGetInboxArticles.execute())
             .thenAnswer((_) async => tArticles);
@@ -125,16 +132,65 @@ void main() {
       seed: () => const InboxLoaded([], hasSources: true),
       act: (cubit) => cubit.syncAndReload(),
       expect: () => [InboxLoaded(tArticles, hasSources: true)],
-      verify: (_) => verify(() => mockSyncSources.execute()).called(1),
+      verify: (_) {
+        verify(() => mockFeedSyncTrigger.execute()).called(1);
+        verify(() => mockSyncUserData.execute()).called(2);
+      },
     );
 
-    test('syncAndReload() retorna SyncResult con isNetworkError=true', () async {
-      const expectedResult = SyncResult(
+    blocTest<InboxCubit, InboxState>(
+      'syncAfterSignIn() emite Loading, sincroniza y recarga con los datos bajados',
+      build: () {
+        when(() => mockSyncUserData.execute()).thenAnswer((_) async {});
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () => const InboxLoaded([], hasSources: false),
+      act: (cubit) => cubit.syncAfterSignIn(),
+      expect: () => [
+        const InboxLoading(message: 'Sincronizando fuentes...'),
+        InboxLoaded(tArticles, hasSources: true),
+      ],
+      verify: (_) {
+        verify(() => mockSyncUserData.execute()).called(1);
+        verifyNever(() => mockFeedSyncTrigger.execute());
+      },
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'syncAndReload() sube el estado local antes de disparar el fetch del servidor',
+      build: () {
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer(
+          (_) async => const FeedSyncResult(synced: 1, failedSourceIds: []),
+        );
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () => const InboxLoaded([], hasSources: true),
+      act: (cubit) => cubit.syncAndReload(),
+      expect: () => [InboxLoaded(tArticles, hasSources: true)],
+      verify: (_) {
+        verifyInOrder([
+          () => mockSyncUserData.execute(),
+          () => mockFeedSyncTrigger.execute(),
+          () => mockSyncUserData.execute(),
+        ]);
+      },
+    );
+
+    test('syncAndReload() retorna FeedSyncResult con isNetworkError=true', () async {
+      const expectedResult = FeedSyncResult(
         synced: 0,
         failedSourceIds: ['s1'],
         isNetworkError: true,
       );
-      when(() => mockSyncSources.execute())
+      when(() => mockFeedSyncTrigger.execute())
           .thenAnswer((_) async => expectedResult);
       when(() => mockGetInboxArticles.execute()).thenAnswer((_) async => []);
       when(() => mockGetSources.execute()).thenAnswer((_) async => tSources);
@@ -146,12 +202,12 @@ void main() {
       expect(result.failedSourceIds, ['s1']);
     });
 
-    test('syncAndReload() retorna SyncResult con fallos parciales', () async {
-      const expectedResult = SyncResult(
+    test('syncAndReload() retorna FeedSyncResult con fallos parciales', () async {
+      const expectedResult = FeedSyncResult(
         synced: 0,
         failedSourceIds: ['s1', 's2'],
       );
-      when(() => mockSyncSources.execute())
+      when(() => mockFeedSyncTrigger.execute())
           .thenAnswer((_) async => expectedResult);
       when(() => mockGetInboxArticles.execute()).thenAnswer((_) async => []);
       when(() => mockGetSources.execute()).thenAnswer((_) async => tSources);

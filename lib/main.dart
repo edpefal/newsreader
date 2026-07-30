@@ -11,8 +11,10 @@ import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dar
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/maintenance/domain/usecases/migrate_archived_articles.dart';
+import 'package:newsreader/features/maintenance/domain/usecases/reset_local_articles.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
+import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 import 'package:newsreader/presentation/app/app.dart';
 
 void main() async {
@@ -42,7 +44,18 @@ void main() async {
   // 4. One-time migration: remove auto-archived articles from previous behavior
   await getIt<MigrateArchivedArticles>().execute();
 
-  // 5. Load data after maintenance so cleanup runs first
+  // 4.5. One-time migration (centralize-feed-fetching): limpia los
+  // artículos locales con ids viejos (generados en el cliente) antes de que
+  // el sync de abajo pueda traer los nuevos (ids generados en el servidor).
+  // No-op después de la primera vez que corre en cada dispositivo.
+  await getIt<ResetLocalArticles>().execute();
+
+  // 5. Sync user data with the cloud (no-op si no hay sesión activa), antes
+  // de que los cubits carguen sus datos para que lo recién sincronizado se
+  // vea en el primer render.
+  await getIt<SyncUserData>().execute();
+
+  // 6. Load data after maintenance so cleanup runs first
   getIt<InboxCubit>().loadArticles();
   getIt<FavoritesCubit>().loadFavorites();
   getIt<ArchiveCubit>().loadArchive();

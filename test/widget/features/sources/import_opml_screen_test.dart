@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:newsreader/features/inbox/domain/usecases/sync_sources.dart';
+import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/presentation/cubit/import_opml_cubit.dart';
 import 'package:newsreader/features/sources/presentation/screens/import_opml_screen.dart';
@@ -36,7 +36,7 @@ void main() {
     inboxCubit = MockInboxCubit();
     when(() => cubit.loadPreview(any())).thenAnswer((_) async {});
     when(() => inboxCubit.syncAndReload()).thenAnswer(
-      (_) async => const SyncResult(synced: 0, failedSourceIds: []),
+      (_) async => const FeedSyncResult(synced: 0, failedSourceIds: []),
     );
     when(() => inboxCubit.state).thenReturn(const InboxLoading());
   });

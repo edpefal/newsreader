@@ -21,10 +21,11 @@ class FavoritesView extends StatelessWidget {
     final result = <Object>[];
     DateTime? lastDay;
     for (final article in articles) {
+      final localPublishedAt = article.publishedAt.toLocal();
       final day = DateTime(
-        article.publishedAt.year,
-        article.publishedAt.month,
-        article.publishedAt.day,
+        localPublishedAt.year,
+        localPublishedAt.month,
+        localPublishedAt.day,
       );
       if (lastDay == null || day != lastDay) {
         result.add(day);

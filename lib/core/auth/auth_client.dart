@@ -12,6 +12,14 @@ abstract class AuthClient {
   /// Si hay una sesión activa en este momento.
   bool get isSignedIn;
 
+  /// El `id` del usuario autenticado actual, o `null` si no hay sesión.
+  String? get currentUserId;
+
+  /// El access token (JWT) de la sesión activa, o `null` si no hay sesión.
+  /// Se usa para autenticar llamadas a Edge Functions como el usuario
+  /// actual (por ejemplo, disparar el fetch de feeds on-demand).
+  String? get currentAccessToken;
+
   /// Inicia sesión con Google. Lanza [AuthException] si el intercambio de
   /// token falla; devuelve [AuthResult.cancelled] si el usuario cierra el
   /// selector de cuenta sin elegir ninguna.

@@ -17,10 +17,25 @@ class HiveSummaryDatasource implements SummaryLocalDataSource {
   }
 
   @override
-  Future<void> save(DailySummaryModel model) async =>
-      _box.put(dateKey(model.date), model);
+  Future<void> save(DailySummaryModel model) async {
+    model.updatedAt = DateTime.now();
+    await _box.put(dateKey(model.date), model);
+  }
 
   @override
   Future<DailySummaryModel?> getByDate(DateTime date) async =>
       _box.get(dateKey(date));
+
+  @override
+  Future<List<DailySummaryModel>> getChangedSince(DateTime? since) async =>
+      _box.values
+          .where((s) => since == null || (s.updatedAt?.isAfter(since) ?? true))
+          .toList();
+
+  @override
+  Future<void> applyRemote(DailySummaryModel model) async =>
+      _box.put(dateKey(model.date), model);
+
+  @override
+  Future<void> clearAll() async => _box.clear();
 }

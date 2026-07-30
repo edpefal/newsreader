@@ -51,6 +51,12 @@ class ArticleModel extends HiveObject {
   @HiveField(14)
   DateTime? savedAsFavoriteAt;
 
+  @HiveField(15)
+  DateTime? updatedAt;
+
+  @HiveField(16)
+  DateTime? deletedAt;
+
   ArticleModel({
     required this.id,
     required this.sourceId,
@@ -67,6 +73,8 @@ class ArticleModel extends HiveObject {
     this.isArchived = false,
     this.readAt,
     this.savedAsFavoriteAt,
+    this.updatedAt,
+    this.deletedAt,
   });
 
   factory ArticleModel.fromEntity(Article entity) => ArticleModel(
@@ -85,6 +93,8 @@ class ArticleModel extends HiveObject {
         isArchived: entity.isArchived,
         readAt: entity.readAt,
         savedAsFavoriteAt: entity.savedAsFavoriteAt,
+        updatedAt: entity.updatedAt,
+        deletedAt: entity.deletedAt,
       );
 
   Article toEntity() => Article(
@@ -103,5 +113,7 @@ class ArticleModel extends HiveObject {
         isArchived: isArchived,
         readAt: readAt,
         savedAsFavoriteAt: savedAsFavoriteAt,
+        updatedAt: updatedAt,
+        deletedAt: deletedAt,
       );
 }

@@ -9,7 +9,9 @@ import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/core/email_feed/supabase_email_feed_generator.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
+import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/feed/feed_url_resolver.dart';
+import 'package:newsreader/core/feed/supabase_feed_sync_trigger.dart';
 import 'package:newsreader/core/feed/webfeed_feed_parser.dart';
 import 'package:newsreader/core/navigation/app_navigator.dart';
 import 'package:newsreader/core/navigation/go_router_navigator.dart';
@@ -38,12 +40,14 @@ import 'package:newsreader/features/favorites/domain/usecases/get_favorites.dart
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/domain/usecases/get_inbox_articles.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
-import 'package:newsreader/features/inbox/domain/usecases/sync_sources.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 import 'package:newsreader/features/maintenance/domain/usecases/migrate_archived_articles.dart';
+import 'package:newsreader/features/maintenance/domain/usecases/reset_local_articles.dart';
 import 'package:newsreader/core/opml/opml_parser.dart';
 import 'package:newsreader/core/opml/xml_opml_parser.dart';
+import 'package:newsreader/core/sync/cloud_sync_client.dart';
+import 'package:newsreader/core/sync/supabase_cloud_sync_client.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/delete_source.dart';
@@ -56,6 +60,8 @@ import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dar
 import 'package:newsreader/features/summaries/domain/usecases/generate_daily_summary.dart';
 import 'package:newsreader/features/summaries/domain/usecases/get_daily_summaries.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
+import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
+import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
 
 final getIt = GetIt.instance;
@@ -63,9 +69,13 @@ final getIt = GetIt.instance;
 Future<void> setupDependencies() async {
   // Core — abstractions
   getIt.registerLazySingleton<AuthClient>(() => SupabaseAuthClient());
+  getIt.registerLazySingleton<CloudSyncClient>(() => SupabaseCloudSyncClient());
   getIt.registerLazySingleton<HttpClient>(() => HttpPackageClient());
   getIt.registerLazySingleton<FeedParser>(() => WebfeedFeedParser());
   getIt.registerLazySingleton<FeedUrlResolver>(() => FeedUrlResolver());
+  getIt.registerLazySingleton<FeedSyncTrigger>(
+    () => SupabaseFeedSyncTrigger(getIt(), getIt()),
+  );
   getIt.registerLazySingleton<IdGenerator>(() => const UuidIdGenerator());
   getIt.registerLazySingleton<AppNavigator>(() => const GoRouterNavigator());
   getIt.registerLazySingleton<OPMLParser>(() => const XmlOpmlParser());
@@ -118,9 +128,6 @@ Future<void> setupDependencies() async {
   );
 
   // Use cases — Articles
-  getIt.registerLazySingleton(
-    () => SyncSources(getIt(), getIt(), getIt(), getIt(), getIt()),
-  );
   getIt.registerLazySingleton(() => GetInboxArticles(getIt()));
   getIt.registerLazySingleton(() => MarkArticleAsRead(getIt()));
   getIt.registerLazySingleton(() => ToggleFavorite(getIt()));
@@ -129,6 +136,12 @@ Future<void> setupDependencies() async {
 
   // Use cases — Maintenance
   getIt.registerLazySingleton(() => MigrateArchivedArticles(getIt()));
+  getIt.registerLazySingleton(
+    () => ResetLocalArticles(
+      getIt(),
+      Hive.box<dynamic>(AppConstants.hiveSettingsBox),
+    ),
+  );
 
   // Use cases — Summaries
   getIt.registerLazySingleton(() => GetDailySummaries(getIt()));
@@ -136,12 +149,34 @@ Future<void> setupDependencies() async {
     () => GenerateDailySummary(getIt(), getIt(), getIt()),
   );
 
+  // Use cases — Sync
+  getIt.registerLazySingleton(
+    () => SyncUserData(
+      getIt(),
+      getIt(),
+      getIt(),
+      getIt(),
+      getIt(),
+      Hive.box<dynamic>(AppConstants.hiveSettingsBox),
+    ),
+  );
+  getIt.registerLazySingleton(
+    () => ClearLocalUserData(
+      getIt(),
+      getIt(),
+      getIt(),
+      Hive.box<dynamic>(AppConstants.hiveSettingsBox),
+    ),
+  );
+
   // Presentation
   getIt.registerFactory<LoginCubit>(() => LoginCubit(getIt()));
   getIt.registerSingleton<ThemeCubit>(
     ThemeCubit(Hive.box<dynamic>(AppConstants.hiveSettingsBox)),
   );
-  getIt.registerSingleton<InboxCubit>(InboxCubit(getIt(), getIt(), getIt(), getIt()));
+  getIt.registerSingleton<InboxCubit>(
+    InboxCubit(getIt(), getIt(), getIt(), getIt(), getIt()),
+  );
   getIt.registerSingleton<FavoritesCubit>(FavoritesCubit(getIt()));
   getIt.registerSingleton<ArchiveCubit>(ArchiveCubit(getIt()));
   getIt.registerSingleton<SourcesCubit>(

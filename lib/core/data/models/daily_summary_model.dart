@@ -21,12 +21,16 @@ class DailySummaryModel extends HiveObject {
   @HiveField(4)
   DateTime createdAt;
 
+  @HiveField(5)
+  DateTime? updatedAt;
+
   DailySummaryModel({
     required this.id,
     required this.date,
     required this.content,
     required this.articleCount,
     required this.createdAt,
+    this.updatedAt,
   });
 
   factory DailySummaryModel.fromEntity(DailySummary entity) =>
@@ -36,6 +40,7 @@ class DailySummaryModel extends HiveObject {
         content: entity.content,
         articleCount: entity.articleCount,
         createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
       );
 
   DailySummary toEntity() => DailySummary(
@@ -44,5 +49,6 @@ class DailySummaryModel extends HiveObject {
         content: content,
         articleCount: articleCount,
         createdAt: createdAt,
+        updatedAt: updatedAt,
       );
 }

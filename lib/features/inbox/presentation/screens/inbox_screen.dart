@@ -65,10 +65,11 @@ class _InboxViewState extends State<InboxView> {
     final result = <_InboxListItem>[];
     DateTime? lastDay;
     for (final article in articles) {
+      final localPublishedAt = article.publishedAt.toLocal();
       final day = DateTime(
-        article.publishedAt.year,
-        article.publishedAt.month,
-        article.publishedAt.day,
+        localPublishedAt.year,
+        localPublishedAt.month,
+        localPublishedAt.day,
       );
       if (lastDay == null || day != lastDay) {
         result.add(_DateHeaderItem(day));
@@ -100,7 +101,18 @@ class _InboxViewState extends State<InboxView> {
             (curr is InboxLoaded && curr.readArticleId == null),
         builder: (context, state) {
           if (state is InboxLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  if (state.message != null) ...[
+                    const SizedBox(height: 16),
+                    Text(state.message!),
+                  ],
+                ],
+              ),
+            );
           }
           final loaded = state as InboxLoaded;
 

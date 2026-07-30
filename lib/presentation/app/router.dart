@@ -10,6 +10,7 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/auth/presentation/screens/login_screen.dart';
+import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
 import 'package:newsreader/core/widgets/webview_flutter_article_web_view.dart';
 import 'package:newsreader/features/archive/presentation/screens/archive_screen.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
@@ -251,7 +252,14 @@ class _ScaffoldWithNavBar extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Cerrar sesión'),
-            onTap: () => getIt<AuthClient>().signOut(),
+            onTap: () async {
+              // Se limpian los datos locales antes de cerrar sesión para
+              // que la próxima cuenta que inicie sesión en este
+              // dispositivo arranque sin datos de la cuenta anterior (evita
+              // colisiones de `id` entre cuentas al sincronizar).
+              await getIt<ClearLocalUserData>().execute();
+              await getIt<AuthClient>().signOut();
+            },
           ),
         ],
       ),

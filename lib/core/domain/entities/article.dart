@@ -16,6 +16,8 @@ class Article extends Equatable {
   final bool isArchived;
   final DateTime? readAt;
   final DateTime? savedAsFavoriteAt;
+  final DateTime? updatedAt;
+  final DateTime? deletedAt;
 
   const Article({
     required this.id,
@@ -33,6 +35,8 @@ class Article extends Equatable {
     this.isArchived = false,
     this.readAt,
     this.savedAsFavoriteAt,
+    this.updatedAt,
+    this.deletedAt,
   });
 
   Article copyWith({
@@ -41,6 +45,8 @@ class Article extends Equatable {
     bool? isArchived,
     DateTime? readAt,
     DateTime? savedAsFavoriteAt,
+    DateTime? updatedAt,
+    DateTime? deletedAt,
   }) {
     return Article(
       id: id,
@@ -58,6 +64,8 @@ class Article extends Equatable {
       isArchived: isArchived ?? this.isArchived,
       readAt: readAt ?? this.readAt,
       savedAsFavoriteAt: savedAsFavoriteAt ?? this.savedAsFavoriteAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -78,5 +86,7 @@ class Article extends Equatable {
         isArchived,
         readAt,
         savedAsFavoriteAt,
+        updatedAt,
+        deletedAt,
       ];
 }

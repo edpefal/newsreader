@@ -12,6 +12,7 @@ ArticleModel _article({
   required DateTime publishedAt,
   bool isRead = false,
   DateTime? readAt,
+  DateTime? deletedAt,
 }) =>
     ArticleModel(
       id: id,
@@ -22,11 +23,16 @@ ArticleModel _article({
       publishedAt: publishedAt,
       isRead: isRead,
       readAt: readAt,
+      deletedAt: deletedAt,
     );
 
 void main() {
   late MockBox mockBox;
   late HiveArticleDatasource datasource;
+
+  setUpAll(() {
+    registerFallbackValue(_article(id: 'fallback', publishedAt: DateTime(2024)));
+  });
 
   setUp(() {
     mockBox = MockBox();
@@ -74,6 +80,57 @@ void main() {
       final result = await datasource.getArchive();
 
       expect(result, isEmpty);
+    });
+
+    test('excluye artículos soft-deleted (deletedAt no nulo)', () async {
+      final live = _article(id: 'a1', publishedAt: DateTime(2024), isRead: true);
+      final deleted = _article(
+        id: 'a2',
+        publishedAt: DateTime(2024),
+        isRead: true,
+        deletedAt: DateTime(2024, 1, 2),
+      );
+
+      when(() => mockBox.values).thenReturn([live, deleted]);
+
+      final result = await datasource.getArchive();
+
+      expect(result.map((a) => a.id), ['a1']);
+    });
+  });
+
+  group('saveArticle / updateArticle', () {
+    test('estampan updatedAt antes de persistir', () async {
+      final article = _article(id: 'a1', publishedAt: DateTime(2024));
+      when(() => mockBox.put(any(), any())).thenAnswer((_) async {});
+
+      await datasource.saveArticle(article);
+
+      expect(article.updatedAt, isNotNull);
+      verify(() => mockBox.put('a1', article)).called(1);
+    });
+  });
+
+  group('deleteArticle', () {
+    test('marca deletedAt/updatedAt en vez de borrar físicamente', () async {
+      final article = _article(id: 'a1', publishedAt: DateTime(2024));
+      when(() => mockBox.get('a1')).thenReturn(article);
+      when(() => mockBox.put(any(), any())).thenAnswer((_) async {});
+
+      await datasource.deleteArticle('a1');
+
+      expect(article.deletedAt, isNotNull);
+      expect(article.updatedAt, isNotNull);
+      verify(() => mockBox.put('a1', article)).called(1);
+      verifyNever(() => mockBox.delete(any()));
+    });
+
+    test('no hace nada si el artículo no existe', () async {
+      when(() => mockBox.get('missing')).thenReturn(null);
+
+      await datasource.deleteArticle('missing');
+
+      verifyNever(() => mockBox.put(any(), any()));
     });
   });
 }

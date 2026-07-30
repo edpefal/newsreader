@@ -33,6 +33,12 @@ class SupabaseAuthClient implements AuthClient {
   bool get isSignedIn => _supabase.auth.currentSession != null;
 
   @override
+  String? get currentUserId => _supabase.auth.currentUser?.id;
+
+  @override
+  String? get currentAccessToken => _supabase.auth.currentSession?.accessToken;
+
+  @override
   Future<AuthResult> signInWithGoogle() async {
     try {
       final account = await _googleSignIn.signIn();

@@ -6,6 +6,7 @@ class DailySummary extends Equatable {
   final String content;
   final int articleCount;
   final DateTime createdAt;
+  final DateTime? updatedAt;
 
   const DailySummary({
     required this.id,
@@ -13,8 +14,10 @@ class DailySummary extends Equatable {
     required this.content,
     required this.articleCount,
     required this.createdAt,
+    this.updatedAt,
   });
 
   @override
-  List<Object?> get props => [id, date, content, articleCount, createdAt];
+  List<Object?> get props =>
+      [id, date, content, articleCount, createdAt, updatedAt];
 }

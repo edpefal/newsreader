@@ -25,13 +25,15 @@ class NewsSourceModelAdapter extends TypeAdapter<NewsSourceModel> {
       addedAt: fields[5] as DateTime,
       lastSyncedAt: fields[6] as DateTime?,
       hasError: fields[7] == null ? false : fields[7] as bool,
+      updatedAt: fields[8] as DateTime?,
+      deletedAt: fields[9] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, NewsSourceModel obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +49,11 @@ class NewsSourceModelAdapter extends TypeAdapter<NewsSourceModel> {
       ..writeByte(6)
       ..write(obj.lastSyncedAt)
       ..writeByte(7)
-      ..write(obj.hasError);
+      ..write(obj.hasError)
+      ..writeByte(8)
+      ..write(obj.updatedAt)
+      ..writeByte(9)
+      ..write(obj.deletedAt);
   }
 
   @override

@@ -30,6 +30,12 @@ class NewsSourceModel extends HiveObject {
   @HiveField(7)
   bool hasError;
 
+  @HiveField(8)
+  DateTime? updatedAt;
+
+  @HiveField(9)
+  DateTime? deletedAt;
+
   NewsSourceModel({
     required this.id,
     required this.name,
@@ -39,6 +45,8 @@ class NewsSourceModel extends HiveObject {
     required this.addedAt,
     this.lastSyncedAt,
     this.hasError = false,
+    this.updatedAt,
+    this.deletedAt,
   });
 
   factory NewsSourceModel.fromEntity(NewsSource entity) => NewsSourceModel(
@@ -50,6 +58,8 @@ class NewsSourceModel extends HiveObject {
         addedAt: entity.addedAt,
         lastSyncedAt: entity.lastSyncedAt,
         hasError: entity.hasError,
+        updatedAt: entity.updatedAt,
+        deletedAt: entity.deletedAt,
       );
 
   NewsSource toEntity() => NewsSource(
@@ -61,5 +71,7 @@ class NewsSourceModel extends HiveObject {
         addedAt: addedAt,
         lastSyncedAt: lastSyncedAt,
         hasError: hasError,
+        updatedAt: updatedAt,
+        deletedAt: deletedAt,
       );
 }

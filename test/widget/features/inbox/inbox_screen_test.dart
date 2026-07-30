@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
-import 'package:newsreader/features/inbox/domain/usecases/sync_sources.dart';
+import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
 
@@ -141,7 +141,7 @@ void main() {
       when(() => cubit.state)
           .thenReturn(InboxLoaded(tArticles, hasSources: true));
       when(() => cubit.syncAndReload()).thenAnswer(
-        (_) async => const SyncResult(
+        (_) async => const FeedSyncResult(
           synced: 0,
           failedSourceIds: ['s1'],
           isNetworkError: true,
@@ -166,7 +166,7 @@ void main() {
       when(() => cubit.state)
           .thenReturn(InboxLoaded(tArticles, hasSources: true));
       when(() => cubit.syncAndReload()).thenAnswer(
-        (_) async => const SyncResult(
+        (_) async => const FeedSyncResult(
           synced: 1,
           failedSourceIds: ['s1', 's2'],
         ),
@@ -201,7 +201,7 @@ void main() {
       when(() => cubit.state)
           .thenReturn(InboxLoaded(tArticles, hasSources: true));
       when(() => cubit.syncAndReload()).thenAnswer(
-        (_) async => const SyncResult(synced: 3, failedSourceIds: []),
+        (_) async => const FeedSyncResult(synced: 3, failedSourceIds: []),
       );
 
       await tester.pumpWidget(_buildSubject(cubit));
