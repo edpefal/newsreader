@@ -17,9 +17,20 @@ final class InboxLoaded extends InboxState {
   final List<Article> articles;
   final bool hasSources;
   final String? readArticleId;
+  final bool isSyncingInBackground;
 
-  const InboxLoaded(this.articles, {required this.hasSources, this.readArticleId});
+  const InboxLoaded(
+    this.articles, {
+    required this.hasSources,
+    this.readArticleId,
+    this.isSyncingInBackground = false,
+  });
 
   @override
-  List<Object?> get props => [articles, hasSources, readArticleId];
+  List<Object?> get props => [
+    articles,
+    hasSources,
+    readArticleId,
+    isSyncingInBackground,
+  ];
 }

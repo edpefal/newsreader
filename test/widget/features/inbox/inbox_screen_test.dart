@@ -125,6 +125,30 @@ void main() {
       expect(find.text('Agregar'), findsOneWidget);
     });
 
+    testWidgets(
+        'muestra LinearProgressIndicator cuando isSyncingInBackground es true sin ocultar los artículos',
+        (tester) async {
+      when(() => cubit.state).thenReturn(
+        InboxLoaded(tArticles, hasSources: true, isSyncingInBackground: true),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.text('Artículo de prueba'), findsOneWidget);
+    });
+
+    testWidgets(
+        'no muestra LinearProgressIndicator cuando isSyncingInBackground es false',
+        (tester) async {
+      when(() => cubit.state)
+          .thenReturn(InboxLoaded(tArticles, hasSources: true));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+    });
+
     testWidgets('muestra RefreshIndicator cuando el estado es InboxLoaded',
         (tester) async {
       when(() => cubit.state)

@@ -83,88 +83,102 @@ class _InboxViewState extends State<InboxView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocConsumer<InboxCubit, InboxState>(
-        listenWhen: (_, curr) => curr is InboxLoaded,
-        listener: (context, state) {
-          final loaded = state as InboxLoaded;
-          if (loaded.readArticleId != null) {
-            _animateDismiss(loaded.readArticleId!);
-          } else {
-            setState(() {
-              _flatItems = _buildFlatItems(loaded.articles);
-              _listKey = GlobalKey<AnimatedListState>();
-            });
-          }
-        },
-        buildWhen: (_, curr) =>
-            curr is InboxLoading ||
-            (curr is InboxLoaded && curr.readArticleId == null),
-        builder: (context, state) {
-          if (state is InboxLoading) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  if (state.message != null) ...[
-                    const SizedBox(height: 16),
-                    Text(state.message!),
-                  ],
+      body: Column(
+        children: [
+          const _BackgroundSyncIndicator(),
+          Expanded(child: _buildInboxBody(context)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInboxBody(BuildContext context) {
+    return BlocConsumer<InboxCubit, InboxState>(
+      listenWhen: (_, curr) => curr is InboxLoaded,
+      listener: (context, state) {
+        final loaded = state as InboxLoaded;
+        if (loaded.readArticleId != null) {
+          _animateDismiss(loaded.readArticleId!);
+        } else {
+          setState(() {
+            _flatItems = _buildFlatItems(loaded.articles);
+            _listKey = GlobalKey<AnimatedListState>();
+          });
+        }
+      },
+      buildWhen: (_, curr) =>
+          curr is InboxLoading ||
+          (curr is InboxLoaded && curr.readArticleId == null),
+      builder: (context, state) {
+        if (state is InboxLoading) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                if (state.message != null) ...[
+                  const SizedBox(height: 16),
+                  Text(state.message!),
                 ],
-              ),
-            );
-          }
-          final loaded = state as InboxLoaded;
-
-          if (_flatItems.isEmpty) {
-            final emptyWidget = loaded.hasSources
-                ? const _UpToDateState()
-                : const _OnboardingState();
-            return RefreshIndicator(
-              onRefresh: () => _onRefresh(context),
-              child: LayoutBuilder(
-                builder: (_, constraints) => SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: SizedBox(height: constraints.maxHeight, child: emptyWidget),
-                ),
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => _onRefresh(context),
-            child: AnimatedList(
-              key: _listKey,
-              initialItemCount: _flatItems.length,
-              itemBuilder: (context, index, animation) {
-                final item = _flatItems[index];
-                if (item is _DateHeaderItem) {
-                  return DateSeparator(day: item.day);
-                }
-                final article = (item as _ArticleListItem).article;
-                return Dismissible(
-                  key: ValueKey(article.id),
-                  direction: DismissDirection.endToStart,
-                  background: const _SwipeReadBackground(),
-                  onDismissed: (_) => _onSwipeDismiss(context, article),
-                  child: ArticleInboxTile(
-                    article: article,
-                    onTap: () async {
-                      await context.push(
-                        '/article/${article.id}',
-                        extra: article,
-                      );
-                      if (context.mounted) {
-                        context.read<InboxCubit>().loadArticlesAfterReading(article.id);
-                      }
-                    },
-                  ),
-                );
-              },
+              ],
             ),
           );
-        },
-      ),
+        }
+        final loaded = state as InboxLoaded;
+
+        if (_flatItems.isEmpty) {
+          final emptyWidget = loaded.hasSources
+              ? const _UpToDateState()
+              : const _OnboardingState();
+          return RefreshIndicator(
+            onRefresh: () => _onRefresh(context),
+            child: LayoutBuilder(
+              builder: (_, constraints) => SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: constraints.maxHeight,
+                  child: emptyWidget,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () => _onRefresh(context),
+          child: AnimatedList(
+            key: _listKey,
+            initialItemCount: _flatItems.length,
+            itemBuilder: (context, index, animation) {
+              final item = _flatItems[index];
+              if (item is _DateHeaderItem) {
+                return DateSeparator(day: item.day);
+              }
+              final article = (item as _ArticleListItem).article;
+              return Dismissible(
+                key: ValueKey(article.id),
+                direction: DismissDirection.endToStart,
+                background: const _SwipeReadBackground(),
+                onDismissed: (_) => _onSwipeDismiss(context, article),
+                child: ArticleInboxTile(
+                  article: article,
+                  onTap: () async {
+                    await context.push(
+                      '/article/${article.id}',
+                      extra: article,
+                    );
+                    if (context.mounted) {
+                      context.read<InboxCubit>().loadArticlesAfterReading(
+                        article.id,
+                      );
+                    }
+                  },
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -176,7 +190,8 @@ class _InboxViewState extends State<InboxView> {
 
     int? headerIdx;
     if (articleIdx > 0 && _flatItems[articleIdx - 1] is _DateHeaderItem) {
-      final nextIsArticleInSameGroup = articleIdx + 1 < _flatItems.length &&
+      final nextIsArticleInSameGroup =
+          articleIdx + 1 < _flatItems.length &&
           _flatItems[articleIdx + 1] is _ArticleListItem;
       if (!nextIsArticleInSameGroup) {
         headerIdx = articleIdx - 1;
@@ -223,7 +238,8 @@ class _InboxViewState extends State<InboxView> {
     // grupo después de este, el header queda huérfano y también se elimina.
     int? headerIdx;
     if (articleIdx > 0 && _flatItems[articleIdx - 1] is _DateHeaderItem) {
-      final nextIsArticleInSameGroup = articleIdx + 1 < _flatItems.length &&
+      final nextIsArticleInSameGroup =
+          articleIdx + 1 < _flatItems.length &&
           _flatItems[articleIdx + 1] is _ArticleListItem;
       if (!nextIsArticleInSameGroup) {
         headerIdx = articleIdx - 1;
@@ -282,7 +298,9 @@ Future<void> _onRefresh(BuildContext context) async {
   if (result.isNetworkError) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Sin conexión. Los artículos descargados siguen disponibles.'),
+        content: Text(
+          'Sin conexión. Los artículos descargados siguen disponibles.',
+        ),
       ),
     );
   } else if (result.failedSourceIds.isNotEmpty) {
@@ -299,6 +317,27 @@ Future<void> _onRefresh(BuildContext context) async {
 // ---------------------------------------------------------------------------
 // Widgets internos
 // ---------------------------------------------------------------------------
+
+/// Indicador no invasivo de que hay una sincronización en curso al volver
+/// del background: a diferencia de `InboxLoading`, no reemplaza el
+/// contenido ya cargado en pantalla.
+class _BackgroundSyncIndicator extends StatelessWidget {
+  const _BackgroundSyncIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<InboxCubit, InboxState>(
+      buildWhen: (prev, curr) =>
+          (curr is InboxLoaded && curr.isSyncingInBackground) ||
+          (prev is InboxLoaded && prev.isSyncingInBackground),
+      builder: (context, state) {
+        final isSyncing = state is InboxLoaded && state.isSyncingInBackground;
+        if (!isSyncing) return const SizedBox.shrink();
+        return const LinearProgressIndicator();
+      },
+    );
+  }
+}
 
 class _OnboardingState extends StatelessWidget {
   const _OnboardingState();
@@ -326,8 +365,8 @@ class _OnboardingState extends StatelessWidget {
             Text(
               'Tu espacio para leer newsletters fuera del email.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -391,8 +430,8 @@ class _UpToDateState extends StatelessWidget {
             Text(
               'Desliza para actualizar.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

@@ -44,6 +44,29 @@ class InboxCubit extends Cubit<InboxState> {
   Future<void> loadArticlesAfterReading(String articleId) =>
       _reload(readArticleId: articleId);
 
+  /// Sincroniza tras volver del background sin ocultar el contenido ya
+  /// cargado. A diferencia de `loadArticles()`/`syncAfterSignIn()`, no
+  /// emite `InboxLoading` (pantalla completa) -- eso reemplazaría los
+  /// artículos ya visibles por un spinner mientras sincroniza. Si el
+  /// estado actual es `InboxLoaded`, se re-emite con
+  /// `isSyncingInBackground: true` para que la UI muestre un indicador no
+  /// invasivo sin perder el contenido en pantalla.
+  Future<void> syncInBackground() async {
+    final current = state;
+    if (current is InboxLoaded) {
+      emit(
+        InboxLoaded(
+          current.articles,
+          hasSources: current.hasSources,
+          readArticleId: current.readArticleId,
+          isSyncingInBackground: true,
+        ),
+      );
+    }
+    await _syncUserData.execute();
+    await _reload();
+  }
+
   Future<void> markAsRead(String articleId) async {
     await _markArticleAsRead.execute(articleId);
     await _reload(readArticleId: articleId);
@@ -70,6 +93,12 @@ class InboxCubit extends Cubit<InboxState> {
     ]);
     final articles = results[0] as List<Article>;
     final hasSources = (results[1] as List).isNotEmpty;
-    emit(InboxLoaded(articles, hasSources: hasSources, readArticleId: readArticleId));
+    emit(
+      InboxLoaded(
+        articles,
+        hasSources: hasSources,
+        readArticleId: readArticleId,
+      ),
+    );
   }
 }

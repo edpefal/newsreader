@@ -161,6 +161,37 @@ void main() {
     );
 
     blocTest<InboxCubit, InboxState>(
+      'syncInBackground() marca isSyncingInBackground sin ocultar los artículos ya cargados',
+      build: () {
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () => InboxLoaded(tArticles, hasSources: true),
+      act: (cubit) => cubit.syncInBackground(),
+      expect: () => [
+        InboxLoaded(tArticles, hasSources: true, isSyncingInBackground: true),
+        InboxLoaded(tArticles, hasSources: true),
+      ],
+      verify: (_) => verify(() => mockSyncUserData.execute()).called(1),
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'syncInBackground() no emite el flag intermedio si el estado actual no es InboxLoaded',
+      build: () {
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      act: (cubit) => cubit.syncInBackground(),
+      expect: () => [InboxLoaded(tArticles, hasSources: true)],
+    );
+
+    blocTest<InboxCubit, InboxState>(
       'syncAndReload() sube el estado local antes de disparar el fetch del servidor',
       build: () {
         when(() => mockFeedSyncTrigger.execute()).thenAnswer(

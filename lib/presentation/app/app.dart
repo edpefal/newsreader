@@ -10,7 +10,6 @@ import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
-import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 import 'package:newsreader/presentation/app/router.dart';
 import 'package:newsreader/presentation/theme/app_theme.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
@@ -73,11 +72,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Sincroniza también al volver del background (no solo al abrir la app
     // desde cero), para que un cambio hecho en otro dispositivo se refleje
-    // sin necesitar forzar el cierre completo de la app.
+    // sin necesitar forzar el cierre completo de la app. `syncInBackground()`
+    // (a diferencia de `loadArticles()`) no reemplaza el Inbox ya cargado
+    // por un spinner a pantalla completa mientras sincroniza.
     if (state == AppLifecycleState.resumed) {
-      getIt<SyncUserData>().execute().then((_) {
-        widget.inboxCubit.loadArticles();
-      });
+      widget.inboxCubit.syncInBackground();
     }
   }
 
