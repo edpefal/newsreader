@@ -8,6 +8,7 @@ import 'package:newsreader/core/data/datasources/local/summary_local_datasource.
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
+import 'package:newsreader/core/sync/article_state_row.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
 
 /// Sincroniza fuentes, artículos y resúmenes diarios con la nube: sube los
@@ -170,7 +171,7 @@ class SyncUserData {
       // dispositivo todavía), no hay nada que actualizar.
       await _cloudSyncClient.updatePartial(
         _articlesTable,
-        local.map((m) => _articleStateToRow(m)).toList(),
+        local.map(articleStateRow).toList(),
       );
       for (final model in local.where((m) => m.deletedAt != null)) {
         await _articleLocalDataSource.purge(model.id);
@@ -188,19 +189,6 @@ class SyncUserData {
     }
     return _maxUpdatedAt(remote);
   }
-
-  /// Fila con únicamente el estado de usuario sobre un artículo -- nunca su
-  /// contenido (título, HTML, extracto, etc.), que solo el servidor escribe.
-  Map<String, dynamic> _articleStateToRow(ArticleModel m) => {
-        'id': m.id,
-        'is_read': m.isRead,
-        'is_favorite': m.isFavorite,
-        'is_archived': m.isArchived,
-        'read_at': _toUtcIso(m.readAt),
-        'saved_as_favorite_at': _toUtcIso(m.savedAsFavoriteAt),
-        'updated_at': _toUtcIsoRequired(m.updatedAt ?? DateTime.now()),
-        'deleted_at': _toUtcIso(m.deletedAt),
-      };
 
   ArticleModel _articleFromRow(Map<String, dynamic> row) => ArticleModel(
         id: row['id'] as String,

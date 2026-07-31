@@ -13,7 +13,7 @@ class SupabaseCloudSyncClient implements CloudSyncClient {
   static const _pageSize = 1000;
 
   SupabaseCloudSyncClient({sb.SupabaseClient? supabase})
-      : _supabase = supabase ?? sb.Supabase.instance.client;
+    : _supabase = supabase ?? sb.Supabase.instance.client;
 
   @override
   Future<void> upsert(String table, List<Map<String, dynamic>> rows) async {
@@ -26,7 +26,10 @@ class SupabaseCloudSyncClient implements CloudSyncClient {
   }
 
   @override
-  Future<void> updatePartial(String table, List<Map<String, dynamic>> rows) async {
+  Future<void> updatePartial(
+    String table,
+    List<Map<String, dynamic>> rows,
+  ) async {
     if (rows.isEmpty) return;
     try {
       for (final row in rows) {

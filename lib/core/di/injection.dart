@@ -129,7 +129,7 @@ Future<void> setupDependencies() async {
 
   // Use cases — Articles
   getIt.registerLazySingleton(() => GetInboxArticles(getIt()));
-  getIt.registerLazySingleton(() => MarkArticleAsRead(getIt()));
+  getIt.registerLazySingleton(() => MarkArticleAsRead(getIt(), getIt(), getIt()));
   getIt.registerLazySingleton(() => ToggleFavorite(getIt()));
   getIt.registerLazySingleton(() => GetFavorites(getIt()));
   getIt.registerLazySingleton(() => GetArchive(getIt()));
