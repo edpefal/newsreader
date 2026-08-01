@@ -8,6 +8,10 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/domain/repositories/article_repository.dart';
+import 'package:newsreader/core/domain/repositories/source_repository.dart';
+import 'package:newsreader/core/domain/repositories/summary_repository.dart';
+import 'package:newsreader/core/navigation/route_extra_resolver.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/auth/presentation/screens/login_screen.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
@@ -73,14 +77,17 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/article/:id',
-      builder: (context, state) {
-        final article = state.extra as Article;
-        return ReaderScreen(
+      builder: (context, state) => RouteExtraResolver<Article>(
+        extra: state.extra,
+        resolve: () =>
+            getIt<ArticleRepository>().getArticleById(state.pathParameters['id']!),
+        onNotFound: (context) => context.go('/'),
+        builder: (context, article) => ReaderScreen(
           article: article,
           markAsRead: getIt<MarkArticleAsRead>(),
           toggleFavorite: getIt<ToggleFavorite>(),
-        );
-      },
+        ),
+      ),
       routes: [
         GoRoute(
           path: 'web',
@@ -107,20 +114,26 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/sources/:id',
-      builder: (context, state) {
-        final source = state.extra as NewsSource;
-        return SourceDetailScreen(
+      builder: (context, state) => RouteExtraResolver<NewsSource>(
+        extra: state.extra,
+        resolve: () =>
+            getIt<SourceRepository>().getSourceById(state.pathParameters['id']!),
+        onNotFound: (context) => context.go('/'),
+        builder: (context, source) => SourceDetailScreen(
           source: source,
           getSourceArticles: getIt<GetSourceArticles>(),
-        );
-      },
+        ),
+      ),
     ),
     GoRoute(
       path: '/summaries/:date',
-      builder: (context, state) {
-        final summary = state.extra as DailySummary;
-        return SummaryDetailScreen(summary: summary);
-      },
+      builder: (context, state) => RouteExtraResolver<DailySummary>(
+        extra: state.extra,
+        resolve: () =>
+            getIt<SummaryRepository>().getById(state.pathParameters['date']!),
+        onNotFound: (context) => context.go('/'),
+        builder: (context, summary) => SummaryDetailScreen(summary: summary),
+      ),
     ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>

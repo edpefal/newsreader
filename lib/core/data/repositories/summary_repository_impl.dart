@@ -23,4 +23,13 @@ class SummaryRepositoryImpl implements SummaryRepository {
     final model = await _dataSource.getByDate(date);
     return model?.toEntity();
   }
+
+  @override
+  Future<DailySummary?> getById(String id) async {
+    final models = await _dataSource.getAll();
+    for (final model in models) {
+      if (model.id == id) return model.toEntity();
+    }
+    return null;
+  }
 }

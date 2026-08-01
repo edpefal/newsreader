@@ -15,6 +15,15 @@ class SourceRepositoryImpl implements SourceRepository {
   }
 
   @override
+  Future<NewsSource?> getSourceById(String id) async {
+    final models = await _localDataSource.getSources();
+    for (final model in models) {
+      if (model.id == id) return model.toEntity();
+    }
+    return null;
+  }
+
+  @override
   Future<NewsSource> addSource(NewsSource source) async {
     final model = NewsSourceModel.fromEntity(source);
     await _localDataSource.saveSource(model);
