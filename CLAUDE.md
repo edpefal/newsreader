@@ -160,6 +160,21 @@ emit(state..articles.add(article)); // mutación
 - Contenido truncado: `contentHtml == null || contentHtml.length < 500`.
 - Timeout por feed durante sync: 10 segundos. Un fallo no interrumpe las demás fuentes.
 
+## Commits
+
+Seguir [Conventional Commits](https://www.conventionalcommits.org/): `<tipo>: <descripción>` en minúscula, sin punto final, en español.
+
+Tipos usados en este proyecto: `feat`, `fix`, `chore`. (`docs`, `refactor`, `test`, `perf` quedan disponibles si aplica, pero no se han usado todavía.)
+
+- Un commit por cambio lógico independiente — si un change de OpenSpec tocó varias áreas no relacionadas, separar en varios commits en vez de uno solo mezclado.
+- El cuerpo (opcional, después de una línea en blanco) explica el *por qué*, no el *qué* — el diff ya muestra el qué.
+
+```
+feat: mostrar imagen destacada del feed en la lista de artículos
+fix: cascadear el borrado de una fuente a sus artículos en Supabase
+chore: bump versión a 1.6.0+7
+```
+
 ## Documentos de referencia
 
 - `PRD.md` — requisitos del producto
