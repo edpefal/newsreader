@@ -30,12 +30,47 @@ interface SourceRow {
   author: string | null;
 }
 
-// content:encoded no es un campo estándar de rss-parser -- hay que pedirlo
-// explícitamente como custom field, igual que el cliente (WebfeedFeedParser)
-// lee item.content?.value desde ese mismo tag para el HTML completo.
+// content:encoded y media:content/media:thumbnail no son campos estándar de
+// rss-parser -- hay que pedirlos explícitamente como custom fields. El
+// cliente (WebfeedFeedParser) lee item.content?.value desde ese mismo tag
+// content:encoded para el HTML completo; acá se usa el mismo tag para el
+// fallback de imagen embebida cuando no hay metadata explícita.
 const parser = new Parser({
-  customFields: { item: [["content:encoded", "contentEncoded"]] },
+  customFields: {
+    item: [
+      ["content:encoded", "contentEncoded"],
+      ["media:content", "mediaContent"],
+      ["media:thumbnail", "mediaThumbnail"],
+    ],
+  },
 });
+
+// Primera imagen embebida en un bloque de HTML (fallback final cuando el
+// feed no trae ninguna imagen como metadata explícita).
+const IMG_SRC_REGEX = /<img[^>]+src=["']([^"']+)["']/i;
+
+// deno-lint-ignore no-explicit-any
+function extractImageUrl(item: any, contentHtml: string | null): string | null {
+  // 1. Media RSS: rss-parser expone customFields como el atributo XML crudo
+  // (objeto con "$") o, si hay varias ocurrencias, un array de esos objetos.
+  const media = item.mediaContent ?? item.mediaThumbnail;
+  const mediaUrl = Array.isArray(media) ? media[0]?.$?.url : media?.$?.url;
+  if (mediaUrl) return mediaUrl;
+
+  // 2. Enclosure de tipo imagen.
+  const enclosureType = item.enclosure?.type as string | undefined;
+  if (item.enclosure?.url && enclosureType?.startsWith("image/")) {
+    return item.enclosure.url;
+  }
+
+  // 3. itunes:image.
+  const itunesImage = item.itunes?.image;
+  if (itunesImage) return itunesImage;
+
+  // 4. Primera <img> embebida en el HTML del contenido.
+  const match = contentHtml?.match(IMG_SRC_REGEX);
+  return match?.[1] ?? null;
+}
 
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -77,18 +112,22 @@ async function syncSource(
 
     const rows = (feed.items ?? [])
       .filter((item: any) => !!item.link)
-      .map((item: any) => ({
-        user_id: source.user_id,
-        source_id: source.id,
-        source_name: source.name,
-        source_icon_url: source.icon_url,
-        title: (item.title?.trim()) || "Sin título",
-        author: item.creator ?? item.author ?? source.author ?? null,
-        published_at: item.isoDate ?? new Date().toISOString(),
-        content_html: item.contentEncoded ?? item.content ?? null,
-        excerpt: item.contentSnippet ?? item.summary ?? null,
-        article_url: item.link,
-      }));
+      .map((item: any) => {
+        const contentHtml = item.contentEncoded ?? item.content ?? null;
+        return {
+          user_id: source.user_id,
+          source_id: source.id,
+          source_name: source.name,
+          source_icon_url: source.icon_url,
+          title: (item.title?.trim()) || "Sin título",
+          author: item.creator ?? item.author ?? source.author ?? null,
+          published_at: item.isoDate ?? new Date().toISOString(),
+          content_html: contentHtml,
+          excerpt: item.contentSnippet ?? item.summary ?? null,
+          article_url: item.link,
+          image_url: extractImageUrl(item, contentHtml),
+        };
+      });
 
     if (rows.length > 0) {
       const { error } = await admin

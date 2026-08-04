@@ -34,13 +34,14 @@ class ArticleModelAdapter extends TypeAdapter<ArticleModel> {
       savedAsFavoriteAt: fields[14] as DateTime?,
       updatedAt: fields[15] as DateTime?,
       deletedAt: fields[16] as DateTime?,
+      imageUrl: fields[17] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ArticleModel obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -74,7 +75,9 @@ class ArticleModelAdapter extends TypeAdapter<ArticleModel> {
       ..writeByte(15)
       ..write(obj.updatedAt)
       ..writeByte(16)
-      ..write(obj.deletedAt);
+      ..write(obj.deletedAt)
+      ..writeByte(17)
+      ..write(obj.imageUrl);
   }
 
   @override

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/widgets/cached_network_image_widget.dart';
 import 'package:newsreader/core/widgets/source_icon.dart';
 
 class ArticleInboxTile extends StatelessWidget {
+  static const double _thumbnailSize = 56;
+
   final Article article;
   final VoidCallback? onTap;
 
@@ -24,7 +27,19 @@ class ArticleInboxTile extends StatelessWidget {
       subtitle: Text(
         '${article.sourceName} · ${_formatDate(article.publishedAt)}',
       ),
+      trailing: article.imageUrl == null ? null : _buildThumbnail(),
       onTap: onTap,
+    );
+  }
+
+  Widget _buildThumbnail() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: CachedNetworkImageWidget(
+        imageUrl: article.imageUrl,
+        width: _thumbnailSize,
+        height: _thumbnailSize,
+      ),
     );
   }
 

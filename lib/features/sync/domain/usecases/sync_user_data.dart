@@ -200,6 +200,7 @@ class SyncUserData {
         publishedAt: DateTime.parse(row['published_at'] as String),
         contentHtml: row['content_html'] as String?,
         excerpt: row['excerpt'] as String?,
+        imageUrl: row['image_url'] as String?,
         articleUrl: row['article_url'] as String,
         isRead: row['is_read'] as bool? ?? false,
         isFavorite: row['is_favorite'] as bool? ?? false,

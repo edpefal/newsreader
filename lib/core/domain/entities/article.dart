@@ -10,6 +10,7 @@ class Article extends Equatable {
   final DateTime publishedAt;
   final String? contentHtml;
   final String? excerpt;
+  final String? imageUrl;
   final String articleUrl;
   final bool isRead;
   final bool isFavorite;
@@ -29,6 +30,7 @@ class Article extends Equatable {
     required this.publishedAt,
     this.contentHtml,
     this.excerpt,
+    this.imageUrl,
     required this.articleUrl,
     this.isRead = false,
     this.isFavorite = false,
@@ -58,6 +60,7 @@ class Article extends Equatable {
       publishedAt: publishedAt,
       contentHtml: contentHtml,
       excerpt: excerpt,
+      imageUrl: imageUrl,
       articleUrl: articleUrl,
       isRead: isRead ?? this.isRead,
       isFavorite: isFavorite ?? this.isFavorite,
@@ -80,6 +83,7 @@ class Article extends Equatable {
         publishedAt,
         contentHtml,
         excerpt,
+        imageUrl,
         articleUrl,
         isRead,
         isFavorite,

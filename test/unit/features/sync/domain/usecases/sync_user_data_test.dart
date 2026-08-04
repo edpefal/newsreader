@@ -377,4 +377,81 @@ void main() {
       expect(applied.isRead, true);
     });
   });
+
+  group('imagen del artículo', () {
+    test('mapea image_url de la fila remota al modelo local', () async {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(null);
+      when(() => mockSourceLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockArticleLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('sources', null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('daily_summaries', null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('articles', null))
+          .thenAnswer((_) async => [
+                {
+                  'id': 'a1',
+                  'source_id': 's1',
+                  'source_name': 'Source',
+                  'title': 'Título',
+                  'published_at': DateTime(2026).toIso8601String(),
+                  'article_url': 'https://example.com/a1',
+                  'image_url': 'https://example.com/a1/image.jpg',
+                  'is_read': false,
+                  'is_favorite': false,
+                  'is_archived': false,
+                  'updated_at': DateTime(2026, 1, 5).toIso8601String(),
+                },
+              ]);
+
+      await sut.execute();
+
+      final applied = verify(() => mockArticleLocal.applyRemote(captureAny()))
+          .captured
+          .single as ArticleModel;
+      expect(applied.imageUrl, 'https://example.com/a1/image.jpg');
+    });
+
+    test('image_url ausente en la fila remota se mapea como null', () async {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(null);
+      when(() => mockSourceLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockArticleLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('sources', null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('daily_summaries', null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('articles', null))
+          .thenAnswer((_) async => [
+                {
+                  'id': 'a1',
+                  'source_id': 's1',
+                  'source_name': 'Source',
+                  'title': 'Título',
+                  'published_at': DateTime(2026).toIso8601String(),
+                  'article_url': 'https://example.com/a1',
+                  'is_read': false,
+                  'is_favorite': false,
+                  'is_archived': false,
+                  'updated_at': DateTime(2026, 1, 5).toIso8601String(),
+                },
+              ]);
+
+      await sut.execute();
+
+      final applied = verify(() => mockArticleLocal.applyRemote(captureAny()))
+          .captured
+          .single as ArticleModel;
+      expect(applied.imageUrl, isNull);
+    });
+  });
 }
