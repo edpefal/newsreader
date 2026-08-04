@@ -1,6 +1,38 @@
+import 'dart:convert';
+
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
+
+/// Un grupo de filas que comparten el mismo payload de update (todo salvo
+/// `id`), listas para actualizarse con un solo UPDATE ... WHERE id IN (...).
+class RowUpdateGroup {
+  final Map<String, dynamic> payload;
+  final List<dynamic> ids;
+
+  const RowUpdateGroup(this.payload, this.ids);
+}
+
+/// Agrupa filas por payload idéntico (todo salvo `id`), preservando el
+/// orden de primera aparición de cada grupo. Función pura, sin dependencia
+/// del cliente de Supabase, para poder testear el agrupamiento sin mockear
+/// la cadena fluida de `postgrest`.
+List<RowUpdateGroup> groupRowsByPayload(List<Map<String, dynamic>> rows) {
+  final order = <String>[];
+  final groups = <String, RowUpdateGroup>{};
+  for (final row in rows) {
+    final payload = Map<String, dynamic>.from(row)..remove('id');
+    final key = jsonEncode(payload);
+    final existing = groups[key];
+    if (existing == null) {
+      order.add(key);
+      groups[key] = RowUpdateGroup(payload, [row['id']]);
+    } else {
+      existing.ids.add(row['id']);
+    }
+  }
+  return order.map((key) => groups[key]!).toList();
+}
 
 class SupabaseCloudSyncClient implements CloudSyncClient {
   final sb.SupabaseClient _supabase;
@@ -32,10 +64,17 @@ class SupabaseCloudSyncClient implements CloudSyncClient {
   ) async {
     if (rows.isEmpty) return;
     try {
-      for (final row in rows) {
-        final id = row['id'];
-        final payload = Map<String, dynamic>.from(row)..remove('id');
-        await _supabase.from(table).update(payload).eq('id', id);
+      // Agrupa las filas con payload idéntico (todo salvo `id`) para poder
+      // actualizarlas con un solo UPDATE ... WHERE id IN (...) en vez de un
+      // request por fila -- un borrado de fuente puede implicar cientos de
+      // artículos con el mismo `deleted_at`, y un loop de un request por
+      // fila deja todo lo que no llegó a correr sin actualizar si se
+      // interrumpe a mitad de camino (red, app a background, cierre).
+      for (final group in groupRowsByPayload(rows)) {
+        await _supabase
+            .from(table)
+            .update(group.payload)
+            .inFilter('id', group.ids);
       }
     } catch (e) {
       throw CloudSyncException(e.toString());
