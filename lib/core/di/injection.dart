@@ -34,6 +34,12 @@ import 'package:newsreader/core/data/repositories/summary_repository_impl.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
+import 'package:newsreader/core/sharing/file_sharer.dart';
+import 'package:newsreader/core/sharing/share_plus_file_sharer.dart';
+import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
+import 'package:newsreader/features/account/domain/usecases/export_favorites_json.dart';
+import 'package:newsreader/features/account/domain/usecases/export_sources_opml.dart';
+import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
 import 'package:newsreader/features/archive/domain/usecases/get_archive.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
 import 'package:newsreader/features/favorites/domain/usecases/get_favorites.dart';
@@ -85,6 +91,7 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton<EmailFeedGenerator>(
     () => SupabaseEmailFeedGenerator(getIt()),
   );
+  getIt.registerLazySingleton<FileSharer>(() => SharePlusFileSharer());
 
   // Data sources
   getIt.registerLazySingleton<SourceLocalDataSource>(
@@ -168,6 +175,12 @@ Future<void> setupDependencies() async {
       Hive.box<dynamic>(AppConstants.hiveSettingsBox),
     ),
   );
+
+  // Use cases — Account
+  getIt.registerLazySingleton(() => DeleteAccount(getIt(), getIt(), getIt()));
+  getIt.registerLazySingleton(() => ExportSourcesOpml(getIt()));
+  getIt.registerLazySingleton(() => ExportFavoritesJson(getIt()));
+  getIt.registerLazySingleton(() => ExportUserData(getIt(), getIt(), getIt()));
 
   // Presentation
   getIt.registerFactory<LoginCubit>(() => LoginCubit(getIt()));

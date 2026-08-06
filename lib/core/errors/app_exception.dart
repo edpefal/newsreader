@@ -30,3 +30,9 @@ class FeedDiscoveryException extends AppException {
             'del feed RSS (por ejemplo, que termine en /feed o .xml).',
   ]);
 }
+
+class AccountDeletionException extends AppException {
+  const AccountDeletionException([
+    super.message = 'No pudimos eliminar tu cuenta. Intentá de nuevo.',
+  ]);
+}

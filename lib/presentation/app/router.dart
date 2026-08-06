@@ -11,7 +11,11 @@ import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
+import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/navigation/route_extra_resolver.dart';
+import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
+import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
+import 'package:newsreader/features/account/presentation/widgets/delete_account_dialog.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/auth/presentation/screens/login_screen.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
@@ -325,6 +329,11 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
           ),
           const Divider(),
           ListTile(
+            leading: const Icon(Icons.ios_share),
+            title: const Text('Exportar mis datos'),
+            onTap: () => _exportUserData(context),
+          ),
+          ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Cerrar sesión'),
             onTap: () async {
@@ -336,8 +345,50 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
               await getIt<AuthClient>().signOut();
             },
           ),
+          ListTile(
+            leading: Icon(
+              Icons.delete_forever,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            title: Text(
+              'Eliminar cuenta',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            onTap: () => _confirmDeleteAccount(context),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _exportUserData(BuildContext context) async {
+    try {
+      await getIt<ExportUserData>().execute();
+    } on AppException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
+  }
+
+  void _confirmDeleteAccount(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => DeleteAccountDialog(
+        onConfirm: () => _deleteAccount(context),
+      ),
+    );
+  }
+
+  Future<void> _deleteAccount(BuildContext context) async {
+    try {
+      await getIt<DeleteAccount>().execute();
+    } on AppException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
   }
 }
