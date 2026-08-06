@@ -184,37 +184,99 @@ final appRouter = GoRouter(
   ],
 );
 
-class _ScaffoldWithNavBar extends StatelessWidget {
+/// Índices de tabs cuyo contenido soporta búsqueda (Inbox, Favoritos,
+/// Leídos), ver capability `article-search`. Fuentes y Resúmenes quedan
+/// fuera de alcance.
+const _searchableTabIndices = {0, 1, 2};
+
+class _ScaffoldWithNavBar extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const _ScaffoldWithNavBar({required this.navigationShell});
 
+  @override
+  State<_ScaffoldWithNavBar> createState() => _ScaffoldWithNavBarState();
+}
+
+class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
   static const _titles = ['Inbox', 'Favoritos', 'Leídos', 'Fuentes', 'Resúmenes'];
 
+  bool _isSearching = false;
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _search(BuildContext context, String query) {
+    switch (widget.navigationShell.currentIndex) {
+      case 0:
+        context.read<InboxCubit>().search(query);
+      case 1:
+        context.read<FavoritesCubit>().search(query);
+      case 2:
+        context.read<ArchiveCubit>().search(query);
+    }
+  }
+
+  void _toggleSearch(BuildContext context) {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchController.clear();
+        _search(context, '');
+      }
+    });
+  }
+
   void _onDestinationSelected(BuildContext context, int index) {
+    if (_isSearching) _toggleSearch(context);
     if (index == 1) context.read<FavoritesCubit>().loadFavorites();
     if (index == 2) context.read<ArchiveCubit>().loadArchive();
     if (index == 3) context.read<SourcesCubit>().loadSources();
     if (index == 4) context.read<SummariesCubit>().loadSummaries();
     Navigator.pop(context);
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       index,
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentIndex = widget.navigationShell.currentIndex;
+    final isSearchable = _searchableTabIndices.contains(currentIndex);
     return Scaffold(
-      appBar: AppBar(title: Text(_titles[navigationShell.currentIndex])),
-      body: navigationShell,
+      appBar: AppBar(
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Buscar por título, fuente o autor...',
+                  border: InputBorder.none,
+                ),
+                onChanged: (query) => _search(context, query),
+              )
+            : Text(_titles[currentIndex]),
+        actions: [
+          if (isSearchable)
+            IconButton(
+              icon: Icon(_isSearching ? Icons.close : Icons.search),
+              onPressed: () => _toggleSearch(context),
+            ),
+        ],
+      ),
+      body: widget.navigationShell,
       drawer: NavigationDrawer(
-        selectedIndex: navigationShell.currentIndex,
+        selectedIndex: currentIndex,
         onDestinationSelected: (index) => _onDestinationSelected(context, index),
         children: [
           const DrawerHeader(
             child: Text(
-              'Newsletter Hub',
+              'Reevo',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),

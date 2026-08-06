@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -36,6 +38,18 @@ void main() {
       title: 'Artículo uno',
       publishedAt: DateTime(2024, 1, 15),
       articleUrl: 'https://example.com/1',
+    ),
+  ];
+
+  final tArticlesRefreshed = [
+    ...tArticles,
+    Article(
+      id: '2',
+      sourceId: 's1',
+      sourceName: 'Newsletter A',
+      title: 'Artículo nuevo tras refrescar feeds',
+      publishedAt: DateTime(2024, 1, 16),
+      articleUrl: 'https://example.com/2',
     ),
   ];
 
@@ -139,9 +153,12 @@ void main() {
     );
 
     blocTest<InboxCubit, InboxState>(
-      'syncAfterSignIn() emite Loading, sincroniza y recarga con los datos bajados',
+      'syncAfterSignIn() emite Loading, sincroniza, recarga, y luego '
+      'refresca los feeds en segundo plano sin bloquear la UI',
       build: () {
-        when(() => mockSyncUserData.execute()).thenAnswer((_) async {});
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer(
+          (_) async => const FeedSyncResult(synced: 1, failedSourceIds: []),
+        );
         when(() => mockGetInboxArticles.execute())
             .thenAnswer((_) async => tArticles);
         when(() => mockGetSources.execute())
@@ -150,13 +167,102 @@ void main() {
       },
       seed: () => const InboxLoaded([], hasSources: false),
       act: (cubit) => cubit.syncAfterSignIn(),
+      wait: const Duration(milliseconds: 10),
       expect: () => [
         const InboxLoading(message: 'Sincronizando fuentes...'),
         InboxLoaded(tArticles, hasSources: true),
+        InboxLoaded(tArticles, hasSources: true, isSyncingInBackground: true),
+        InboxLoaded(tArticles, hasSources: true),
       ],
       verify: (_) {
-        verify(() => mockSyncUserData.execute()).called(1);
-        verifyNever(() => mockFeedSyncTrigger.execute());
+        verify(() => mockSyncUserData.execute()).called(2);
+        verify(() => mockFeedSyncTrigger.execute()).called(1);
+      },
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'syncAfterSignIn() actualiza el Inbox con los artículos nuevos que '
+      'trae el refresco silencioso de feeds',
+      build: () {
+        var reloadCount = 0;
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer(
+          (_) async => const FeedSyncResult(synced: 1, failedSourceIds: []),
+        );
+        when(() => mockGetInboxArticles.execute()).thenAnswer((_) async {
+          reloadCount++;
+          return reloadCount == 1 ? tArticles : tArticlesRefreshed;
+        });
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () => const InboxLoaded([], hasSources: false),
+      act: (cubit) => cubit.syncAfterSignIn(),
+      wait: const Duration(milliseconds: 10),
+      expect: () => [
+        const InboxLoading(message: 'Sincronizando fuentes...'),
+        InboxLoaded(tArticles, hasSources: true),
+        InboxLoaded(tArticles, hasSources: true, isSyncingInBackground: true),
+        InboxLoaded(tArticlesRefreshed, hasSources: true),
+      ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'syncAfterSignIn() no propaga a la UI un error del refresco '
+      'silencioso de feeds (a diferencia de syncAndReload())',
+      build: () {
+        when(() => mockFeedSyncTrigger.execute())
+            .thenAnswer((_) async => throw const FeedSyncException('boom'));
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () => const InboxLoaded([], hasSources: false),
+      act: (cubit) => cubit.syncAfterSignIn(),
+      wait: const Duration(milliseconds: 10),
+      expect: () => [
+        const InboxLoading(message: 'Sincronizando fuentes...'),
+        InboxLoaded(tArticles, hasSources: true),
+        InboxLoaded(tArticles, hasSources: true, isSyncingInBackground: true),
+        InboxLoaded(tArticles, hasSources: true),
+      ],
+      errors: () => [],
+    );
+
+    test(
+      'un pull-to-refresh manual que coincide con el refresco silencioso '
+      'de login reusa la misma invocación de FeedSyncTrigger en vez de '
+      'disparar una segunda',
+      () async {
+        final completer = Completer<FeedSyncResult>();
+        when(() => mockFeedSyncTrigger.execute())
+            .thenAnswer((_) => completer.future);
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+
+        final cubit = buildCubit();
+
+        // Dispara el login: su fase silenciosa deja una invocación de
+        // FeedSyncTrigger en vuelo (el completer todavía no se resuelve).
+        final signInDone = cubit.syncAfterSignIn();
+        await Future<void>.delayed(Duration.zero);
+
+        // Un pull-to-refresh manual se solapa mientras esa invocación
+        // sigue pendiente.
+        final reloadDone = cubit.syncAndReload();
+
+        completer.complete(
+          const FeedSyncResult(synced: 1, failedSourceIds: []),
+        );
+
+        await signInDone;
+        await reloadDone;
+
+        verify(() => mockFeedSyncTrigger.execute()).called(1);
       },
     );
 
@@ -283,6 +389,73 @@ void main() {
         const InboxLoaded([], hasSources: true, readArticleId: '1'),
       ],
       verify: (_) => verify(() => mockMarkArticleAsRead.execute('1')).called(1),
+    );
+
+    final tSearchableArticles = [
+      Article(
+        id: '1',
+        sourceId: 's1',
+        sourceName: 'Newsletter A',
+        title: 'Cómo escribir mejor código Dart',
+        publishedAt: DateTime(2024, 1, 15),
+        articleUrl: 'https://example.com/1',
+      ),
+      Article(
+        id: '2',
+        sourceId: 's2',
+        sourceName: 'The Pragmatic Engineer',
+        title: 'Otro artículo sin relación',
+        publishedAt: DateTime(2024, 1, 16),
+        articleUrl: 'https://example.com/2',
+      ),
+    ];
+
+    blocTest<InboxCubit, InboxState>(
+      'search() filtra visibleArticles sin llamar al repositorio',
+      build: buildCubit,
+      seed: () => InboxLoaded(tSearchableArticles, hasSources: true),
+      act: (cubit) => cubit.search('dart'),
+      expect: () => [
+        InboxLoaded(tSearchableArticles, hasSources: true, searchQuery: 'dart'),
+      ],
+      verify: (_) => verifyNever(() => mockGetInboxArticles.execute()),
+    );
+
+    test('visibleArticles refleja el filtro de search() sobre título/fuente', () {
+      final cubit = InboxCubit(
+        mockGetInboxArticles,
+        mockGetSources,
+        mockFeedSyncTrigger,
+        mockMarkArticleAsRead,
+        mockSyncUserData,
+      );
+      cubit.emit(InboxLoaded(tSearchableArticles, hasSources: true));
+
+      cubit.search('pragmatic');
+      final loaded = cubit.state as InboxLoaded;
+      expect(loaded.visibleArticles, [tSearchableArticles[1]]);
+
+      cubit.search('');
+      final cleared = cubit.state as InboxLoaded;
+      expect(cleared.visibleArticles, tSearchableArticles);
+    });
+
+    blocTest<InboxCubit, InboxState>(
+      'search() sin coincidencias deja visibleArticles vacío',
+      build: buildCubit,
+      seed: () => InboxLoaded(tSearchableArticles, hasSources: true),
+      act: (cubit) => cubit.search('inexistente'),
+      verify: (cubit) {
+        final loaded = cubit.state as InboxLoaded;
+        expect(loaded.visibleArticles, isEmpty);
+      },
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'search() no tiene efecto si el estado actual no es InboxLoaded',
+      build: buildCubit,
+      act: (cubit) => cubit.search('algo'),
+      expect: () => [],
     );
   });
 }

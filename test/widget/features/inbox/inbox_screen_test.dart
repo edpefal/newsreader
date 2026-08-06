@@ -77,7 +77,7 @@ void main() {
 
       await tester.pumpWidget(_buildSubject(cubit));
 
-      expect(find.text('Bienvenido a Newsletter Hub'), findsOneWidget);
+      expect(find.text('Bienvenido a Reevo'), findsOneWidget);
       expect(find.text('Agregar tu primer newsletter'), findsOneWidget);
     });
 
@@ -319,6 +319,19 @@ void main() {
 
       expect(find.text('Artículo de prueba'), findsNothing);
       expect(find.text('Otro artículo'), findsOneWidget);
+    });
+
+    testWidgets(
+        'estado "sin resultados" se muestra distinto al estado sin fuentes',
+        (tester) async {
+      when(() => cubit.state).thenReturn(
+        const InboxLoaded([], hasSources: true, searchQuery: 'algo'),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Sin resultados'), findsOneWidget);
+      expect(find.text('Estás al día'), findsNothing);
     });
   });
 }

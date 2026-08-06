@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
+import 'package:newsreader/core/widgets/no_search_results_state.dart';
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 
@@ -45,10 +46,12 @@ class FavoritesView extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           final loaded = state as FavoritesLoaded;
-          if (loaded.articles.isEmpty) {
-            return const _EmptyFavoritesState();
+          if (loaded.visibleArticles.isEmpty) {
+            return loaded.searchQuery.isNotEmpty
+                ? const NoSearchResultsState()
+                : const _EmptyFavoritesState();
           }
-          final items = _buildGroupedItems(loaded.articles);
+          final items = _buildGroupedItems(loaded.visibleArticles);
           return ListView.builder(
             itemCount: items.length,
             itemBuilder: (context, index) {

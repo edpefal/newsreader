@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
+import 'package:newsreader/core/widgets/no_search_results_state.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 
@@ -55,7 +56,7 @@ class _InboxViewState extends State<InboxView> {
       _initialized = true;
       final state = context.read<InboxCubit>().state;
       if (state is InboxLoaded && state.readArticleId == null) {
-        _flatItems = _buildFlatItems(state.articles);
+        _flatItems = _buildFlatItems(state.visibleArticles);
       }
     }
   }
@@ -101,7 +102,7 @@ class _InboxViewState extends State<InboxView> {
           _animateDismiss(loaded.readArticleId!);
         } else {
           setState(() {
-            _flatItems = _buildFlatItems(loaded.articles);
+            _flatItems = _buildFlatItems(loaded.visibleArticles);
             _listKey = GlobalKey<AnimatedListState>();
           });
         }
@@ -127,9 +128,11 @@ class _InboxViewState extends State<InboxView> {
         final loaded = state as InboxLoaded;
 
         if (_flatItems.isEmpty) {
-          final emptyWidget = loaded.hasSources
-              ? const _UpToDateState()
-              : const _OnboardingState();
+          final emptyWidget = loaded.searchQuery.isNotEmpty
+              ? const NoSearchResultsState()
+              : loaded.hasSources
+                  ? const _UpToDateState()
+                  : const _OnboardingState();
           return RefreshIndicator(
             onRefresh: () => _onRefresh(context),
             child: LayoutBuilder(
@@ -357,7 +360,7 @@ class _OnboardingState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Bienvenido a Newsletter Hub',
+              'Bienvenido a Reevo',
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),

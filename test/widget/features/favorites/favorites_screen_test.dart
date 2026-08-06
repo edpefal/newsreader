@@ -148,5 +148,18 @@ void main() {
 
       verify(() => cubit.loadFavorites()).called(1);
     });
+
+    testWidgets(
+        'estado "sin resultados" se muestra distinto al estado vacío',
+        (tester) async {
+      when(() => cubit.state).thenReturn(
+        const FavoritesLoaded([], searchQuery: 'algo'),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Sin resultados'), findsOneWidget);
+      expect(find.text('Sin favoritos aún'), findsNothing);
+    });
   });
 }

@@ -147,5 +147,18 @@ void main() {
 
       verify(() => cubit.loadArchive()).called(1);
     });
+
+    testWidgets(
+        'estado "sin resultados" se muestra distinto al estado vacío',
+        (tester) async {
+      when(() => cubit.state).thenReturn(
+        const ArchiveLoaded([], searchQuery: 'algo'),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Sin resultados'), findsOneWidget);
+      expect(find.text('Sin artículos leídos'), findsNothing);
+    });
   });
 }
