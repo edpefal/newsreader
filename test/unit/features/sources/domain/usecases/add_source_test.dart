@@ -106,6 +106,70 @@ void main() {
       );
     });
 
+    test(
+        'etapa 3: si la etapa 2 falla, extrae el link declarado en el HTML de la etapa 1 y lo usa',
+        () async {
+      when(() => mockResolver.candidatesFor('https://simonwillison.net'))
+          .thenReturn([
+        'https://simonwillison.net',
+        'https://simonwillison.net/feed',
+      ]);
+      when(() => mockHttp.get('https://simonwillison.net')).thenAnswer(
+        (_) async => '<html><head>'
+            '<link rel="alternate" type="application/atom+xml" '
+            'href="/atom/everything/">'
+            '</head></html>',
+      );
+      when(() => mockFeedParser.parse(any(that: contains('<html>'))))
+          .thenThrow(const ParseException());
+      when(() => mockHttp.get('https://simonwillison.net/feed'))
+          .thenThrow(const NetworkException());
+      when(() => mockHttp.get('https://simonwillison.net/atom/everything/'))
+          .thenAnswer((_) async => '<xml/>');
+      when(() => mockFeedParser.parse('<xml/>')).thenReturn(_tFeedData);
+      when(() =>
+              mockRepo.sourceExists('https://simonwillison.net/atom/everything/'))
+          .thenAnswer((_) async => false);
+
+      await sut.execute('https://simonwillison.net');
+
+      verify(() =>
+              mockRepo.sourceExists('https://simonwillison.net/atom/everything/'))
+          .called(1);
+    });
+
+    test(
+        'etapa 3: si el HTML de la etapa 1 no declara ningún link, falla igual que hoy',
+        () async {
+      when(() => mockResolver.candidatesFor('https://sin-feed-ni-link.com'))
+          .thenReturn(['https://sin-feed-ni-link.com']);
+      when(() => mockHttp.get('https://sin-feed-ni-link.com'))
+          .thenAnswer((_) async => '<html><head></head></html>');
+      when(() => mockFeedParser.parse('<html><head></head></html>'))
+          .thenThrow(const ParseException());
+
+      expect(
+        () => sut.execute('https://sin-feed-ni-link.com'),
+        throwsA(isA<FeedDiscoveryException>()),
+      );
+    });
+
+    test(
+        'etapa 3: no se intenta si la etapa 1 falla por red (no hay HTML retenido)',
+        () async {
+      when(() => mockResolver.candidatesFor('https://timeout.com'))
+          .thenReturn(['https://timeout.com']);
+      when(() => mockHttp.get('https://timeout.com'))
+          .thenThrow(const NetworkException());
+
+      expect(
+        () => sut.execute('https://timeout.com'),
+        throwsA(isA<NetworkException>()),
+      );
+      // Ningún otro request más allá del único intento de la etapa 1.
+      verify(() => mockHttp.get('https://timeout.com')).called(1);
+    });
+
     test('error de red en el primer intento se propaga sin probar el candidato heurístico',
         () async {
       when(() => mockResolver.candidatesFor('https://autor.substack.com/p/x'))

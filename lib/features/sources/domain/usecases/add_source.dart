@@ -2,6 +2,7 @@ import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/feed/feed_data.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
 import 'package:newsreader/core/feed/feed_url_resolver.dart';
+import 'package:newsreader/core/feed/html_feed_link_extractor.dart';
 import 'package:newsreader/core/network/http_client.dart';
 import 'package:newsreader/core/utils/id_generator.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
@@ -50,37 +51,68 @@ class AddSource {
     return _sourceRepository.addSource(source);
   }
 
-  /// Resolución en dos etapas: primero prueba [rawUrl] en solitario (etapa 1);
-  /// si no resulta un feed válido, dispara el resto de los candidatos
+  /// Resolución en tres etapas: primero prueba [rawUrl] en solitario (etapa
+  /// 1); si no resulta un feed válido, dispara el resto de los candidatos
   /// heurísticos en paralelo (etapa 2) y elige el ganador respetando el
   /// orden de prioridad de [FeedUrlResolver.candidatesFor], no el orden en
   /// que respondieron por red — así el resultado es determinista para el
-  /// mismo input.
+  /// mismo input. Si la etapa 2 tampoco resuelve nada, y la etapa 1 alcanzó
+  /// a descargar HTML (falló el parseo como feed, no la conexión), se
+  /// intenta un último candidato extraído de un `<link rel="alternate">`
+  /// declarado en ese HTML (etapa 3, auto-descubrimiento) — ver
+  /// [HtmlFeedLinkExtractor].
   Future<({String feedUrl, FeedData feedData})> _resolveFeed(
     String rawUrl,
     void Function()? onHeuristicStageStarted,
   ) async {
     final candidates = _feedUrlResolver.candidatesFor(rawUrl);
 
-    final firstStageResult = await _tryCandidate(candidates.first);
-    if (firstStageResult != null) return firstStageResult;
+    final firstStage = await _tryFirstStageCandidate(candidates.first);
+    if (firstStage.result != null) return firstStage.result!;
 
     final heuristicCandidates = candidates.skip(1).toList();
-    if (heuristicCandidates.isEmpty) {
-      throw const FeedDiscoveryException();
+    if (heuristicCandidates.isNotEmpty) {
+      onHeuristicStageStarted?.call();
+
+      final results = await Future.wait(
+        heuristicCandidates.map(_tryCandidateIgnoringErrors),
+      );
+
+      for (final result in results) {
+        if (result != null) return result;
+      }
     }
 
-    onHeuristicStageStarted?.call();
-
-    final results = await Future.wait(
-      heuristicCandidates.map(_tryCandidateIgnoringErrors),
-    );
-
-    for (final result in results) {
-      if (result != null) return result;
+    final retainedHtml = firstStage.html;
+    if (retainedHtml != null) {
+      final discoveredUrl = HtmlFeedLinkExtractor.extract(
+        retainedHtml,
+        Uri.parse(candidates.first),
+      );
+      if (discoveredUrl != null) {
+        final discoveredResult =
+            await _tryCandidateIgnoringErrors(discoveredUrl);
+        if (discoveredResult != null) return discoveredResult;
+      }
     }
 
     throw const FeedDiscoveryException();
+  }
+
+  /// Prueba el candidato de la etapa 1. A diferencia de [_tryCandidate],
+  /// retiene el HTML descargado cuando el parseo como feed falla, para que
+  /// la etapa 3 (auto-descubrimiento) pueda inspeccionarlo sin volver a
+  /// pedirlo. Un error de red/timeout se sigue propagando tal cual (aborta
+  /// la detección, no pasa a ninguna etapa siguiente).
+  Future<({({String feedUrl, FeedData feedData})? result, String? html})>
+      _tryFirstStageCandidate(String candidate) async {
+    final content = await _httpClient.get(candidate);
+    try {
+      final feedData = _feedParser.parse(content);
+      return (result: (feedUrl: candidate, feedData: feedData), html: null);
+    } on ParseException {
+      return (result: null, html: content);
+    }
   }
 
   /// Prueba un único candidato. Un feed inválido (no parseable) se traduce

@@ -18,6 +18,10 @@ void main() {
         'https://stratechery.com/feed/',
         'https://stratechery.com/rss/',
         'https://stratechery.com/atom.xml',
+        'https://www.stratechery.com/feed',
+        'https://www.stratechery.com/feed/',
+        'https://www.stratechery.com/rss/',
+        'https://www.stratechery.com/atom.xml',
       ]);
     });
 
@@ -30,6 +34,10 @@ void main() {
         'https://stratechery.com/feed/',
         'https://stratechery.com/rss/',
         'https://stratechery.com/atom.xml',
+        'https://www.stratechery.com/feed',
+        'https://www.stratechery.com/feed/',
+        'https://www.stratechery.com/rss/',
+        'https://www.stratechery.com/atom.xml',
       ]);
     });
 
@@ -42,6 +50,10 @@ void main() {
         'http://stratechery.com/feed/',
         'http://stratechery.com/rss/',
         'http://stratechery.com/atom.xml',
+        'http://www.stratechery.com/feed',
+        'http://www.stratechery.com/feed/',
+        'http://www.stratechery.com/rss/',
+        'http://www.stratechery.com/atom.xml',
       ]);
     });
 
@@ -54,6 +66,10 @@ void main() {
         'https://autor.substack.com/feed/',
         'https://autor.substack.com/rss/',
         'https://autor.substack.com/atom.xml',
+        'https://www.autor.substack.com/feed',
+        'https://www.autor.substack.com/feed/',
+        'https://www.autor.substack.com/rss/',
+        'https://www.autor.substack.com/atom.xml',
       ]);
     });
 
@@ -67,6 +83,10 @@ void main() {
         'https://stratechery.com/feed/',
         'https://stratechery.com/rss/',
         'https://stratechery.com/atom.xml',
+        'https://www.stratechery.com/feed',
+        'https://www.stratechery.com/feed/',
+        'https://www.stratechery.com/rss/',
+        'https://www.stratechery.com/atom.xml',
       ]);
     });
 
@@ -80,6 +100,10 @@ void main() {
         'https://blog.miempresa.com/feed/',
         'https://blog.miempresa.com/rss/',
         'https://blog.miempresa.com/atom.xml',
+        'https://www.blog.miempresa.com/feed',
+        'https://www.blog.miempresa.com/feed/',
+        'https://www.blog.miempresa.com/rss/',
+        'https://www.blog.miempresa.com/atom.xml',
       ]);
     });
 
@@ -93,6 +117,10 @@ void main() {
         'https://autor.beehiiv.com/feed/',
         'https://autor.beehiiv.com/rss/',
         'https://autor.beehiiv.com/atom.xml',
+        'https://www.autor.beehiiv.com/feed',
+        'https://www.autor.beehiiv.com/feed/',
+        'https://www.autor.beehiiv.com/rss/',
+        'https://www.autor.beehiiv.com/atom.xml',
       ]);
     });
 
@@ -118,6 +146,10 @@ void main() {
         'https://autor.substack.com/feed/',
         'https://autor.substack.com/rss/',
         'https://autor.substack.com/atom.xml',
+        'https://www.autor.substack.com/feed',
+        'https://www.autor.substack.com/feed/',
+        'https://www.autor.substack.com/rss/',
+        'https://www.autor.substack.com/atom.xml',
       ]);
     });
 
@@ -133,6 +165,10 @@ void main() {
         'https://substack.com/feed/',
         'https://substack.com/rss/',
         'https://substack.com/atom.xml',
+        'https://www.substack.com/feed',
+        'https://www.substack.com/feed/',
+        'https://www.substack.com/rss/',
+        'https://www.substack.com/atom.xml',
       ]);
     });
 
@@ -160,6 +196,10 @@ void main() {
         'https://substack.com/feed/',
         'https://substack.com/rss/',
         'https://substack.com/atom.xml',
+        'https://www.substack.com/feed',
+        'https://www.substack.com/feed/',
+        'https://www.substack.com/rss/',
+        'https://www.substack.com/atom.xml',
       ]);
     });
 
@@ -175,6 +215,10 @@ void main() {
         'https://medium.com/feed/',
         'https://medium.com/rss/',
         'https://medium.com/atom.xml',
+        'https://www.medium.com/feed',
+        'https://www.medium.com/feed/',
+        'https://www.medium.com/rss/',
+        'https://www.medium.com/atom.xml',
       ]);
     });
 
@@ -190,6 +234,10 @@ void main() {
         'https://medium.com/feed/',
         'https://medium.com/rss/',
         'https://medium.com/atom.xml',
+        'https://www.medium.com/feed',
+        'https://www.medium.com/feed/',
+        'https://www.medium.com/rss/',
+        'https://www.medium.com/atom.xml',
       ]);
     });
 
@@ -203,6 +251,10 @@ void main() {
         'https://ederperez.medium.com/feed/',
         'https://ederperez.medium.com/rss/',
         'https://ederperez.medium.com/atom.xml',
+        'https://www.ederperez.medium.com/feed',
+        'https://www.ederperez.medium.com/feed/',
+        'https://www.ederperez.medium.com/rss/',
+        'https://www.ederperez.medium.com/atom.xml',
       ]);
     });
 
@@ -215,7 +267,62 @@ void main() {
         'https://medium.com/feed/',
         'https://medium.com/rss/',
         'https://medium.com/atom.xml',
+        'https://www.medium.com/feed',
+        'https://www.medium.com/feed/',
+        'https://www.medium.com/rss/',
+        'https://www.medium.com/atom.xml',
       ]);
+    });
+
+    test('dominio apex que solo redirige a www en la raíz: agrega candidatos www',
+        () {
+      final candidates = resolver.candidatesFor('https://notboring.co');
+
+      expect(candidates, [
+        'https://notboring.co',
+        'https://notboring.co/feed',
+        'https://notboring.co/feed/',
+        'https://notboring.co/rss/',
+        'https://notboring.co/atom.xml',
+        'https://www.notboring.co/feed',
+        'https://www.notboring.co/feed/',
+        'https://www.notboring.co/rss/',
+        'https://www.notboring.co/atom.xml',
+      ]);
+    });
+
+    test('host que ya empieza con www no genera un candidato www.www duplicado',
+        () {
+      final candidates = resolver.candidatesFor('https://www.notboring.co');
+
+      expect(candidates, [
+        'https://www.notboring.co',
+        'https://www.notboring.co/feed',
+        'https://www.notboring.co/feed/',
+        'https://www.notboring.co/rss/',
+        'https://www.notboring.co/atom.xml',
+      ]);
+      expect(
+        candidates.any((c) => c.contains('www.www.')),
+        isFalse,
+      );
+    });
+
+    test('los candidatos www quedan después de todos los del host original',
+        () {
+      final candidates = resolver.candidatesFor('https://notboring.co');
+
+      final originalHostCandidates =
+          candidates.where((c) => Uri.parse(c).host == 'notboring.co');
+      final wwwHostCandidates =
+          candidates.where((c) => Uri.parse(c).host == 'www.notboring.co');
+
+      final lastOriginalIndex = candidates.lastIndexOf(
+        originalHostCandidates.last,
+      );
+      final firstWwwIndex = candidates.indexOf(wwwHostCandidates.first);
+
+      expect(firstWwwIndex, greaterThan(lastOriginalIndex));
     });
   });
 }

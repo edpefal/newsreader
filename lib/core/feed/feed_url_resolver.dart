@@ -33,6 +33,14 @@ class FeedUrlResolver {
       addIfNew('$origin$suffix');
     }
 
+    if (!uri.host.startsWith('www.')) {
+      final wwwOrigin =
+          Uri(scheme: uri.scheme, host: 'www.${uri.host}').toString();
+      for (final suffix in _genericSuffixes) {
+        addIfNew('$wwwOrigin$suffix');
+      }
+    }
+
     return candidates;
   }
 
