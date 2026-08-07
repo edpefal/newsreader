@@ -47,6 +47,15 @@ final class AddSourceValidating extends AddSourceState {
   List<Object?> get props => [];
 }
 
+/// La URL ingresada tal cual no resultó ser un feed válido y el sistema
+/// pasó a probar varios candidatos heurísticos en paralelo.
+final class AddSourceValidatingHeuristics extends AddSourceState {
+  const AddSourceValidatingHeuristics();
+
+  @override
+  List<Object?> get props => [];
+}
+
 final class AddSourceSuccess extends AddSourceState {
   final NewsSource source;
 

@@ -123,6 +123,123 @@ void main() {
       verifyNever(() => mockHttp.get('https://autor.substack.com/feed'));
     });
 
+    test(
+        'gana el candidato de mayor prioridad aunque otro de menor prioridad responda antes',
+        () async {
+      when(() => mockResolver.candidatesFor('https://autor.substack.com/p/x'))
+          .thenReturn([
+        'https://autor.substack.com/p/x',
+        'https://autor.substack.com/feed', // prioridad 1
+        'https://autor.substack.com/rss/', // prioridad 2
+      ]);
+      when(() => mockHttp.get('https://autor.substack.com/p/x'))
+          .thenAnswer((_) async => '<html></html>');
+      when(() => mockFeedParser.parse('<html></html>'))
+          .thenThrow(const ParseException());
+
+      // El candidato de menor prioridad resuelve más rápido...
+      when(() => mockHttp.get('https://autor.substack.com/rss/'))
+          .thenAnswer((_) async => '<xml-rss/>');
+      when(() => mockFeedParser.parse('<xml-rss/>')).thenReturn(_tFeedData);
+
+      // ...pero el de mayor prioridad tarda más en responder.
+      when(() => mockHttp.get('https://autor.substack.com/feed')).thenAnswer(
+        (_) async {
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+          return '<xml-feed/>';
+        },
+      );
+      when(() => mockFeedParser.parse('<xml-feed/>')).thenReturn(_tFeedData);
+
+      when(() => mockRepo.sourceExists('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => false);
+
+      await sut.execute('https://autor.substack.com/p/x');
+
+      // La corroboración real de cuál candidato ganó pasa por qué URL se usó
+      // para chequear duplicados, no por el valor de retorno (el mock de
+      // `addSource` devuelve siempre el mismo `_tSource` fijo).
+      verify(() => mockRepo.sourceExists('https://autor.substack.com/feed'))
+          .called(1);
+      verifyNever(() => mockRepo.sourceExists('https://autor.substack.com/rss/'));
+    });
+
+    test(
+        'un error de red en un candidato de la etapa 2 no aborta si otro candidato en vuelo es válido',
+        () async {
+      when(() => mockResolver.candidatesFor('https://autor.substack.com/p/x'))
+          .thenReturn([
+        'https://autor.substack.com/p/x',
+        'https://autor.substack.com/feed',
+        'https://autor.substack.com/rss/',
+      ]);
+      when(() => mockHttp.get('https://autor.substack.com/p/x'))
+          .thenAnswer((_) async => '<html></html>');
+      when(() => mockFeedParser.parse('<html></html>'))
+          .thenThrow(const ParseException());
+
+      when(() => mockHttp.get('https://autor.substack.com/feed'))
+          .thenThrow(const NetworkException());
+
+      when(() => mockHttp.get('https://autor.substack.com/rss/'))
+          .thenAnswer((_) async => '<xml/>');
+      when(() => mockFeedParser.parse('<xml/>')).thenReturn(_tFeedData);
+      when(() => mockRepo.sourceExists('https://autor.substack.com/rss/'))
+          .thenAnswer((_) async => false);
+
+      await sut.execute('https://autor.substack.com/p/x');
+
+      verify(() => mockRepo.sourceExists('https://autor.substack.com/rss/'))
+          .called(1);
+    });
+
+    test(
+        'onHeuristicStageStarted se invoca solo al pasar a la etapa de candidatos heurísticos',
+        () async {
+      when(() => mockResolver.candidatesFor('https://autor.substack.com/p/x'))
+          .thenReturn([
+        'https://autor.substack.com/p/x',
+        'https://autor.substack.com/feed',
+      ]);
+      when(() => mockHttp.get('https://autor.substack.com/p/x'))
+          .thenAnswer((_) async => '<html></html>');
+      when(() => mockFeedParser.parse('<html></html>'))
+          .thenThrow(const ParseException());
+      when(() => mockHttp.get('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => '<xml/>');
+      when(() => mockFeedParser.parse('<xml/>')).thenReturn(_tFeedData);
+      when(() => mockRepo.sourceExists('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => false);
+
+      var stageStartedCalls = 0;
+      await sut.execute(
+        'https://autor.substack.com/p/x',
+        onHeuristicStageStarted: () => stageStartedCalls++,
+      );
+
+      expect(stageStartedCalls, 1);
+    });
+
+    test(
+        'onHeuristicStageStarted no se invoca cuando la URL exacta ya es un feed válido',
+        () async {
+      when(() => mockResolver.candidatesFor('https://autor.substack.com/feed'))
+          .thenReturn(['https://autor.substack.com/feed']);
+      when(() => mockRepo.sourceExists('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => false);
+      when(() => mockHttp.get('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => '<xml/>');
+      when(() => mockFeedParser.parse('<xml/>')).thenReturn(_tFeedData);
+
+      var stageStartedCalls = 0;
+      await sut.execute(
+        'https://autor.substack.com/feed',
+        onHeuristicStageStarted: () => stageStartedCalls++,
+      );
+
+      expect(stageStartedCalls, 0);
+    });
+
     test('duplicado se detecta sobre la feed URL final resuelta', () async {
       when(() => mockResolver.candidatesFor('https://autor.substack.com/p/x'))
           .thenReturn([

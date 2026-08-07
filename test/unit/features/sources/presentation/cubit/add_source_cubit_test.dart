@@ -44,13 +44,38 @@ void main() {
     blocTest<AddSourceCubit, AddSourceState>(
       'emite [Validating, Success] cuando la URL es válida',
       build: () {
-        when(() => mockAddSource.execute(any()))
+        when(() => mockAddSource.execute(
+              any(),
+              onHeuristicStageStarted: any(named: 'onHeuristicStageStarted'),
+            ))
             .thenAnswer((_) async => tSource);
         return buildCubit();
       },
       act: (cubit) => cubit.addSource('https://example.com/feed'),
       expect: () => [
         const AddSourceValidating(),
+        AddSourceSuccess(tSource),
+      ],
+    );
+
+    blocTest<AddSourceCubit, AddSourceState>(
+      'emite [Validating, ValidatingHeuristics, Success] cuando pasa a la etapa heurística',
+      build: () {
+        when(() => mockAddSource.execute(
+              any(),
+              onHeuristicStageStarted: any(named: 'onHeuristicStageStarted'),
+            )).thenAnswer((invocation) async {
+          final onHeuristicStageStarted = invocation.namedArguments[
+              #onHeuristicStageStarted] as void Function()?;
+          onHeuristicStageStarted?.call();
+          return tSource;
+        });
+        return buildCubit();
+      },
+      act: (cubit) => cubit.addSource('https://example.com/p/algun-articulo'),
+      expect: () => [
+        const AddSourceValidating(),
+        const AddSourceValidatingHeuristics(),
         AddSourceSuccess(tSource),
       ],
     );
@@ -68,7 +93,10 @@ void main() {
     blocTest<AddSourceCubit, AddSourceState>(
       'emite [Validating, Error] cuando el feed no es válido (ParseException)',
       build: () {
-        when(() => mockAddSource.execute(any()))
+        when(() => mockAddSource.execute(
+              any(),
+              onHeuristicStageStarted: any(named: 'onHeuristicStageStarted'),
+            ))
             .thenThrow(const ParseException());
         return buildCubit();
       },
@@ -82,7 +110,10 @@ void main() {
     blocTest<AddSourceCubit, AddSourceState>(
       'emite [Validating, Error] cuando no hay conexión (NetworkException)',
       build: () {
-        when(() => mockAddSource.execute(any()))
+        when(() => mockAddSource.execute(
+              any(),
+              onHeuristicStageStarted: any(named: 'onHeuristicStageStarted'),
+            ))
             .thenThrow(const NetworkException());
         return buildCubit();
       },
@@ -96,7 +127,10 @@ void main() {
     blocTest<AddSourceCubit, AddSourceState>(
       'emite [Validating, Error] cuando la fuente ya existe (DuplicateSourceException)',
       build: () {
-        when(() => mockAddSource.execute(any()))
+        when(() => mockAddSource.execute(
+              any(),
+              onHeuristicStageStarted: any(named: 'onHeuristicStageStarted'),
+            ))
             .thenThrow(const DuplicateSourceException());
         return buildCubit();
       },
@@ -110,7 +144,10 @@ void main() {
     blocTest<AddSourceCubit, AddSourceState>(
       'emite [Validating, Error] cuando hay timeout (TimeoutException)',
       build: () {
-        when(() => mockAddSource.execute(any()))
+        when(() => mockAddSource.execute(
+              any(),
+              onHeuristicStageStarted: any(named: 'onHeuristicStageStarted'),
+            ))
             .thenThrow(const TimeoutException());
         return buildCubit();
       },
@@ -124,7 +161,10 @@ void main() {
     blocTest<AddSourceCubit, AddSourceState>(
       'emite [Validating, FeedDiscoveryFailed] cuando no se pudo detectar el feed',
       build: () {
-        when(() => mockAddSource.execute(any()))
+        when(() => mockAddSource.execute(
+              any(),
+              onHeuristicStageStarted: any(named: 'onHeuristicStageStarted'),
+            ))
             .thenThrow(const FeedDiscoveryException());
         return buildCubit();
       },

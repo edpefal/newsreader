@@ -1,12 +1,4 @@
-# Capability: Feed URL Discovery
-
-## Purpose
-
-Detección automática de la URL de feed RSS/Atom real a partir de una URL "humana" de newsletter (home o artículo puntual), mediante heurísticas de patrón de URL por plataforma conocida (Substack, WordPress.com, Ghost Pro).
-
----
-
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Normalización de esquema faltante
 El sistema SHALL, antes de generar cualquier candidato, normalizar la URL ingresada agregándole el esquema `https://` si no incluye ningún esquema, de forma que la URL "tal cual" y todos los candidatos derivados (inserción de path, sufijos genéricos) se construyan sobre una URL con esquema válido.
@@ -19,7 +11,7 @@ El sistema SHALL, antes de generar cualquier candidato, normalizar la URL ingres
 - **WHEN** el usuario ingresa `https://stratechery.com` o `http://stratechery.com`
 - **THEN** el sistema no modifica la URL
 
----
+## MODIFIED Requirements
 
 ### Requirement: Detección de feed URL por sufijo genérico sobre el dominio raíz
 El sistema SHALL, cuando una URL ingresada no sea directamente un feed válido, intentar derivar la feed URL real normalizando la URL a su origin (scheme+host, descartando path, query y fragment) y probando una lista de sufijos genéricos de feed conocidos, sin condicionar el intento a que el host matchee un subdominio de plataforma reconocida: `/feed`, `/feed/`, `/rss/`, `/atom.xml`.

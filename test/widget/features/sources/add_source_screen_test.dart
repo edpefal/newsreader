@@ -45,6 +45,18 @@ void main() {
       expect(find.text('Agregar'), findsNothing);
     });
 
+    testWidgets(
+        'muestra "Buscando en varios lugares posibles..." cuando estado es ValidatingHeuristics',
+        (tester) async {
+      when(() => cubit.state)
+          .thenReturn(const AddSourceValidatingHeuristics());
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('Buscando en varios lugares posibles...'), findsOneWidget);
+    });
+
     testWidgets('botón está deshabilitado cuando estado es Validating',
         (tester) async {
       when(() => cubit.state).thenReturn(const AddSourceValidating());

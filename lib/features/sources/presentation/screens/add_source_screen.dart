@@ -105,17 +105,27 @@ class _AddSourceViewState extends State<AddSourceView> {
               const SizedBox(height: 32),
               BlocBuilder<AddSourceCubit, AddSourceState>(
                 builder: (context, state) {
-                  final isLoading = state is AddSourceValidating;
+                  final isLoading = state is AddSourceValidating ||
+                      state is AddSourceValidatingHeuristics;
                   return FilledButton(
                     onPressed: isLoading ? null : () => _submit(context),
                     child: isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              if (state is AddSourceValidatingHeuristics) ...[
+                                const SizedBox(width: 12),
+                                const Text('Buscando en varios lugares posibles...'),
+                              ],
+                            ],
                           )
                         : const Text('Agregar'),
                   );

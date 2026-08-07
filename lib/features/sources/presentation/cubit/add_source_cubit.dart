@@ -26,7 +26,10 @@ class AddSourceCubit extends Cubit<AddSourceState> {
     emit(const AddSourceValidating());
 
     try {
-      final source = await _addSource.execute(trimmed);
+      final source = await _addSource.execute(
+        trimmed,
+        onHeuristicStageStarted: () => emit(const AddSourceValidatingHeuristics()),
+      );
       emit(AddSourceSuccess(source));
     } on FeedDiscoveryException catch (e) {
       emit(AddSourceFeedDiscoveryFailed(e.message, trimmed));
