@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/widgets/fwh_html_content_renderer.dart';
 import 'package:newsreader/core/widgets/source_icon.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
@@ -167,9 +167,9 @@ class _ReaderScreenState extends State<ReaderScreen>
 
   Widget _buildContent(Article article, ThemeData theme) {
     if (article.contentHtml != null) {
-      return HtmlWidget(
-        article.contentHtml!,
-        textStyle: theme.textTheme.bodyMedium,
+      return FwhHtmlContentRenderer(
+        htmlContent: article.contentHtml!,
+        articleUrl: article.articleUrl,
       );
     }
     if (article.excerpt != null) {
