@@ -12,6 +12,7 @@ import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
+import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/navigation/route_extra_resolver.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
@@ -19,6 +20,7 @@ import 'package:newsreader/features/account/presentation/widgets/delete_account_
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/auth/presentation/screens/login_screen.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
+import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 import 'package:newsreader/core/widgets/webview_flutter_article_web_view.dart';
 import 'package:newsreader/features/archive/presentation/screens/archive_screen.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
@@ -126,6 +128,9 @@ final appRouter = GoRouter(
         builder: (context, source) => SourceDetailScreen(
           source: source,
           getSourceArticles: getIt<GetSourceArticles>(),
+          feedSyncTrigger: getIt<FeedSyncTrigger>(),
+          syncUserData: getIt<SyncUserData>(),
+          syncOnOpen: state.uri.queryParameters['justAdded'] == 'true',
         ),
       ),
     ),

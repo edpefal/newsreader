@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/features/sources/presentation/cubit/add_source_cubit.dart';
 import 'package:newsreader/features/sources/presentation/screens/add_source_screen.dart';
 
@@ -15,6 +16,37 @@ Widget _buildSubject(AddSourceCubit cubit) {
     home: BlocProvider<AddSourceCubit>.value(
       value: cubit,
       child: const AddSourceView(),
+    ),
+  );
+}
+
+/// Envuelve `AddSourceView` en un `Navigator` real con una pantalla debajo,
+/// para poder observar el valor con el que hace `pop` al recibir
+/// `AddSourceSuccess`.
+Widget _buildSubjectWithPopObserver(
+  AddSourceCubit cubit,
+  void Function(NewsSource?) onPopped,
+) {
+  return MaterialApp(
+    home: Builder(
+      builder: (context) => Scaffold(
+        body: Center(
+          child: TextButton(
+            onPressed: () async {
+              final result = await Navigator.of(context).push<NewsSource>(
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider<AddSourceCubit>.value(
+                    value: cubit,
+                    child: const AddSourceView(),
+                  ),
+                ),
+              );
+              onPopped(result);
+            },
+            child: const Text('Abrir'),
+          ),
+        ),
+      ),
     ),
   );
 }
@@ -157,6 +189,31 @@ void main() {
 
       expect(find.text('abc-123@dominio.com'), findsOneWidget);
       expect(find.text('Ya me suscribí'), findsOneWidget);
+    });
+
+    testWidgets('al agregar exitosamente, hace pop con la fuente agregada',
+        (tester) async {
+      final tSource = NewsSource(
+        id: 's1',
+        name: 'Newsletter Nueva',
+        feedUrl: 'https://nueva.com/feed',
+        addedAt: DateTime(2024),
+      );
+
+      whenListen(
+        cubit,
+        Stream.fromIterable([AddSourceSuccess(tSource)]),
+        initialState: const AddSourceInitial(),
+      );
+
+      NewsSource? poppedResult;
+      await tester.pumpWidget(
+        _buildSubjectWithPopObserver(cubit, (result) => poppedResult = result),
+      );
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+
+      expect(poppedResult, tSource);
     });
   });
 }

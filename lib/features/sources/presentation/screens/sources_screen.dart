@@ -39,9 +39,13 @@ class SourcesView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final added = await context.push<bool>('/sources/add');
-          if (added == true && context.mounted) {
+          final addedSource = await context.push<NewsSource>('/sources/add');
+          if (addedSource != null && context.mounted) {
             context.read<SourcesCubit>().loadSources();
+            context.push(
+              '/sources/${addedSource.id}?justAdded=true',
+              extra: addedSource,
+            );
           }
         },
         tooltip: 'Agregar newsletter',

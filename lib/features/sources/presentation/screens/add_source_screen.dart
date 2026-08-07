@@ -51,7 +51,7 @@ class _AddSourceViewState extends State<AddSourceView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('"${state.source.name}" agregado.')),
           );
-          Navigator.of(context).pop(true);
+          Navigator.of(context).pop(state.source);
         } else if (state is AddSourceError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

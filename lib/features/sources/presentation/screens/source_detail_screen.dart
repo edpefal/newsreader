@@ -4,26 +4,49 @@ import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_source_articles.dart';
 import 'package:newsreader/features/sources/presentation/cubit/source_detail_cubit.dart';
+import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 
 class SourceDetailScreen extends StatelessWidget {
   final NewsSource source;
   final GetSourceArticles getSourceArticles;
+  final FeedSyncTrigger feedSyncTrigger;
+  final SyncUserData syncUserData;
+
+  /// `true` cuando se llega a esta pantalla inmediatamente después de
+  /// agregar la fuente: dispara una sincronización antes de mostrar los
+  /// artículos, en vez de solo leer lo que ya haya localmente.
+  final bool syncOnOpen;
 
   const SourceDetailScreen({
     super.key,
     required this.source,
     required this.getSourceArticles,
+    required this.feedSyncTrigger,
+    required this.syncUserData,
+    this.syncOnOpen = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) =>
-          SourceDetailCubit(getSourceArticles)..loadArticles(source.id),
+      create: (_) {
+        final cubit = SourceDetailCubit(
+          getSourceArticles,
+          feedSyncTrigger,
+          syncUserData,
+        );
+        if (syncOnOpen) {
+          cubit.syncAndLoadArticles(source.id);
+        } else {
+          cubit.loadArticles(source.id);
+        }
+        return cubit;
+      },
       child: SourceDetailView(sourceName: source.name),
     );
   }

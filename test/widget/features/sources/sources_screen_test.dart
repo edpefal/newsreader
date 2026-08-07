@@ -12,7 +12,7 @@ import 'package:newsreader/features/sources/presentation/screens/sources_screen.
 class MockSourcesCubit extends MockCubit<SourcesState>
     implements SourcesCubit {}
 
-Widget _buildSubject(SourcesCubit cubit) {
+Widget _buildSubject(SourcesCubit cubit, {NewsSource? sourceToReturnOnAdd}) {
   final router = GoRouter(
     routes: [
       GoRoute(
@@ -24,11 +24,20 @@ Widget _buildSubject(SourcesCubit cubit) {
       ),
       GoRoute(
         path: '/sources/add',
-        builder: (_, __) => const Scaffold(body: Text('Agregar')),
+        builder: (context, __) => Scaffold(
+          body: TextButton(
+            onPressed: () => Navigator.of(context).pop(sourceToReturnOnAdd),
+            child: const Text('Simular agregado'),
+          ),
+        ),
       ),
       GoRoute(
         path: '/sources/:id',
-        builder: (_, __) => const Scaffold(body: Text('Detalle')),
+        builder: (_, state) => Scaffold(
+          body: Text(
+            'Detalle${state.uri.queryParameters['justAdded'] == 'true' ? ' (justAdded)' : ''}',
+          ),
+        ),
       ),
     ],
   );
@@ -112,6 +121,45 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Detalle'), findsOneWidget);
+    });
+
+    testWidgets(
+        'al agregar una fuente, recarga la lista y navega a su detalle con justAdded',
+        (tester) async {
+      when(() => cubit.state).thenReturn(const SourcesLoaded([]));
+      when(() => cubit.loadSources()).thenAnswer((_) async {});
+      final addedSource = NewsSource(
+        id: 'new-1',
+        name: 'Newsletter Nueva',
+        feedUrl: 'https://nueva.com/feed',
+        addedAt: DateTime(2024),
+      );
+
+      await tester.pumpWidget(
+        _buildSubject(cubit, sourceToReturnOnAdd: addedSource),
+      );
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Simular agregado'));
+      await tester.pumpAndSettle();
+
+      verify(() => cubit.loadSources()).called(1);
+      expect(find.text('Detalle (justAdded)'), findsOneWidget);
+    });
+
+    testWidgets(
+        'si no vuelve ninguna fuente del flujo de agregar, no recarga ni navega',
+        (tester) async {
+      when(() => cubit.state).thenReturn(const SourcesLoaded([]));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Simular agregado'));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => cubit.loadSources());
+      expect(find.text('Agregar mi primer newsletter'), findsOneWidget);
     });
 
     testWidgets('el menú muestra opciones Editar y Eliminar', (tester) async {
