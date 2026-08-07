@@ -27,14 +27,10 @@ class LoginScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.auto_stories_outlined,
-                    size: 72,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                  Image.asset('assets/reevo_logo.png', height: 72),
                   const SizedBox(height: 16),
                   Text(
-                    'Newsletter Hub',
+                    'Reevo',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
