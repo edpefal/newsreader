@@ -94,7 +94,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
       child: BlocBuilder<ThemeCubit, ThemeMode>(
         builder: (context, themeMode) {
           return MaterialApp.router(
-            title: 'Newsletter Hub',
+            title: 'Reevo',
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             themeMode: themeMode,

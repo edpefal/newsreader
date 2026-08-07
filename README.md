@@ -1,4 +1,4 @@
-# Newsletter Hub
+# Reevo
 
 Una app Flutter para centralizar newsletters fuera del correo electrónico. Agrega feeds RSS/Atom, lee artículos en un lector limpio, guarda favoritos y archiva contenido automáticamente.
 

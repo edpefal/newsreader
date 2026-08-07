@@ -1,73 +1,109 @@
-# PRD: Newsletter Hub (MVP)
+# PRD: Reevo (v2)
+
+> Este documento reemplaza la versión original (MVP local-only, sin cuentas). Desde entonces el producto evolucionó hacia un modelo con cuenta y sincronización en la nube. Ver `openspec/specs/` para el detalle línea a línea de cada capability — este PRD es la vista de producto, no la fuente normativa de comportamiento.
 
 ---
 
 ## 1. Visión del Producto
 
-Crear un espacio de lectura dedicado que rescate los boletines informativos del desorden del correo electrónico. La aplicación permite centralizar suscripciones de plataformas como Substack o Ghost en una interfaz limpia, priorizando la concentración y el hábito de lectura sin distracciones.
+Crear un espacio de lectura dedicado que rescate los boletines informativos del desorden del correo electrónico. La aplicación centraliza suscripciones de plataformas como Substack, WordPress.com o Ghost en una interfaz limpia, priorizando la concentración y el hábito de lectura sin distracciones — y ahora, con cuenta de usuario, ese hábito y esas suscripciones viajan con la persona entre sus dispositivos.
 
 ---
 
 ## 2. Plataforma Objetivo
 
-- **iOS y Android** (ambas desde el MVP)
-- Versiones mínimas de SO: iOS 16+ / Android 8.0 (API 26)+
+- **iOS y Android**, publicadas en App Store y Google Play para público general.
+- Versiones mínimas de SO: iOS 16+ / Android 8.0 (API 26)+.
+- Backend: Supabase (Postgres + Auth + Edge Functions) como servicio administrado.
 
 ---
 
-## 3. Objetivos del MVP
+## 3. Objetivos del Producto
 
-- **Descongestionar el Email:** Mover el consumo de contenido editorial fuera de la bandeja de entrada.
-- **Lectura de Alto Valor:** Ofrecer una interfaz optimizada para textos largos.
-- **Simplicidad Extrema:** Funcionamiento local, sin cuentas y sin fricción de configuración.
+- **Descongestionar el Email:** mover el consumo de contenido editorial fuera de la bandeja de entrada, incluso para newsletters sin feed RSS propio (vía email-to-RSS).
+- **Lectura de Alto Valor:** interfaz optimizada para textos largos, con imagen destacada y renderizado fiel del HTML original.
+- **Continuidad entre dispositivos:** el estado de lectura, favoritos y fuentes suscritas es el mismo sin importar en qué dispositivo se abra la app.
+- **Síntesis diaria:** ofrecer, además del inbox artículo por artículo, un resumen editorial generado por IA que dé ganas de volver a la app todos los días.
+- **Simplicidad de configuración:** agregar una fuente debe funcionar pegando el link humano del newsletter, sin que el usuario necesite encontrar la URL exacta del feed.
 
-**Criterio de éxito del MVP:** El usuario puede agregar una fuente, leer un artículo completo y marcarlo como leído sin errores ni fricción.
+**Criterio de éxito:** un usuario nuevo puede crear cuenta, agregar una fuente (aunque no publique RSS), leer un artículo completo, y volver a encontrar ese artículo y ese estado en otro dispositivo — todo sin fricción ni errores.
 
 ---
 
 ## 4. Requisitos Funcionales
 
-### A. Gestión de Suscripciones
+### A. Cuenta y Autenticación
 
-- **Registro Manual:** El usuario añade nuevas fuentes pegando directamente la URL del feed (ej. `autor.substack.com/feed`).
-- **Identificación Automática:** Tras validar la URL, la app extrae el nombre del boletín, el autor y el ícono representativo de la fuente.
-- **Administración de Fuentes:** Pantalla para listar, editar el nombre o eliminar suscripciones activas.
-- **Límite de fuentes:** Ilimitado; el almacenamiento del dispositivo es el único límite.
+- **Login obligatorio:** toda pantalla de la app requiere sesión activa (Google Sign-In o Sign in with Apple vía Supabase Auth). Sin sesión, la app muestra la pantalla de login antes que cualquier otra cosa.
+- **Persistencia de sesión:** con sesión previamente válida, la app entra directo al Inbox.
+- **Cierre de sesión:** disponible desde el `NavigationDrawer`; limpia los datos locales del dispositivo para evitar colisiones si otra cuenta inicia sesión después.
+- **Borrado de cuenta y datos (nuevo — pendiente de implementar):** el usuario debe poder eliminar su cuenta y todos sus datos asociados (fuentes, artículos, resúmenes, estado) desde dentro de la app, sin necesidad de contactar soporte. Requisito de compliance de las tiendas de aplicaciones para cualquier app que permita crear cuenta in-app.
+- **Exportación de datos (nuevo — pendiente de implementar):** el usuario debe poder solicitar una copia de sus datos (fuentes suscritas, artículos favoritos como mínimo) en un formato legible (OPML para fuentes, JSON o similar para el resto).
 
-### B. El Inbox (Sistema Inbox Zero)
+### B. Gestión de Suscripciones
 
-- **Flujo Cronológico:** Lista centralizada que muestra únicamente los artículos no leídos de todas las fuentes, ordenados del más reciente al más antiguo.
-- **Estado de Lectura:** Al abrir un artículo, este se marca automáticamente como "Leído" y desaparece de la vista principal del Inbox.
-- **Sincronización Manual:** Función de "deslizar para actualizar" (pull-to-refresh) para buscar nuevas publicaciones. No hay fetch en background ni notificaciones push.
-- **Onboarding (primer uso):** Si el Inbox está vacío, se muestra un estado vacío con mensaje descriptivo y un botón de llamada a la acción: *"+ Agregar tu primer newsletter"*.
+- **Registro por URL humana o feed exacto:** el usuario pega el link del newsletter (ej. `autor.substack.com`) o la URL exacta del feed; el sistema intenta primero la URL tal cual como feed, y si falla, aplica heurísticas de detección automática por plataforma conocida (Substack, WordPress.com, Ghost Pro), incluyendo el formato de perfil `substack.com/@usuario`.
+- **Fallback vía email-to-RSS:** si la detección automática falla, el sistema ofrece generar una dirección de email desechable que recibe el newsletter por correo y lo expone como feed RSS propio, con retención de 30 días sobre los items recibidos.
+- **Identificación automática:** tras validar el feed, la app extrae nombre, autor e ícono de la fuente.
+- **Importación masiva vía OPML:** el usuario puede importar múltiples fuentes de una vez desde un archivo `.opml`/`.xml`, con preview de validación concurrente por feed (nuevo/válido, ya suscrito, o error) y selección granular antes de confirmar.
+- **Administración de fuentes:** listar, editar nombre, eliminar. Al eliminar una fuente, sus artículos no favoritos se eliminan en cascada (servidor).
+- **Límite de fuentes:** ilimitado.
 
-### C. Experiencia de Lectura
+### C. El Inbox
 
-**Visualización Dual:**
+- **Flujo cronológico:** artículos no leídos de todas las fuentes, más reciente primero.
+- **Persistencia indefinida en el inbox:** un artículo no leído permanece en el inbox sin importar su antigüedad — no hay archivado automático por tiempo (a diferencia del MVP original).
+- **Estado de lectura:** al abrir un artículo se marca como leído y desaparece del inbox hacia "Leídos", de forma indefinida (no expira).
+- **Sincronización on-demand:** pull-to-refresh dispara un fetch de feeds del lado del servidor (Edge Function) más una sincronización de estado. No hay fetch periódico en background ni notificaciones push — el contenido nuevo solo aparece cuando algún dispositivo de la cuenta hace pull-to-refresh o inicia sesión.
+- **Onboarding (primer uso):** inbox vacío muestra CTA "+ Agregar tu primer newsletter".
+- **Búsqueda por pantalla (nuevo — pendiente de implementar):** Inbox, Leídos y Favoritos cada una ofrece su propia búsqueda (ícono de lupa) que filtra la lista ya cargada en esa pantalla por título, nombre de fuente o autor. No es full-text sobre el contenido del artículo, y no es una pantalla global separada.
 
-| Modo | Comportamiento |
-|------|---------------|
-| **Vista Original** | Renderiza el HTML del campo `<content>` del feed RSS. Si el contenido está truncado o vacío (artículo de pago), muestra un botón para abrir la URL del artículo en un WebView embebido. |
-| **Modo Reader** | Interruptor que activa una interfaz limpia: tipografía estandarizada, sin imágenes decorativas, contraste optimizado para lectura prolongada. |
+### D. Experiencia de Lectura
 
-**Gestión de Favoritos:** El usuario puede marcar artículos con una estrella para moverlos a una sección de archivo permanente accesible en cualquier momento.
+- **Renderizado del artículo:** HTML del campo `<content>` del feed. Si está truncado o vacío (artículo de pago), botón para abrir la URL original en WebView embebido. Los iframes de video (YouTube) embebidos se manejan con tratamiento especial para reproducir correctamente dentro del WebView aislado.
+- **Indicador de progreso de scroll:** referencia visual de la posición del usuario dentro de artículos largos.
+- **Imagen destacada:** se muestra en las listas (Inbox, Leídos, Favoritos, Fuente) cuando el feed la provee. El servidor la extrae probando, en orden: Media RSS, enclosure de imagen, imagen de iTunes, primera imagen embebida en el HTML.
+- **Gestión de Favoritos:** estrella para mover el artículo a una sección de archivo permanente. Favoritos nunca se eliminan automáticamente, ni siquiera al eliminar su fuente de origen.
+- **Recuperación de estado de ruta:** abrir un artículo, fuente o resumen diario por URL/deep link no crashea la app aunque el estado de navegación en memoria no esté disponible — se resuelve por id.
 
-### D. Almacenamiento y Privacidad
+### E. Resúmenes Diarios (IA)
 
-- **Persistencia Local:** Toda la información (artículos, historial, favoritos) reside exclusivamente en el dispositivo.
-- **Privacidad Total:** No se requiere registro, correo electrónico ni perfil en la nube.
+- **Generación bajo demanda:** el usuario dispara la generación de un resumen del día a partir de los artículos publicados ese día en su inbox, agrupados por fuente, con voz editorial consistente (tono cercano, sin emojis, español latinoamericano neutro con tuteo) sin importar el tono original de cada newsletter.
+- **Un resumen por día:** regenerar sobrescribe el resumen existente de ese día; no crea duplicados.
+- **Listado y detalle:** pantalla con todos los resúmenes históricos ordenados por fecha, cada uno navegable a su detalle con texto completo.
+
+### F. Sincronización en la Nube
+
+- **Bidireccional al abrir la app:** fuentes, resúmenes diarios y estado de usuario sobre artículos (leído/favorito/borrado) se sincronizan entre dispositivo y nube en una sola operación, subiendo cambios locales pendientes y bajando cambios remotos.
+- **El contenido de los artículos es pull-only:** nace en el servidor vía fetch centralizado de feeds; el cliente nunca sube artículos nuevos ni su contenido.
+- **Detección de cambios sin cola separada:** por comparación de `updatedAt` contra el cursor de última sincronización.
+- **Borrados vía soft-delete:** propagados con `deletedAt`, borrado físico local solo tras confirmación de sync.
+- **Resolución de conflictos:** last-write-wins por `updatedAt`, sin merge.
+- **Push inmediato best-effort:** marcar leído o favorito intenta subir el cambio a Supabase de inmediato, sin bloquear la UI ni mostrar errores si falla (se repara en la próxima sync completa).
+- **Sin tiempo real:** un cambio en un dispositivo no se refleja en otro dispositivo con la app abierta simultáneamente; requiere abrir la app, volver del background, o pull-to-refresh.
+- **Aislamiento por usuario:** Row-Level Security en Postgres garantiza que cada usuario solo accede a sus propios registros.
+
+### G. Almacenamiento y Privacidad
+
+- **Persistencia local + nube:** los artículos, historial y favoritos residen en el dispositivo (Hive) y se respaldan/sincronizan en Supabase bajo la cuenta del usuario.
+- **Cuenta requerida:** a diferencia del MVP original, ya no hay modo 100% local sin cuenta.
+- **RLS como mecanismo de privacidad:** ningún usuario puede leer los datos de otro, ni siquiera con acceso directo a la tabla.
 
 ---
 
-## 5. Reglas de Negocio
+## 5. Reglas de Negocio Clave
 
 | Regla | Detalle |
 |-------|---------|
-| **Validación de feeds** | Solo se aceptan URLs que devuelvan una estructura XML válida (RSS 2.0 o Atom). Si la validación falla, se muestra un mensaje de error claro al usuario. |
-| **Limpieza automática** | Los artículos marcados como **leídos** con más de 30 días de antigüedad se eliminan automáticamente para liberar espacio, **salvo** que estén marcados como favoritos. |
-| **Archivo de no leídos** | Los artículos **no leídos** con más de 30 días no se eliminan; se mueven a una sección de archivo separada y dejan de aparecer en el Inbox principal. |
-| **Favoritos permanentes** | Los artículos marcados con estrella nunca se eliminan automáticamente. |
-| **Orden del Inbox** | Siempre de más reciente a más antiguo para mantener la relevancia informativa. |
+| **Artículo se marca leído al abrirlo** | Automático, `readAt=now`. No se revierte al reabrirlo. |
+| **Sin archivado ni borrado automático por antigüedad** | A diferencia del MVP original, el inbox y "Leídos" no expiran artículos por tiempo. |
+| **Favoritos permanentes** | Nunca se eliminan automáticamente, ni al borrar la fuente de origen. |
+| **Borrado de fuente cascadea a sus artículos** | Excepto los favoritos, que sobreviven al borrado de su fuente. |
+| **Orden del Inbox y de Leídos** | Siempre por `publishedAt` descendente. |
+| **Dedupe de artículos** | Por constraint único `(source_id, article_url)` en base de datos, no solo lógica de aplicación. |
+| **Contenido truncado** | `contentHtml == null \|\| contentHtml.length < 500` → se usa `excerpt` como fallback (incluye el prompt de resúmenes IA). |
+| **Timeout por feed durante fetch** | 10 segundos. Un fallo no interrumpe las demás fuentes. |
+| **Retención de items de email-to-RSS** | 30 días desde `received_at`, limpieza periódica automática. |
 
 ---
 
@@ -75,42 +111,48 @@ Crear un espacio de lectura dedicado que rescate los boletines informativos del 
 
 | Escenario | Comportamiento esperado |
 |-----------|------------------------|
-| Sin conexión a internet al sincronizar | Mostrar mensaje "Sin conexión. Los artículos descargados siguen disponibles." |
-| Feed caído o timeout (>10 seg) | Mostrar error por fuente afectada; no interrumpir la sincronización de otras fuentes. |
-| URL válida pero sin estructura RSS/Atom | Mostrar error al intentar agregar la fuente: *"No se encontró un feed válido en esta URL."* |
-| Feed que cambia su URL | La fuente aparece como "sin actualizaciones". El usuario puede editar la URL manualmente. |
-| Artículo de pago sin contenido completo en el RSS | Mostrar el excerpt disponible + botón *"Leer en el sitio original"* que abre el WebView. |
+| Sin conexión al sincronizar | Artículos ya descargados siguen disponibles; error visible pero no bloqueante. |
+| Feed caído o timeout (>10s) | Error por fuente afectada; no interrumpe la sincronización de otras fuentes. |
+| URL sin feed detectable ni por heurística | Mensaje: *"No pudimos detectar el feed automáticamente. Pega la URL exacta del feed RSS..."*, con opción de generar dirección de email-to-RSS. |
+| Fuente ya existe | Verificado contra la feed URL final resuelta (no la URL cruda ingresada). |
+| Artículo de pago sin contenido completo | Excerpt disponible + botón "Leer en el sitio original" (WebView). |
+| OPML inválido o sin feeds | Mensajes específicos: *"El archivo no es un OPML válido"* / *"No se encontraron feeds en este archivo"*. |
+| Falla la generación de un resumen IA | Estado de error distinguible del estado "sin artículos", con opción de reintentar. |
+| Push inmediato de leído/favorito falla | Silencioso; se repara en la próxima sincronización completa. |
+| Login cancelado (Google/Apple) | Permanece en login sin mostrar error, listo para reintentar. |
 
 ---
 
 ## 7. Diseño y Experiencia de Usuario (UX)
 
-**Flujo de Navegación Principal (4 pantallas):**
+**Navegación principal (drawer + 5 tabs):**
 
-1. **Inbox:** Foco principal. Lista de artículos no leídos. Pull-to-refresh para actualizar.
-2. **Lectura:** Interfaz inmersiva. Los controles de navegación se ocultan al hacer scroll hacia abajo y reaparecen al hacer scroll hacia arriba.
-3. **Favoritos:** Acceso a artículos guardados con estrella, ordenados por fecha de guardado.
-4. **Fuentes:** Gestión de newsletters suscritos (agregar, editar nombre, eliminar).
+1. **Inbox** — foco principal, artículos no leídos, pull-to-refresh, búsqueda por pantalla.
+2. **Favoritos** — artículos guardados con estrella, búsqueda por pantalla.
+3. **Leídos** — historial de artículos abiertos, búsqueda por pantalla.
+4. **Fuentes** — agregar (URL o OPML), editar nombre, eliminar.
+5. **Resúmenes** — listado y detalle de resúmenes diarios generados por IA.
+
+**Lectura:** interfaz inmersiva, controles ocultos al hacer scroll hacia abajo, indicador de progreso de lectura.
 
 ---
 
-## 8. Fuera del Alcance (MVP)
+## 8. Fuera del Alcance (explícito)
 
-Las siguientes funcionalidades quedan **explícitamente excluidas** del MVP:
-
-- Búsqueda de artículos (en Inbox o Favoritos)
-- Importar/exportar suscripciones en formato OPML
-- Sincronización en la nube o entre dispositivos
-- Notificaciones push de nuevos artículos
-- Fetch de artículos en background (sin abrir la app)
-- Soporte para formatos que no sean RSS 2.0 o Atom (ej. JSON Feed)
-- Carpetas o etiquetas para organizar fuentes
+- Sincronización en tiempo real entre dispositivos (todo sync es on-demand, no hay websockets ni push).
+- Fetch de artículos en background sin acción del usuario (sin cron de polling del lado del cliente).
+- Notificaciones push de nuevos artículos.
+- Búsqueda full-text sobre el contenido (`contentHtml`) de los artículos — solo título/fuente/autor.
+- Carpetas o etiquetas para organizar fuentes.
+- Soporte para formatos que no sean RSS 2.0 o Atom (JSON Feed queda fuera, aunque email-to-RSS cubre el caso de newsletters sin feed propio).
+- Adaptar el tono de los resúmenes IA al estilo de cada fuente individual (la voz editorial es única para toda la app).
 
 ---
 
 ## 9. Consideraciones Técnicas
 
-- **Offline-first:** Los artículos ya descargados deben ser legibles sin conexión.
-- **Contenido de pago:** La app no puede saltarse paywalls. El flujo con WebView embebido es el mecanismo de acceso para quienes tengan suscripción activa en su navegador.
-- **Parseo de feeds:** Soportar RSS 2.0 y Atom como mínimo.
-- **Almacenamiento:** Usar la base de datos local del dispositivo (SQLite o equivalente). No usar almacenamiento en red.
+- **Offline-first para lectura:** los artículos ya descargados deben ser legibles sin conexión; solo la sincronización y el fetch de feeds requieren red.
+- **Servidor como única fuente de fetch/parseo de RSS:** los clientes nunca parsean feeds ni generan ids de artículo; eso ocurre en Edge Functions, con dedupe garantizado a nivel de base de datos.
+- **Contenido de pago:** la app no salta paywalls; el WebView embebido es el mecanismo de acceso para quienes ya tienen sesión/suscripción en su navegador.
+- **Almacenamiento local:** Hive CE. **Almacenamiento remoto:** Postgres/Supabase con RLS por usuario.
+- **Compliance de tiendas:** dado que la app requiere cuenta, debe ofrecer borrado de cuenta in-app antes de publicarse para público general (ver sección 4.A).

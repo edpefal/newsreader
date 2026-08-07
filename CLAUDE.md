@@ -1,4 +1,4 @@
-# Newsletter Hub — Instrucciones para Claude
+# Reevo — Instrucciones para Claude
 
 ## Comandos esenciales
 
