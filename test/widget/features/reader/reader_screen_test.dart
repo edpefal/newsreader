@@ -41,13 +41,16 @@ void main() {
   late MockMarkArticleAsRead mockMarkAsRead;
   late MockToggleFavorite mockToggleFavorite;
 
+  // Contenido de 500+ caracteres a propósito: representa un artículo
+  // completo, no truncado, para que los tests que usan este fixture no
+  // disparen el aviso de contenido truncado (ver FeedContentChecker).
   final tArticle = Article(
     id: 'a1',
     sourceId: 's1',
     sourceName: 'Newsletter A',
     title: 'Un artículo interesante',
     author: 'Juan Pérez',
-    contentHtml: '<p>Contenido completo del artículo.</p>',
+    contentHtml: '<p>${'Contenido completo del artículo. ' * 20}</p>',
     excerpt: 'Este es el resumen.',
     publishedAt: DateTime(2024, 3, 15),
     articleUrl: 'https://example.com/article',
@@ -101,7 +104,9 @@ void main() {
       expect(find.byType(HtmlWidget), findsOneWidget);
     });
 
-    testWidgets('muestra excerpt cuando contentHtml es nulo', (tester) async {
+    testWidgets(
+        'muestra excerpt y el aviso de contenido truncado cuando contentHtml es nulo',
+        (tester) async {
       final articleSinHtml = Article(
         id: 'a2',
         sourceId: 's1',
@@ -117,9 +122,14 @@ void main() {
 
       expect(find.text('Solo el resumen.'), findsOneWidget);
       expect(find.byType(HtmlWidget), findsNothing);
+      expect(
+        find.textContaining('Este feed no incluye el artículo completo'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('muestra fallback cuando no hay contentHtml ni excerpt',
+    testWidgets(
+        'muestra el aviso de contenido truncado cuando no hay contentHtml ni excerpt',
         (tester) async {
       final articleMinimal = Article(
         id: 'a3',
@@ -133,8 +143,69 @@ void main() {
       await tester.pumpWidget(
           _buildSubject(articleMinimal, mockMarkAsRead, mockToggleFavorite));
 
-      expect(find.text('Contenido no disponible en el feed.'), findsOneWidget);
       expect(find.byType(HtmlWidget), findsNothing);
+      expect(
+        find.textContaining('Este feed no incluye el artículo completo'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'muestra el aviso cuando contentHtml está por debajo del umbral de truncamiento',
+        (tester) async {
+      final articleCorto = Article(
+        id: 'a4',
+        sourceId: 's1',
+        sourceName: 'Newsletter A',
+        title: 'Contenido corto',
+        contentHtml: '<p>Un teaser breve antes del paywall.</p>',
+        publishedAt: DateTime(2024, 3, 15),
+        articleUrl: 'https://example.com/article',
+      );
+
+      await tester.pumpWidget(
+          _buildSubject(articleCorto, mockMarkAsRead, mockToggleFavorite));
+      await tester.pump();
+
+      expect(find.byType(HtmlWidget), findsOneWidget);
+      expect(
+        find.textContaining('Este feed no incluye el artículo completo'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'no muestra el aviso cuando contentHtml tiene 500+ caracteres',
+        (tester) async {
+      await tester.pumpWidget(
+          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+      await tester.pump();
+
+      expect(
+        find.textContaining('Este feed no incluye el artículo completo'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('tocar el aviso de contenido truncado navega al WebView',
+        (tester) async {
+      final articleMinimal = Article(
+        id: 'a3',
+        sourceId: 's1',
+        sourceName: 'Newsletter A',
+        title: 'Sin contenido',
+        publishedAt: DateTime(2024, 3, 15),
+        articleUrl: 'https://example.com/article',
+      );
+
+      await tester.pumpWidget(
+          _buildSubject(articleMinimal, mockMarkAsRead, mockToggleFavorite));
+      await tester.tap(
+        find.textContaining('Este feed no incluye el artículo completo'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('WebView'), findsOneWidget);
     });
 
     testWidgets('llama a markAsRead con el id del artículo al abrir',
@@ -150,13 +221,18 @@ void main() {
       await tester.pumpWidget(
           _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
 
-      expect(find.byIcon(Icons.open_in_browser), findsOneWidget);
+      expect(
+        find.widgetWithIcon(IconButton, Icons.open_in_browser),
+        findsOneWidget,
+      );
     });
 
     testWidgets('botón Ver en navegador navega al WebView', (tester) async {
       await tester.pumpWidget(
           _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
-      await tester.tap(find.byIcon(Icons.open_in_browser));
+      await tester.tap(
+        find.widgetWithIcon(IconButton, Icons.open_in_browser),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('WebView'), findsOneWidget);

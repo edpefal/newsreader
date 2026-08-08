@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/utils/feed_content_checker.dart';
 import 'package:newsreader/core/widgets/fwh_html_content_renderer.dart';
 import 'package:newsreader/core/widgets/source_icon.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
@@ -152,7 +153,7 @@ class _ReaderScreenState extends State<ReaderScreen>
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 16),
-                _buildContent(article, theme),
+                _buildContent(context, article, theme),
               ],
             ),
           ),
@@ -165,21 +166,50 @@ class _ReaderScreenState extends State<ReaderScreen>
     );
   }
 
-  Widget _buildContent(Article article, ThemeData theme) {
+  Widget _buildContent(BuildContext context, Article article, ThemeData theme) {
+    final children = <Widget>[];
+
     if (article.contentHtml != null) {
-      return FwhHtmlContentRenderer(
+      children.add(FwhHtmlContentRenderer(
         htmlContent: article.contentHtml!,
         articleUrl: article.articleUrl,
-      );
+      ));
+    } else if (article.excerpt != null) {
+      children.add(Text(article.excerpt!, style: theme.textTheme.bodyMedium));
     }
-    if (article.excerpt != null) {
-      return Text(article.excerpt!, style: theme.textTheme.bodyMedium);
+
+    if (FeedContentChecker.isTruncated(article.contentHtml)) {
+      if (children.isNotEmpty) children.add(const SizedBox(height: 16));
+      children.add(_buildTruncatedHint(context, article, theme));
     }
-    return Text(
-      'Contenido no disponible en el feed.',
-      style: theme.textTheme.bodyMedium?.copyWith(
-        color: theme.colorScheme.onSurfaceVariant,
-        fontStyle: FontStyle.italic,
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: children);
+  }
+
+  Widget _buildTruncatedHint(
+    BuildContext context,
+    Article article,
+    ThemeData theme,
+  ) {
+    final color = theme.colorScheme.onSurfaceVariant;
+    return InkWell(
+      onTap: () => context.push('/article/${article.id}/web', extra: article),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.open_in_browser, size: 18, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Este feed no incluye el artículo completo. Tocá acá para '
+              'leerlo en el sitio original.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: color,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
