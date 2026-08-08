@@ -197,10 +197,10 @@ final appRouter = GoRouter(
   ],
 );
 
-/// Índices de tabs cuyo contenido soporta búsqueda (Inbox, Favoritos,
-/// Leídos), ver capability `article-search`. Fuentes y Resúmenes quedan
-/// fuera de alcance.
-const _searchableTabIndices = {0, 1, 2};
+/// Índices de tabs cuyo contenido soporta búsqueda: Inbox, Favoritos y
+/// Leídos (capability `article-search`), y Fuentes (capability
+/// `source-search`). Resúmenes queda fuera de alcance.
+const _searchableTabIndices = {0, 1, 2, 3};
 
 class _ScaffoldWithNavBar extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -231,6 +231,8 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
         context.read<FavoritesCubit>().search(query);
       case 2:
         context.read<ArchiveCubit>().search(query);
+      case 3:
+        context.read<SourcesCubit>().search(query);
     }
   }
 
@@ -267,8 +269,10 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Buscar por título, fuente o autor...',
+                decoration: InputDecoration(
+                  hintText: currentIndex == 3
+                      ? 'Buscar por nombre o autor...'
+                      : 'Buscar por título, fuente o autor...',
                   border: InputBorder.none,
                 ),
                 onChanged: (query) => _search(context, query),

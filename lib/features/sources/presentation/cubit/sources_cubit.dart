@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/utils/source_text_matcher.dart';
 import 'package:newsreader/features/sources/domain/usecases/delete_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
 import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
@@ -29,6 +30,16 @@ class SourcesCubit extends Cubit<SourcesState> {
   Future<void> deleteSource(String id) async {
     await _deleteSource.execute(id);
     await _reload();
+  }
+
+  /// Filtra, en memoria, la lista de fuentes ya cargada por [query] (ver
+  /// `SourcesLoaded.visibleSources`), sin recargar desde el repositorio. Si
+  /// el estado actual no es `SourcesLoaded`, no tiene efecto.
+  void search(String query) {
+    final current = state;
+    if (current is SourcesLoaded) {
+      emit(SourcesLoaded(current.sources, searchQuery: query));
+    }
   }
 
   Future<void> _reload() async {

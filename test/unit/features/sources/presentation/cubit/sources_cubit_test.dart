@@ -24,12 +24,14 @@ void main() {
       id: '1',
       name: 'Newsletter A',
       feedUrl: 'https://a.com/feed',
+      author: 'Autor Uno',
       addedAt: DateTime(2024),
     ),
     NewsSource(
       id: '2',
       name: 'Newsletter B',
       feedUrl: 'https://b.com/feed',
+      author: 'Autor Dos',
       addedAt: DateTime(2024),
     ),
   ];
@@ -124,6 +126,59 @@ void main() {
       verify: (_) {
         verify(() => mockDeleteSource.execute('1')).called(1);
       },
+    );
+
+    blocTest<SourcesCubit, SourcesState>(
+      'search() filtra visibleSources por nombre',
+      build: buildCubit,
+      seed: () => SourcesLoaded(tSources),
+      act: (cubit) => cubit.search('newsletter a'),
+      verify: (cubit) {
+        final state = cubit.state as SourcesLoaded;
+        expect(state.visibleSources, [tSources[0]]);
+        expect(state.sources, tSources);
+      },
+    );
+
+    blocTest<SourcesCubit, SourcesState>(
+      'search() filtra visibleSources por autor',
+      build: buildCubit,
+      seed: () => SourcesLoaded(tSources),
+      act: (cubit) => cubit.search('autor dos'),
+      verify: (cubit) {
+        final state = cubit.state as SourcesLoaded;
+        expect(state.visibleSources, [tSources[1]]);
+      },
+    );
+
+    blocTest<SourcesCubit, SourcesState>(
+      'search() sin coincidencias deja visibleSources vacío',
+      build: buildCubit,
+      seed: () => SourcesLoaded(tSources),
+      act: (cubit) => cubit.search('inexistente'),
+      verify: (cubit) {
+        final state = cubit.state as SourcesLoaded;
+        expect(state.visibleSources, isEmpty);
+      },
+    );
+
+    blocTest<SourcesCubit, SourcesState>(
+      'limpiar la búsqueda restaura la lista completa',
+      build: buildCubit,
+      seed: () => const SourcesLoaded([], searchQuery: 'algo'),
+      act: (cubit) => cubit.search(''),
+      verify: (cubit) {
+        final state = cubit.state as SourcesLoaded;
+        expect(state.searchQuery, '');
+      },
+    );
+
+    blocTest<SourcesCubit, SourcesState>(
+      'search() no tiene efecto si el estado actual no es SourcesLoaded',
+      build: buildCubit,
+      seed: () => const SourcesLoading(),
+      act: (cubit) => cubit.search('algo'),
+      expect: () => [],
     );
   });
 }

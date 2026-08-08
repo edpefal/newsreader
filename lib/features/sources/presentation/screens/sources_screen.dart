@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/widgets/no_search_results_state.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/features/sources/presentation/widgets/delete_source_dialog.dart';
 import 'package:newsreader/features/sources/presentation/widgets/edit_source_name_dialog.dart';
@@ -26,9 +27,12 @@ class SourcesView extends StatelessWidget {
           if (state is SourcesLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          final sources = (state as SourcesLoaded).sources;
+          final loaded = state as SourcesLoaded;
+          final sources = loaded.visibleSources;
           if (sources.isEmpty) {
-            return const _EmptySourcesState();
+            return loaded.searchQuery.isNotEmpty
+                ? const NoSearchResultsState()
+                : const _EmptySourcesState();
           }
           return ListView.builder(
             itemCount: sources.length,

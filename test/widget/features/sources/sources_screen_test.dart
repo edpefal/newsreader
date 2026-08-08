@@ -85,6 +85,32 @@ void main() {
       expect(find.text('Agregar mi primer newsletter'), findsOneWidget);
     });
 
+    testWidgets(
+        'muestra solo las fuentes que coinciden con la búsqueda activa',
+        (tester) async {
+      when(() => cubit.state).thenReturn(
+        SourcesLoaded(tSources, searchQuery: 'Newsletter A'),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Newsletter A'), findsOneWidget);
+      expect(find.text('Newsletter B'), findsNothing);
+    });
+
+    testWidgets(
+        'muestra NoSearchResultsState cuando la búsqueda no encuentra nada',
+        (tester) async {
+      when(() => cubit.state).thenReturn(
+        SourcesLoaded(tSources, searchQuery: 'inexistente'),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Sin resultados'), findsOneWidget);
+      expect(find.text('Aún no tienes newsletters'), findsNothing);
+    });
+
     testWidgets('muestra lista de fuentes cuando hay fuentes', (tester) async {
       when(() => cubit.state).thenReturn(SourcesLoaded(tSources));
 

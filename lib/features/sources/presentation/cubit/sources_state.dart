@@ -13,9 +13,14 @@ final class SourcesLoading extends SourcesState {
 
 final class SourcesLoaded extends SourcesState {
   final List<NewsSource> sources;
+  final String searchQuery;
 
-  const SourcesLoaded(this.sources);
+  const SourcesLoaded(this.sources, {this.searchQuery = ''});
+
+  List<NewsSource> get visibleSources => searchQuery.isEmpty
+      ? sources
+      : sources.where((s) => sourceMatchesQuery(s, searchQuery)).toList();
 
   @override
-  List<Object?> get props => [sources];
+  List<Object?> get props => [sources, searchQuery];
 }
