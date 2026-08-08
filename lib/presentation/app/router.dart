@@ -97,10 +97,14 @@ final appRouter = GoRouter(
       routes: [
         GoRoute(
           path: 'web',
-          builder: (context, state) {
-            final article = state.extra as Article;
-            return WebviewFlutterArticleWebView(url: article.articleUrl);
-          },
+          builder: (context, state) => RouteExtraResolver<Article>(
+            extra: state.extra,
+            resolve: () => getIt<ArticleRepository>()
+                .getArticleById(state.pathParameters['id']!),
+            onNotFound: (context) => context.go('/'),
+            builder: (context, article) =>
+                WebviewFlutterArticleWebView(url: article.articleUrl),
+          ),
         ),
       ],
     ),
