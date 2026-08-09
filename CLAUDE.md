@@ -160,6 +160,12 @@ emit(state..articles.add(article)); // mutación
 - Contenido truncado: `contentHtml == null || contentHtml.length < 500`.
 - Timeout por feed durante sync: 10 segundos. Un fallo no interrumpe las demás fuentes.
 
+## Flujo de trabajo
+
+Todos los features se implementan por medio de OpenSpec (`/opsx:propose` → `/opsx:apply` → `/opsx:archive`), sin excepción, aunque el scope parezca chico.
+
+Después de archivar un change, siempre hay que commitear y pushear — no dejar el archive sin subir.
+
 ## Commits
 
 Seguir [Conventional Commits](https://www.conventionalcommits.org/): `<tipo>: <descripción>` en minúscula, sin punto final, en español.
