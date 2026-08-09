@@ -36,6 +36,7 @@ class _AddSourceViewState extends State<AddSourceView> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
   ScaffoldMessengerState? _scaffoldMessenger;
+  bool _emailCardExpanded = false;
 
   @override
   void didChangeDependencies() {
@@ -64,6 +65,7 @@ class _AddSourceViewState extends State<AddSourceView> {
     return BlocListener<AddSourceCubit, AddSourceState>(
       listener: (context, state) {
         if (state is AddSourceSuccess) {
+          setState(() => _emailCardExpanded = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('"${state.source.name}" agregado.')),
           );
@@ -78,12 +80,13 @@ class _AddSourceViewState extends State<AddSourceView> {
         } else if (state is AddSourceFeedDiscoveryFailed) {
           _showFeedDiscoveryFailedSnackBar(context, state.message);
         } else if (state is AddSourceEmailFeedGenerated) {
+          setState(() => _emailCardExpanded = false);
           _showGeneratedEmailDialog(context, state.feed);
         }
       },
       child: Scaffold(
         appBar: AppBar(title: const Text('Agregar newsletter')),
-        body: Padding(
+        body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -138,11 +141,35 @@ class _AddSourceViewState extends State<AddSourceView> {
                   );
                 },
               ),
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: () => _importOpml(context),
-                icon: const Icon(Icons.upload_file_outlined),
-                label: const Text('Importar desde OPML'),
+              const SizedBox(height: 32),
+              Text(
+                'Otras formas de agregar',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              _SourceOptionCard(
+                icon: Icons.upload_file_outlined,
+                title: 'Importar desde OPML',
+                description: 'Traé tus suscripciones desde otro lector de feeds.',
+                onTap: () => _importOpml(context),
+              ),
+              const SizedBox(height: 12),
+              BlocBuilder<AddSourceCubit, AddSourceState>(
+                builder: (context, state) {
+                  final isGenerating = state is AddSourceGeneratingEmailFeed;
+                  return _EmailFeedCard(
+                    expanded: _emailCardExpanded,
+                    isGenerating: isGenerating,
+                    onToggle: () => setState(
+                      () => _emailCardExpanded = !_emailCardExpanded,
+                    ),
+                    onGenerate: isGenerating
+                        ? null
+                        : () => context.read<AddSourceCubit>().generateEmailFeed(),
+                  );
+                },
               ),
             ],
           ),
@@ -168,37 +195,22 @@ class _AddSourceViewState extends State<AddSourceView> {
       SnackBar(
         duration: const Duration(days: 1),
         backgroundColor: Theme.of(context).colorScheme.error,
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        content: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Text(message)),
-                SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    iconSize: 20,
-                    icon: const Icon(Icons.close),
-                    tooltip: 'Cerrar',
-                    color: onError,
-                    onPressed: () =>
-                        ScaffoldMessenger.of(context).hideCurrentSnackBar(),
-                  ),
-                ),
-              ],
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                style: TextButton.styleFrom(foregroundColor: onError),
+            Expanded(child: Text(message)),
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                iconSize: 20,
+                icon: const Icon(Icons.close),
+                tooltip: 'Cerrar',
+                color: onError,
                 onPressed: () =>
-                    context.read<AddSourceCubit>().generateEmailFeed(),
-                child: const Text('Generar email'),
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar(),
               ),
             ),
           ],
@@ -279,6 +291,163 @@ class _AddSourceViewState extends State<AddSourceView> {
             child: const Text('Ya me suscribí'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SourceOptionCard extends StatelessWidget {
+  const _SourceOptionCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: colorScheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleSmall),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmailFeedCard extends StatelessWidget {
+  const _EmailFeedCard({
+    required this.expanded,
+    required this.isGenerating,
+    required this.onToggle,
+    required this.onGenerate,
+  });
+
+  final bool expanded;
+  final bool isGenerating;
+  final VoidCallback onToggle;
+  final VoidCallback? onGenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onToggle,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.mail_outline, color: colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Generar dirección de email',
+                            style: textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Para newsletters sin RSS: los correos se '
+                            'convierten en artículos.',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      expanded
+                          ? Icons.expand_less
+                          : Icons.expand_more,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+                if (expanded) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Te damos una dirección única. Suscribí el newsletter '
+                    'con ella y cada correo que llegue aparecerá acá.',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.tonal(
+                      onPressed: onGenerate,
+                      child: isGenerating
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Generar dirección de email'),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

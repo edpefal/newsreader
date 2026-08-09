@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -159,11 +161,8 @@ void main() {
     });
 
     testWidgets(
-        'muestra snackbar con acción "Generar email" cuando falla la detección',
+        'muestra snackbar sin ninguna acción cuando falla la detección',
         (tester) async {
-      when(() => cubit.generateEmailFeed(label: any(named: 'label')))
-          .thenAnswer((_) async {});
-
       whenListen(
         cubit,
         Stream.fromIterable([
@@ -186,11 +185,7 @@ void main() {
         find.text('No pudimos detectar el feed automáticamente.'),
         findsOneWidget,
       );
-      expect(find.text('Generar email'), findsOneWidget);
-
-      await tester.tap(find.text('Generar email'));
-
-      verify(() => cubit.generateEmailFeed()).called(1);
+      expect(find.text('Generar email'), findsNothing);
     });
 
     testWidgets(
@@ -300,6 +295,136 @@ void main() {
         find.text('No pudimos detectar el feed automáticamente.'),
         findsNothing,
       );
+    });
+
+    testWidgets(
+        'la card de generar email está visible y colapsada al abrir la pantalla',
+        (tester) async {
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Generar dirección de email'), findsOneWidget);
+      expect(
+        find.text(
+          'Para newsletters sin RSS: los correos se convierten en artículos.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Te damos una dirección única. Suscribí el newsletter con ella '
+          'y cada correo que llegue aparecerá acá.',
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('tocar la card de email la expande mostrando el detalle',
+        (tester) async {
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      await tester.tap(find.text('Generar dirección de email'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Te damos una dirección única. Suscribí el newsletter con ella '
+          'y cada correo que llegue aparecerá acá.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(FilledButton, 'Generar dirección de email'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'tocar el botón interno de la card expandida llama a generateEmailFeed',
+        (tester) async {
+      when(() => cubit.generateEmailFeed(label: any(named: 'label')))
+          .thenAnswer((_) async {});
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.tap(find.text('Generar dirección de email'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'Generar dirección de email'),
+      );
+
+      verify(() => cubit.generateEmailFeed()).called(1);
+    });
+
+    testWidgets('la card de email se colapsa tras generar exitosamente',
+        (tester) async {
+      const feed = (
+        email: 'abc-123@dominio.com',
+        feedUrl: 'https://x.supabase.co/functions/v1/feed/abc-123',
+      );
+      final controller = StreamController<AddSourceState>();
+      addTearDown(controller.close);
+      whenListen(cubit, controller.stream, initialState: const AddSourceInitial());
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      await tester.tap(find.text('Generar dirección de email'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Te damos una dirección única. Suscribí el newsletter con ella '
+          'y cada correo que llegue aparecerá acá.',
+        ),
+        findsOneWidget,
+      );
+
+      controller.add(const AddSourceGeneratingEmailFeed());
+      await tester.pump();
+      controller.add(const AddSourceEmailFeedGenerated(feed));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Te damos una dirección única. Suscribí el newsletter con ella '
+          'y cada correo que llegue aparecerá acá.',
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+        'la card de email se colapsa al agregar una fuente exitosamente',
+        (tester) async {
+      final tSource = NewsSource(
+        id: 's2',
+        name: 'Otra fuente',
+        feedUrl: 'https://otra.com/feed',
+        addedAt: DateTime(2024),
+      );
+      final controller = StreamController<AddSourceState>();
+      addTearDown(controller.close);
+      whenListen(cubit, controller.stream, initialState: const AddSourceInitial());
+
+      NewsSource? poppedResult;
+      await tester.pumpWidget(
+        _buildSubjectWithPopObserver(cubit, (result) => poppedResult = result),
+      );
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Generar dirección de email'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Te damos una dirección única. Suscribí el newsletter con ella '
+          'y cada correo que llegue aparecerá acá.',
+        ),
+        findsOneWidget,
+      );
+
+      controller.add(AddSourceSuccess(tSource));
+      await tester.pumpAndSettle();
+
+      expect(poppedResult, tSource);
     });
 
     testWidgets('muestra diálogo con la dirección generada', (tester) async {
