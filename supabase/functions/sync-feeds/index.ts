@@ -113,7 +113,14 @@ async function syncSource(
     const rows = (feed.items ?? [])
       .filter((item: any) => !!item.link)
       .map((item: any) => {
-        const contentHtml = item.contentEncoded ?? item.content ?? null;
+        // item.summary solo lo pobla rss-parser para Atom (undefined en RSS
+        // 2.0). Cuando un ítem Atom no trae <content>, item.summary es el
+        // único HTML real disponible (ya decodificado de entidades XML por
+        // el parseo) -- por eso entra como fallback de content_html, no de
+        // excerpt (ver design.md del change
+        // fix-atom-summary-only-content-mapping).
+        const contentHtml =
+          item.contentEncoded ?? item.content ?? item.summary ?? null;
         return {
           user_id: source.user_id,
           source_id: source.id,
@@ -123,7 +130,7 @@ async function syncSource(
           author: item.creator ?? item.author ?? source.author ?? null,
           published_at: item.isoDate ?? new Date().toISOString(),
           content_html: contentHtml,
-          excerpt: item.contentSnippet ?? item.summary ?? null,
+          excerpt: item.contentSnippet ?? null,
           article_url: item.link,
           image_url: extractImageUrl(item, contentHtml),
         };
