@@ -35,9 +35,25 @@ class AddSourceView extends StatefulWidget {
 class _AddSourceViewState extends State<AddSourceView> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+  ScaffoldMessengerState? _scaffoldMessenger;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scaffoldMessenger = ScaffoldMessenger.of(context);
+  }
 
   @override
   void dispose() {
+    // Se difiere a después del frame actual: dispose() se ejecuta con el
+    // árbol de widgets bloqueado, y ocultar el SnackBar dispara un setState
+    // síncrono en ScaffoldMessenger que fallaría si se llama directamente acá.
+    final messenger = _scaffoldMessenger;
+    if (messenger != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (messenger.mounted) messenger.removeCurrentSnackBar();
+      });
+    }
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -60,16 +76,7 @@ class _AddSourceViewState extends State<AddSourceView> {
             ),
           );
         } else if (state is AddSourceFeedDiscoveryFailed) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Theme.of(context).colorScheme.error,
-              action: SnackBarAction(
-                label: 'Generar email',
-                onPressed: () => context.read<AddSourceCubit>().generateEmailFeed(),
-              ),
-            ),
-          );
+          _showFeedDiscoveryFailedSnackBar(context, state.message);
         } else if (state is AddSourceEmailFeedGenerated) {
           _showGeneratedEmailDialog(context, state.feed);
         }
@@ -145,7 +152,59 @@ class _AddSourceViewState extends State<AddSourceView> {
   }
 
   void _submit(BuildContext context) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     context.read<AddSourceCubit>().addSource(_controller.text);
+  }
+
+  void _showFeedDiscoveryFailedSnackBar(BuildContext context, String message) {
+    // No se usan `action`/`showCloseIcon` nativos de SnackBar: cuando están
+    // presentes, SnackBar reserva ~40% del ancho para su propia fila de
+    // acción y el `content` solo recibe el 60% restante, lo que rompe
+    // cualquier alineación absoluta (ej. a la esquina superior derecha) que
+    // se intente armar dentro del `content`. Al no declararlos, `content`
+    // recibe el ancho completo y podemos controlar el layout nosotros.
+    final onError = Theme.of(context).colorScheme.onError;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(days: 1),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: Text(message)),
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    iconSize: 20,
+                    icon: const Icon(Icons.close),
+                    tooltip: 'Cerrar',
+                    color: onError,
+                    onPressed: () =>
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+                  ),
+                ),
+              ],
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                style: TextButton.styleFrom(foregroundColor: onError),
+                onPressed: () =>
+                    context.read<AddSourceCubit>().generateEmailFeed(),
+                child: const Text('Generar email'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _importOpml(BuildContext context) async {

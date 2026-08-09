@@ -51,6 +51,30 @@ Widget _buildSubjectWithPopObserver(
   );
 }
 
+/// Envuelve `AddSourceView` en un `Navigator` real con una pantalla debajo,
+/// para poder navegar hacia atrás con el botón de back del `AppBar`.
+Widget _buildSubjectPushed(AddSourceCubit cubit) {
+  return MaterialApp(
+    home: Builder(
+      builder: (context) => Scaffold(
+        body: Center(
+          child: TextButton(
+            onPressed: () => Navigator.of(context).push<NewsSource>(
+              MaterialPageRoute(
+                builder: (_) => BlocProvider<AddSourceCubit>.value(
+                  value: cubit,
+                  child: const AddSourceView(),
+                ),
+              ),
+            ),
+            child: const Text('Abrir'),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 void main() {
   late MockAddSourceCubit cubit;
 
@@ -167,6 +191,115 @@ void main() {
       await tester.tap(find.text('Generar email'));
 
       verify(() => cubit.generateEmailFeed()).called(1);
+    });
+
+    testWidgets(
+        'cierra el snackbar de error al tocar el ícono de cerrar',
+        (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable([
+          const AddSourceValidating(),
+          const AddSourceFeedDiscoveryFailed(
+            'No pudimos detectar el feed automáticamente.',
+            'https://sin-feed.com',
+          ),
+        ]),
+        initialState: const AddSourceInitial(),
+      );
+
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('No pudimos detectar el feed automáticamente.'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('No pudimos detectar el feed automáticamente.'),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+        'oculta el snackbar de error previo al reintentar agregar una fuente',
+        (tester) async {
+      when(() => cubit.addSource(any())).thenAnswer((_) async {});
+
+      whenListen(
+        cubit,
+        Stream.fromIterable([
+          const AddSourceValidating(),
+          const AddSourceFeedDiscoveryFailed(
+            'No pudimos detectar el feed automáticamente.',
+            'https://sin-feed.com',
+          ),
+        ]),
+        initialState: const AddSourceInitial(),
+      );
+
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('No pudimos detectar el feed automáticamente.'),
+        findsOneWidget,
+      );
+
+      await tester.enterText(find.byType(TextField), 'https://otra-url.com');
+      await tester.tap(find.text('Agregar'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('No pudimos detectar el feed automáticamente.'),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+        'oculta el snackbar de error al salir de la pantalla',
+        (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable([
+          const AddSourceValidating(),
+          const AddSourceFeedDiscoveryFailed(
+            'No pudimos detectar el feed automáticamente.',
+            'https://sin-feed.com',
+          ),
+        ]),
+        initialState: const AddSourceInitial(),
+      );
+
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(_buildSubjectPushed(cubit));
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('No pudimos detectar el feed automáticamente.'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byTooltip('Back'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('No pudimos detectar el feed automáticamente.'),
+        findsNothing,
+      );
     });
 
     testWidgets('muestra diálogo con la dirección generada', (tester) async {
