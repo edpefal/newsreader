@@ -72,6 +72,7 @@ USER_STORIES.md
 
 # Claude Code local config
 .claude/
+.mcp.json
 
 # AI tool configs (local only)
 .gemini/
