@@ -85,14 +85,14 @@ class _AddSourceViewState extends State<AddSourceView> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Agregar newsletter')),
+        appBar: AppBar(title: const Text('Agregar fuente')),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Pega el link de tu newsletter (o la URL del feed RSS si la tienes).',
+                'Pega el link del sitio (o la URL del feed RSS si la tienes).',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),

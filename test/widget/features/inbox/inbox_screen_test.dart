@@ -78,7 +78,7 @@ void main() {
       await tester.pumpWidget(_buildSubject(cubit));
 
       expect(find.text('Bienvenido a Reevo'), findsOneWidget);
-      expect(find.text('Agregar tu primer newsletter'), findsOneWidget);
+      expect(find.text('Agregar tu primera fuente'), findsOneWidget);
     });
 
     testWidgets(
@@ -119,7 +119,7 @@ void main() {
       when(() => cubit.loadArticles()).thenAnswer((_) async {});
 
       await tester.pumpWidget(_buildSubject(cubit));
-      await tester.tap(find.text('Agregar tu primer newsletter'));
+      await tester.tap(find.text('Agregar tu primera fuente'));
       await tester.pumpAndSettle();
 
       expect(find.text('Agregar'), findsOneWidget);

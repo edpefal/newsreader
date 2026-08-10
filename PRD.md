@@ -24,7 +24,7 @@ Crear un espacio de lectura dedicado que rescate los boletines informativos del 
 - **Lectura de Alto Valor:** interfaz optimizada para textos largos, con imagen destacada y renderizado fiel del HTML original.
 - **Continuidad entre dispositivos:** el estado de lectura, favoritos y fuentes suscritas es el mismo sin importar en qué dispositivo se abra la app.
 - **Síntesis diaria:** ofrecer, además del inbox artículo por artículo, un resumen editorial generado por IA que dé ganas de volver a la app todos los días.
-- **Simplicidad de configuración:** agregar una fuente debe funcionar pegando el link humano del newsletter, sin que el usuario necesite encontrar la URL exacta del feed.
+- **Simplicidad de configuración:** agregar una fuente debe funcionar pegando el link humano del sitio, sin que el usuario necesite encontrar la URL exacta del feed.
 
 **Criterio de éxito:** un usuario nuevo puede crear cuenta, agregar una fuente (aunque no publique RSS), leer un artículo completo, y volver a encontrar ese artículo y ese estado en otro dispositivo — todo sin fricción ni errores.
 
@@ -42,7 +42,7 @@ Crear un espacio de lectura dedicado que rescate los boletines informativos del 
 
 ### B. Gestión de Suscripciones
 
-- **Registro por URL humana o feed exacto:** el usuario pega el link del newsletter (ej. `autor.substack.com`) o la URL exacta del feed; el sistema intenta primero la URL tal cual como feed, y si falla, aplica heurísticas de detección automática por plataforma conocida (Substack, WordPress.com, Ghost Pro), incluyendo el formato de perfil `substack.com/@usuario`.
+- **Registro por URL humana o feed exacto:** el usuario pega el link del sitio (ej. `autor.substack.com`) o la URL exacta del feed; el sistema intenta primero la URL tal cual como feed, y si falla, aplica heurísticas de detección automática por plataforma conocida (Substack, WordPress.com, Ghost Pro), incluyendo el formato de perfil `substack.com/@usuario`.
 - **Fallback vía email-to-RSS:** si la detección automática falla, el sistema ofrece generar una dirección de email desechable que recibe el newsletter por correo y lo expone como feed RSS propio, con retención de 30 días sobre los items recibidos.
 - **Identificación automática:** tras validar el feed, la app extrae nombre, autor e ícono de la fuente.
 - **Importación masiva vía OPML:** el usuario puede importar múltiples fuentes de una vez desde un archivo `.opml`/`.xml`, con preview de validación concurrente por feed (nuevo/válido, ya suscrito, o error) y selección granular antes de confirmar.
@@ -55,7 +55,7 @@ Crear un espacio de lectura dedicado que rescate los boletines informativos del 
 - **Persistencia indefinida en el inbox:** un artículo no leído permanece en el inbox sin importar su antigüedad — no hay archivado automático por tiempo (a diferencia del MVP original).
 - **Estado de lectura:** al abrir un artículo se marca como leído y desaparece del inbox hacia "Leídos", de forma indefinida (no expira).
 - **Sincronización on-demand:** pull-to-refresh dispara un fetch de feeds del lado del servidor (Edge Function) más una sincronización de estado. No hay fetch periódico en background ni notificaciones push — el contenido nuevo solo aparece cuando algún dispositivo de la cuenta hace pull-to-refresh o inicia sesión.
-- **Onboarding (primer uso):** inbox vacío muestra CTA "+ Agregar tu primer newsletter".
+- **Onboarding (primer uso):** inbox vacío muestra CTA "+ Agregar tu primera fuente".
 - **Búsqueda por pantalla (nuevo — pendiente de implementar):** Inbox, Leídos y Favoritos cada una ofrece su propia búsqueda (ícono de lupa) que filtra la lista ya cargada en esa pantalla por título, nombre de fuente o autor. No es full-text sobre el contenido del artículo, y no es una pantalla global separada.
 
 ### D. Experiencia de Lectura
@@ -68,7 +68,7 @@ Crear un espacio de lectura dedicado que rescate los boletines informativos del 
 
 ### E. Resúmenes Diarios (IA)
 
-- **Generación bajo demanda:** el usuario dispara la generación de un resumen del día a partir de los artículos publicados ese día en su inbox, agrupados por fuente, con voz editorial consistente (tono cercano, sin emojis, español latinoamericano neutro con tuteo) sin importar el tono original de cada newsletter.
+- **Generación bajo demanda:** el usuario dispara la generación de un resumen del día a partir de los artículos publicados ese día en su inbox, agrupados por fuente, con voz editorial consistente (tono cercano, sin emojis, español latinoamericano neutro con tuteo) sin importar el tono original de cada fuente.
 - **Un resumen por día:** regenerar sobrescribe el resumen existente de ese día; no crea duplicados.
 - **Listado y detalle:** pantalla con todos los resúmenes históricos ordenados por fecha, cada uno navegable a su detalle con texto completo.
 

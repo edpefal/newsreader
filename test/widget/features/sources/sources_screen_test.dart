@@ -81,8 +81,8 @@ void main() {
 
       await tester.pumpWidget(_buildSubject(cubit));
 
-      expect(find.text('Aún no tienes newsletters'), findsOneWidget);
-      expect(find.text('Agregar mi primer newsletter'), findsOneWidget);
+      expect(find.text('Aún no tienes fuentes'), findsOneWidget);
+      expect(find.text('Agregar mi primera fuente'), findsOneWidget);
     });
 
     testWidgets(
@@ -108,7 +108,7 @@ void main() {
       await tester.pumpWidget(_buildSubject(cubit));
 
       expect(find.text('Sin resultados'), findsOneWidget);
-      expect(find.text('Aún no tienes newsletters'), findsNothing);
+      expect(find.text('Aún no tienes fuentes'), findsNothing);
     });
 
     testWidgets('muestra lista de fuentes cuando hay fuentes', (tester) async {
@@ -185,7 +185,7 @@ void main() {
       await tester.pumpAndSettle();
 
       verifyNever(() => cubit.loadSources());
-      expect(find.text('Agregar mi primer newsletter'), findsOneWidget);
+      expect(find.text('Agregar mi primera fuente'), findsOneWidget);
     });
 
     testWidgets('el menú muestra opciones Editar y Eliminar', (tester) async {

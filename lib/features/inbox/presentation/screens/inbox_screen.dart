@@ -366,7 +366,7 @@ class _OnboardingState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Tu espacio para leer newsletters fuera del email.',
+              'Tu espacio para leer tus fuentes fuera del email.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -381,7 +381,7 @@ class _OnboardingState extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.add),
-              label: const Text('Agregar tu primer newsletter'),
+              label: const Text('Agregar tu primera fuente'),
             ),
           ],
         ),

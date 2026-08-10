@@ -1,5 +1,5 @@
 name: newsreader
-description: Reevo — centralize your newsletters outside of email.
+description: Reevo — centralize your RSS feeds and newsletters outside of email.
 publish_to: 'none'
 
 version: 1.7.0+8

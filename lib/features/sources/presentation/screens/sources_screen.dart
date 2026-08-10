@@ -52,7 +52,7 @@ class SourcesView extends StatelessWidget {
             );
           }
         },
-        tooltip: 'Agregar newsletter',
+        tooltip: 'Agregar fuente',
         child: const Icon(Icons.add),
       ),
     );
@@ -77,12 +77,12 @@ class _EmptySourcesState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Aún no tienes newsletters',
+              'Aún no tienes fuentes',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Agrega tu primer newsletter para empezar a leer.',
+              'Agrega tu primera fuente para empezar a leer.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -97,7 +97,7 @@ class _EmptySourcesState extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.add),
-              label: const Text('Agregar mi primer newsletter'),
+              label: const Text('Agregar mi primera fuente'),
             ),
           ],
         ),
