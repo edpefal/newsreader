@@ -1,6 +1,7 @@
 import 'package:hive_ce/hive.dart';
 
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/core/domain/entities/summary_source_block.dart';
 
 part 'daily_summary_model.g.dart';
 
@@ -24,6 +25,9 @@ class DailySummaryModel extends HiveObject {
   @HiveField(5)
   DateTime? updatedAt;
 
+  @HiveField(6)
+  List<Map<dynamic, dynamic>>? sourceBlocks;
+
   DailySummaryModel({
     required this.id,
     required this.date,
@@ -31,7 +35,34 @@ class DailySummaryModel extends HiveObject {
     required this.articleCount,
     required this.createdAt,
     this.updatedAt,
+    this.sourceBlocks,
   });
+
+  static List<Map<dynamic, dynamic>>? _sourceBlocksToMaps(
+    List<SummarySourceBlock>? blocks,
+  ) {
+    if (blocks == null) return null;
+    return blocks
+        .map((b) => {
+              'sourceId': b.sourceId,
+              'sourceName': b.sourceName,
+              'articleIds': b.articleIds,
+            })
+        .toList();
+  }
+
+  static List<SummarySourceBlock>? _sourceBlocksFromMaps(
+    List<Map<dynamic, dynamic>>? maps,
+  ) {
+    if (maps == null) return null;
+    return maps
+        .map((m) => SummarySourceBlock(
+              sourceId: m['sourceId'] as String,
+              sourceName: m['sourceName'] as String,
+              articleIds: (m['articleIds'] as List).cast<String>(),
+            ))
+        .toList();
+  }
 
   factory DailySummaryModel.fromEntity(DailySummary entity) =>
       DailySummaryModel(
@@ -41,6 +72,7 @@ class DailySummaryModel extends HiveObject {
         articleCount: entity.articleCount,
         createdAt: entity.createdAt,
         updatedAt: entity.updatedAt,
+        sourceBlocks: _sourceBlocksToMaps(entity.sourceBlocks),
       );
 
   DailySummary toEntity() => DailySummary(
@@ -50,5 +82,6 @@ class DailySummaryModel extends HiveObject {
         articleCount: articleCount,
         createdAt: createdAt,
         updatedAt: updatedAt,
+        sourceBlocks: _sourceBlocksFromMaps(sourceBlocks),
       );
 }

@@ -23,13 +23,16 @@ class DailySummaryModelAdapter extends TypeAdapter<DailySummaryModel> {
       articleCount: (fields[3] as num).toInt(),
       createdAt: fields[4] as DateTime,
       updatedAt: fields[5] as DateTime?,
+      sourceBlocks: (fields[6] as List?)
+          ?.map((e) => (e as Map).cast<dynamic, dynamic>())
+          .toList(),
     );
   }
 
   @override
   void write(BinaryWriter writer, DailySummaryModel obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +44,9 @@ class DailySummaryModelAdapter extends TypeAdapter<DailySummaryModel> {
       ..writeByte(4)
       ..write(obj.createdAt)
       ..writeByte(5)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(6)
+      ..write(obj.sourceBlocks);
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/core/domain/entities/summary_source_block.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
 import 'package:newsreader/core/utils/date_key.dart';
@@ -48,6 +49,27 @@ class GenerateDailySummary {
     return article.excerpt ?? '';
   }
 
+  /// Agrupa los artículos de hoy por fuente, preservando el orden de
+  /// primera aparición — misma agrupación que ya se arma implícitamente al
+  /// construir el request al backend, pero persistida para poder linkear
+  /// cada bloque del resumen a sus artículos de origen.
+  static List<SummarySourceBlock> _sourceBlocksFor(List<Article> articles) {
+    final bySourceId = <String, SummarySourceBlock>{};
+    for (final article in articles) {
+      final existing = bySourceId[article.sourceId];
+      if (existing == null) {
+        bySourceId[article.sourceId] = SummarySourceBlock(
+          sourceId: article.sourceId,
+          sourceName: article.sourceName,
+          articleIds: [article.id],
+        );
+      } else {
+        existing.articleIds.add(article.id);
+      }
+    }
+    return bySourceId.values.toList();
+  }
+
   Future<DailySummary> execute() async {
     final todayArticles = await _todayInboxArticles();
     if (todayArticles.isEmpty) {
@@ -76,6 +98,7 @@ class GenerateDailySummary {
       content: content,
       articleCount: todayArticles.length,
       createdAt: now,
+      sourceBlocks: _sourceBlocksFor(todayArticles),
     );
 
     await _summaryRepository.save(summary);

@@ -40,6 +40,7 @@ import 'package:newsreader/features/sources/presentation/screens/import_opml_scr
 import 'package:newsreader/features/sources/presentation/screens/source_detail_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summaries_screen.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summary_detail_screen.dart';
@@ -145,7 +146,10 @@ final appRouter = GoRouter(
         resolve: () =>
             getIt<SummaryRepository>().getById(state.pathParameters['date']!),
         onNotFound: (context) => context.go('/'),
-        builder: (context, summary) => SummaryDetailScreen(summary: summary),
+        builder: (context, summary) => SummaryDetailScreen(
+          summary: summary,
+          resolveSummaryArticles: getIt<ResolveSummaryArticles>(),
+        ),
       ),
     ),
     StatefulShellRoute.indexedStack(

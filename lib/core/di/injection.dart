@@ -64,6 +64,7 @@ import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/features/summaries/domain/usecases/generate_daily_summary.dart';
+import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
 import 'package:newsreader/features/summaries/domain/usecases/get_daily_summaries.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
@@ -155,6 +156,7 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton(
     () => GenerateDailySummary(getIt(), getIt(), getIt()),
   );
+  getIt.registerLazySingleton(() => ResolveSummaryArticles(getIt()));
 
   // Use cases — Sync
   getIt.registerLazySingleton(

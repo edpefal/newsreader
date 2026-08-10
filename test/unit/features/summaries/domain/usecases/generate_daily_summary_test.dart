@@ -158,6 +158,45 @@ void main() {
       verify(() => mockSummaryRepository.save(any())).called(2);
     });
 
+    test('persiste sourceBlocks agrupando articleIds por sourceId', () async {
+      final now = DateTime.now();
+      final todayArticles = [
+        _article(
+          id: 'a1',
+          publishedAt: now,
+          sourceId: 's1',
+          sourceName: 'Newsletter A',
+        ),
+        _article(
+          id: 'a2',
+          publishedAt: now,
+          sourceId: 's1',
+          sourceName: 'Newsletter A',
+        ),
+        _article(
+          id: 'a3',
+          publishedAt: now,
+          sourceId: 's2',
+          sourceName: 'Newsletter B',
+        ),
+      ];
+      when(() => mockArticleRepository.getInboxArticles())
+          .thenAnswer((_) async => todayArticles);
+      when(() => mockSummaryGenerator.summarize(any()))
+          .thenAnswer((_) async => 'Resumen');
+      when(() => mockSummaryRepository.save(any())).thenAnswer((_) async {});
+
+      final result = await sut.execute();
+
+      expect(result.sourceBlocks, hasLength(2));
+      final blockA = result.sourceBlocks!.firstWhere((b) => b.sourceId == 's1');
+      expect(blockA.sourceName, 'Newsletter A');
+      expect(blockA.articleIds, ['a1', 'a2']);
+      final blockB = result.sourceBlocks!.firstWhere((b) => b.sourceId == 's2');
+      expect(blockB.sourceName, 'Newsletter B');
+      expect(blockB.articleIds, ['a3']);
+    });
+
     test('countTodayArticles() cuenta solo los de hoy', () async {
       final now = DateTime.now();
       final yesterday = now.subtract(const Duration(days: 1));
