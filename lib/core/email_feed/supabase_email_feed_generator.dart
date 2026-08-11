@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:newsreader/core/auth/auth_client.dart';
+import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
@@ -8,8 +9,8 @@ import 'package:newsreader/core/network/http_client.dart';
 /// feed RSS correspondiente. Se autentica con el access token de la sesión
 /// activa del usuario (no con el anon key público); el backend exige que sea
 /// una sesión real (ver require-authenticated-session-for-summary-and-email-feed).
-const _createFeedFunctionUrl =
-    'https://avyaxzhdilhufyimrzzb.supabase.co/functions/v1/create-feed';
+String get _createFeedFunctionUrl =>
+    '${AppConfig.supabaseUrl}/functions/v1/create-feed';
 
 class SupabaseEmailFeedGenerator implements EmailFeedGenerator {
   final HttpClient _httpClient;

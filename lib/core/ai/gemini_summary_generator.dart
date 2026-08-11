@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/auth/auth_client.dart';
+import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
@@ -10,8 +11,8 @@ import 'package:newsreader/core/network/http_client.dart';
 /// backend; esta app se autentica con el access token de la sesión activa
 /// del usuario (no con el anon key público), y el backend exige que sea una
 /// sesión real (ver require-authenticated-session-for-summary-and-email-feed).
-const _summarizeFunctionUrl =
-    'https://avyaxzhdilhufyimrzzb.supabase.co/functions/v1/summarize-articles';
+String get _summarizeFunctionUrl =>
+    '${AppConfig.supabaseUrl}/functions/v1/summarize-articles';
 
 class GeminiSummaryGenerator implements SummaryGenerator {
   final HttpClient _httpClient;
