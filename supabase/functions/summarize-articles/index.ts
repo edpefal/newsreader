@@ -4,6 +4,7 @@
 // quede embebida en el APK/IPA distribuido.
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { hasActiveEntitlement } from "./entitlement.ts";
 
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_URL =
@@ -107,6 +108,24 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ error: "Token inválido" }),
       { status: 401, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  // El resumen diario es la única feature paga de la app: se rechaza sin
+  // invocar a Gemini si el usuario autenticado no tiene una suscripción
+  // activa en `entitlements` -- la tabla que sincroniza `superwall-webhook`.
+  // Se lee con `userClient` (scoped al usuario, mismo cliente de arriba),
+  // apoyándose en la policy `entitlements_select_own` en vez de necesitar
+  // `service_role` para leer.
+  const { data: entitlementRow } = await userClient
+    .from("entitlements")
+    .select("is_active")
+    .eq("user_id", userData.user.id)
+    .maybeSingle();
+  if (!hasActiveEntitlement(entitlementRow)) {
+    return new Response(
+      JSON.stringify({ error: "Se requiere una suscripción activa" }),
+      { status: 403, headers: { "Content-Type": "application/json" } },
     );
   }
 

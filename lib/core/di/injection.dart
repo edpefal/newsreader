@@ -36,6 +36,8 @@ import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
 import 'package:newsreader/core/sharing/file_sharer.dart';
 import 'package:newsreader/core/sharing/share_plus_file_sharer.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
+import 'package:newsreader/core/subscription/superwall_subscription_status_provider.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_favorites_json.dart';
 import 'package:newsreader/features/account/domain/usecases/export_sources_opml.dart';
@@ -93,6 +95,9 @@ Future<void> setupDependencies() async {
     () => SupabaseEmailFeedGenerator(getIt(), getIt()),
   );
   getIt.registerLazySingleton<FileSharer>(() => SharePlusFileSharer());
+  getIt.registerLazySingleton<SubscriptionStatusProvider>(
+    () => SuperwallSubscriptionStatusProvider(),
+  );
 
   // Data sources
   getIt.registerLazySingleton<SourceLocalDataSource>(
@@ -198,6 +203,6 @@ Future<void> setupDependencies() async {
     SourcesCubit(getIt(), getIt(), getIt()),
   );
   getIt.registerSingleton<SummariesCubit>(
-    SummariesCubit(getIt(), getIt()),
+    SummariesCubit(getIt(), getIt(), getIt()),
   );
 }

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/summaries/domain/usecases/generate_daily_summary.dart';
 import 'package:newsreader/features/summaries/domain/usecases/get_daily_summaries.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
@@ -11,9 +12,13 @@ class MockGetDailySummaries extends Mock implements GetDailySummaries {}
 
 class MockGenerateDailySummary extends Mock implements GenerateDailySummary {}
 
+class MockSubscriptionStatusProvider extends Mock
+    implements SubscriptionStatusProvider {}
+
 void main() {
   late MockGetDailySummaries mockGetDailySummaries;
   late MockGenerateDailySummary mockGenerateDailySummary;
+  late MockSubscriptionStatusProvider mockSubscriptionStatusProvider;
 
   final tSummary = DailySummary(
     id: '2026-07-09',
@@ -23,12 +28,20 @@ void main() {
     createdAt: DateTime(2026, 7, 9),
   );
 
-  SummariesCubit buildCubit() =>
-      SummariesCubit(mockGetDailySummaries, mockGenerateDailySummary);
+  SummariesCubit buildCubit() => SummariesCubit(
+        mockGetDailySummaries,
+        mockGenerateDailySummary,
+        mockSubscriptionStatusProvider,
+      );
 
   setUp(() {
     mockGetDailySummaries = MockGetDailySummaries();
     mockGenerateDailySummary = MockGenerateDailySummary();
+    mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
+    // Suscripción activa por defecto: la mayoría de los tests existentes
+    // ejercitan la generación en sí, no el gate del paywall (que tiene su
+    // propio grupo de tests más abajo).
+    when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(true);
   });
 
   group('SummariesCubit', () {
@@ -121,6 +134,59 @@ void main() {
           canGenerateToday: true,
           message: 'No se pudo generar el resumen. Intentá de nuevo.',
         ),
+      ],
+    );
+
+    blocTest<SummariesCubit, SummariesState>(
+      'generateTodaySummary() sin suscripción activa muestra el paywall '
+      'en vez de generar',
+      build: () {
+        when(() => mockSubscriptionStatusProvider.isSubscribed)
+            .thenReturn(false);
+        when(
+          () => mockSubscriptionStatusProvider.showPaywall(
+            onSubscribed: any(named: 'onSubscribed'),
+          ),
+        ).thenAnswer((_) async {});
+        return buildCubit();
+      },
+      seed: () => const SummariesLoaded(summaries: [], canGenerateToday: true),
+      act: (cubit) => cubit.generateTodaySummary(),
+      expect: () => <SummariesState>[],
+      verify: (_) {
+        verify(
+          () => mockSubscriptionStatusProvider.showPaywall(
+            onSubscribed: any(named: 'onSubscribed'),
+          ),
+        ).called(1);
+        verifyNever(() => mockGenerateDailySummary.execute());
+      },
+    );
+
+    blocTest<SummariesCubit, SummariesState>(
+      'generateTodaySummary() sin suscripción activa dispara la generación '
+      'automáticamente si el usuario completa la compra desde el paywall',
+      build: () {
+        when(() => mockSubscriptionStatusProvider.isSubscribed)
+            .thenReturn(false);
+        when(
+          () => mockSubscriptionStatusProvider.showPaywall(
+            onSubscribed: any(named: 'onSubscribed'),
+          ),
+        ).thenAnswer((invocation) async {
+          final onSubscribed = invocation.namedArguments[#onSubscribed]
+              as Future<void> Function();
+          await onSubscribed();
+        });
+        when(() => mockGenerateDailySummary.execute())
+            .thenAnswer((_) async => tSummary);
+        return buildCubit();
+      },
+      seed: () => const SummariesLoaded(summaries: [], canGenerateToday: true),
+      act: (cubit) => cubit.generateTodaySummary(),
+      expect: () => [
+        const SummaryGenerating([]),
+        SummariesLoaded(summaries: [tSummary], canGenerateToday: true),
       ],
     );
   });

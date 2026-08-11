@@ -393,3 +393,12 @@ entrypoint = "./functions/summarize-articles/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/summarize-articles/*.html" ]
+
+[functions.superwall-webhook]
+enabled = true
+# Superwall llama a este endpoint sin sesión de usuario (no hay JWT que
+# verificar) -- la autenticidad del request se valida con la firma Svix
+# (SUPERWALL_WEBHOOK_SECRET) dentro de la función, no con el JWT de Supabase.
+verify_jwt = false
+import_map = "./functions/superwall-webhook/deno.json"
+entrypoint = "./functions/superwall-webhook/index.ts"
