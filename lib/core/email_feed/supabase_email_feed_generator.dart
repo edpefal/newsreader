@@ -1,29 +1,35 @@
 import 'dart:convert';
 
+import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
 /// Llama a la Supabase Edge Function que genera una dirección de email y su
-/// feed RSS correspondiente. Mismo patrón que GeminiSummaryGenerator: la app
-/// solo se autentica con el anon key público de Supabase.
+/// feed RSS correspondiente. Se autentica con el access token de la sesión
+/// activa del usuario (no con el anon key público); el backend exige que sea
+/// una sesión real (ver require-authenticated-session-for-summary-and-email-feed).
 const _createFeedFunctionUrl =
     'https://avyaxzhdilhufyimrzzb.supabase.co/functions/v1/create-feed';
-const _supabaseAnonKey =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2eWF4emhkaWxodWZ5aW1yenpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3OTE1MTMsImV4cCI6MjA5OTM2NzUxM30.LfgL2Arsth-br6qoAUzbAYhMFtiVCXnrnpoWU59Xzh0';
 
 class SupabaseEmailFeedGenerator implements EmailFeedGenerator {
   final HttpClient _httpClient;
+  final AuthClient _authClient;
 
-  const SupabaseEmailFeedGenerator(this._httpClient);
+  const SupabaseEmailFeedGenerator(this._httpClient, this._authClient);
 
   @override
   Future<GeneratedEmailFeed> generate({String? label}) async {
+    final accessToken = _authClient.currentAccessToken;
+    if (accessToken == null) {
+      throw const EmailFeedGenerationException('Se requiere sesión activa.');
+    }
+
     try {
       final responseBody = await _httpClient.post(
         _createFeedFunctionUrl,
-        headers: const {
+        headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_supabaseAnonKey',
+          'Authorization': 'Bearer $accessToken',
         },
         body: jsonEncode({if (label != null) 'label': label}),
       );

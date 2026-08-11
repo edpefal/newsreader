@@ -3,14 +3,18 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/ai/gemini_summary_generator.dart';
 import 'package:newsreader/core/ai/summary_generator.dart';
+import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
 class MockHttpClient extends Mock implements HttpClient {}
 
+class MockAuthClient extends Mock implements AuthClient {}
+
 void main() {
   late MockHttpClient mockHttpClient;
+  late MockAuthClient mockAuthClient;
   late GeminiSummaryGenerator sut;
 
   setUpAll(() {
@@ -19,7 +23,9 @@ void main() {
 
   setUp(() {
     mockHttpClient = MockHttpClient();
-    sut = GeminiSummaryGenerator(mockHttpClient);
+    mockAuthClient = MockAuthClient();
+    when(() => mockAuthClient.currentAccessToken).thenReturn('token-de-sesion');
+    sut = GeminiSummaryGenerator(mockHttpClient, mockAuthClient);
   });
 
   final tArticles = [
@@ -98,5 +104,46 @@ void main() {
     ).thenThrow(const NetworkException());
 
     expect(sut.summarize(tArticles), throwsA(isA<SummaryGenerationException>()));
+  });
+
+  test(
+      'lanza SummaryGenerationException sin accessToken y no llama al HttpClient',
+      () async {
+    when(() => mockAuthClient.currentAccessToken).thenReturn(null);
+
+    expect(sut.summarize(tArticles), throwsA(isA<SummaryGenerationException>()));
+    verifyNever(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
+      ),
+    );
+  });
+
+  test('usa el accessToken de la sesión como Authorization, no la anon key',
+      () async {
+    when(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
+      ),
+    ).thenAnswer((_) async => '{"summary": "Resumen generado"}');
+
+    await sut.summarize(tArticles);
+
+    final headers = verify(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: captureAny(named: 'headers'),
+        timeout: any(named: 'timeout'),
+      ),
+    ).captured.single as Map<String, String>;
+
+    expect(headers['Authorization'], 'Bearer token-de-sesion');
   });
 }

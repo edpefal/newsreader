@@ -1,8 +1,9 @@
 // Proxy a la API de Gemini para el resumen diario de Newsletter Hub.
-// La app Flutter llama a esta función (autenticada con el anon key de
-// Supabase, nunca con la API key de Gemini) para que la key real de Gemini
-// jamás quede embebida en el APK/IPA distribuido.
+// La app Flutter llama a esta función autenticada con la sesión del usuario
+// (nunca con la API key de Gemini), para que la key real de Gemini jamás
+// quede embebida en el APK/IPA distribuido.
 import "@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_URL =
@@ -89,6 +90,23 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ error: "Método no permitido" }),
       { status: 405, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data: userData, error: authError } = await userClient.auth.getUser(
+    token,
+  );
+  if (authError || !userData.user) {
+    return new Response(
+      JSON.stringify({ error: "Token inválido" }),
+      { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
 

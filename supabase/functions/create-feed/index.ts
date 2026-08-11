@@ -3,10 +3,9 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-// Límite básico anti-abuso: como esta función se llama con el anon key
-// público (mismo modelo que summarize-articles), cualquiera que lo extraiga
-// del APK podría generar feeds sin límite. Un tope simple por hora alcanza
-// para una app de uso personal sin sistema de cuentas.
+// Tope por hora como segunda capa de protección, redundante con la
+// exigencia de sesión autenticada de más abajo (ver
+// require-authenticated-session-for-summary-and-email-feed).
 const MAX_FEEDS_PER_HOUR = 20;
 
 interface CreateFeedRequest {
@@ -18,6 +17,23 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ error: "Método no permitido" }),
       { status: 405, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data: userData, error: authError } = await userClient.auth.getUser(
+    token,
+  );
+  if (authError || !userData.user) {
+    return new Response(
+      JSON.stringify({ error: "Token inválido" }),
+      { status: 401, headers: { "Content-Type": "application/json" } },
     );
   }
 

@@ -87,10 +87,10 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton<AppNavigator>(() => const GoRouterNavigator());
   getIt.registerLazySingleton<OPMLParser>(() => const XmlOpmlParser());
   getIt.registerLazySingleton<SummaryGenerator>(
-    () => GeminiSummaryGenerator(getIt()),
+    () => GeminiSummaryGenerator(getIt(), getIt()),
   );
   getIt.registerLazySingleton<EmailFeedGenerator>(
-    () => SupabaseEmailFeedGenerator(getIt()),
+    () => SupabaseEmailFeedGenerator(getIt(), getIt()),
   );
   getIt.registerLazySingleton<FileSharer>(() => SharePlusFileSharer());
 

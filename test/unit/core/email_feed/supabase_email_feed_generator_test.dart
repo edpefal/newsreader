@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/core/email_feed/supabase_email_feed_generator.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
@@ -8,13 +9,18 @@ import 'package:newsreader/core/network/http_client.dart';
 
 class MockHttpClient extends Mock implements HttpClient {}
 
+class MockAuthClient extends Mock implements AuthClient {}
+
 void main() {
   late MockHttpClient mockHttpClient;
+  late MockAuthClient mockAuthClient;
   late SupabaseEmailFeedGenerator sut;
 
   setUp(() {
     mockHttpClient = MockHttpClient();
-    sut = SupabaseEmailFeedGenerator(mockHttpClient);
+    mockAuthClient = MockAuthClient();
+    when(() => mockAuthClient.currentAccessToken).thenReturn('token-de-sesion');
+    sut = SupabaseEmailFeedGenerator(mockHttpClient, mockAuthClient);
   });
 
   test('devuelve email y feedUrl del backend en caso exitoso', () async {
@@ -87,5 +93,45 @@ void main() {
       sut.generate(),
       throwsA(isA<EmailFeedGenerationException>()),
     );
+  });
+
+  test(
+      'lanza EmailFeedGenerationException sin accessToken y no llama al HttpClient',
+      () async {
+    when(() => mockAuthClient.currentAccessToken).thenReturn(null);
+
+    expect(sut.generate(), throwsA(isA<EmailFeedGenerationException>()));
+    verifyNever(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: any(named: 'headers'),
+      ),
+    );
+  });
+
+  test('usa el accessToken de la sesión como Authorization, no la anon key',
+      () async {
+    when(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: any(named: 'headers'),
+      ),
+    ).thenAnswer(
+      (_) async => '{"email": "a@b.com", "feedUrl": "https://x/feed/a"}',
+    );
+
+    await sut.generate();
+
+    final headers = verify(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: captureAny(named: 'headers'),
+      ),
+    ).captured.single as Map<String, String>;
+
+    expect(headers['Authorization'], 'Bearer token-de-sesion');
   });
 }
