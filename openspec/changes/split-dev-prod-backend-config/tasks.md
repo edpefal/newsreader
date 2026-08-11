@@ -9,11 +9,11 @@
 
 ## 2. Proyecto Supabase "dev" (infraestructura)
 
-- [ ] 2.1 Crear el proyecto Supabase nuevo para dev (vía dashboard o MCP).
-- [ ] 2.2 Aplicar las 9 migraciones existentes al proyecto dev (`supabase link` + `supabase db push`, o vía MCP).
-- [ ] 2.3 Desplegar las 6 Edge Functions al proyecto dev.
-- [ ] 2.4 Configurar el secret `GEMINI_API_KEY` del proyecto dev con la key de free tier actual. **Requiere que el usuario provea el valor** (no es legible desde el código ni desde las herramientas — solo se puede *escribir* un secret nuevo, no leer el existente).
-- [ ] 2.5 Completar `AppConfig` con la URL y anon key reales del proyecto dev recién creado.
+- [x] 2.1 Crear el proyecto Supabase nuevo para dev (vía dashboard o MCP).
+- [x] 2.2 Aplicar las 9 migraciones existentes al proyecto dev (`supabase link` + `supabase db push`, o vía MCP). (En la práctica son 10 -- se sumó `add_entitlements` después de escrito este proposal.)
+- [x] 2.3 Desplegar las 6 Edge Functions al proyecto dev. (En la práctica son 7 -- se sumó `superwall-webhook` después de escrito este proposal.)
+- [x] 2.4 Configurar el secret `GEMINI_API_KEY` del proyecto dev con la key de free tier actual. **Requiere que el usuario provea el valor** (no es legible desde el código ni desde las herramientas — solo se puede *escribir* un secret nuevo, no leer el existente).
+- [x] 2.5 Completar `AppConfig` con la URL y anon key reales del proyecto dev recién creado.
 
 ## 3. Rotar prod a cuenta paga de Gemini
 

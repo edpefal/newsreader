@@ -12,10 +12,10 @@ class AppConfig {
 
   static const bool isProd = _env == 'prod';
 
-  // TODO(split-dev-prod-backend-config): reemplazar por la URL/anon key
-  // reales del proyecto Supabase "dev" una vez creado (tasks.md, sección 2).
-  static const String _devSupabaseUrl = 'https://TODO-dev.supabase.co';
-  static const String _devSupabaseAnonKey = 'TODO-dev-anon-key';
+  static const String _devSupabaseUrl =
+      'https://xgwnxhpdcrghrtdbrmpn.supabase.co';
+  static const String _devSupabaseAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhnd254aHBkY3JnaHJ0ZGJybXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0MDYwODAsImV4cCI6MjEwMTk4MjA4MH0.Jf2OQDF8epNC3sXDOJK7T-sdS_FjfHvDO4IkACmxbgU';
 
   static const String _prodSupabaseUrl =
       'https://avyaxzhdilhufyimrzzb.supabase.co';
