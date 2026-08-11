@@ -1,11 +1,11 @@
 ## 1. AppConfig en el cliente
 
-- [ ] 1.1 Crear `lib/core/config/app_config.dart`: clase estática (constructor privado, patrón `AppConstants`) con `isProd` (`const String.fromEnvironment('APP_ENV', defaultValue: 'dev') == 'prod'`), `supabaseUrl` y `supabaseAnonKey` (par de valores hardcodeados dev/prod, elegidos según `isProd`).
-- [ ] 1.2 `lib/main.dart`: usar `AppConfig.supabaseUrl`/`AppConfig.supabaseAnonKey` en `Supabase.initialize`; loguear una vez al arrancar qué ambiente está activo (`debugPrint('Ambiente: ${AppConfig.isProd ? 'prod' : 'dev'}')` o similar).
-- [ ] 1.3 `lib/core/ai/gemini_summary_generator.dart`: reemplazar la URL hardcodeada por `'${AppConfig.supabaseUrl}/functions/v1/summarize-articles'`; quitar la constante local.
-- [ ] 1.4 `lib/core/email_feed/supabase_email_feed_generator.dart`: mismo cambio para `create-feed`.
-- [ ] 1.5 `lib/core/feed/supabase_feed_sync_trigger.dart`: mismo cambio para `sync-feeds`.
-- [ ] 1.6 `lib/features/account/domain/usecases/delete_account.dart`: mismo cambio para `delete-account`.
+- [x] 1.1 Crear `lib/core/config/app_config.dart`: clase estática (constructor privado, patrón `AppConstants`) con `isProd` (`const String.fromEnvironment('APP_ENV', defaultValue: 'dev') == 'prod'`), `supabaseUrl` y `supabaseAnonKey` (par de valores hardcodeados dev/prod, elegidos según `isProd`).
+- [x] 1.2 `lib/main.dart`: usar `AppConfig.supabaseUrl`/`AppConfig.supabaseAnonKey` en `Supabase.initialize`; loguear una vez al arrancar qué ambiente está activo (`debugPrint('Ambiente: ${AppConfig.isProd ? 'prod' : 'dev'}')` o similar).
+- [x] 1.3 `lib/core/ai/gemini_summary_generator.dart`: reemplazar la URL hardcodeada por `'${AppConfig.supabaseUrl}/functions/v1/summarize-articles'`; quitar la constante local.
+- [x] 1.4 `lib/core/email_feed/supabase_email_feed_generator.dart`: mismo cambio para `create-feed`.
+- [x] 1.5 `lib/core/feed/supabase_feed_sync_trigger.dart`: mismo cambio para `sync-feeds`.
+- [x] 1.6 `lib/features/account/domain/usecases/delete_account.dart`: mismo cambio para `delete-account`.
 
 ## 2. Proyecto Supabase "dev" (infraestructura)
 
@@ -23,7 +23,7 @@
 
 ## 4. Verificación
 
-- [ ] 4.1 Correr `flutter analyze` sin warnings.
-- [ ] 4.2 Correr `flutter test` y confirmar que toda la suite pasa.
+- [x] 4.1 Correr `flutter analyze` sin warnings.
+- [x] 4.2 Correr `flutter test` y confirmar que toda la suite pasa.
 - [ ] 4.3 `flutter run` (sin flags) y confirmar en el log que arranca en modo "dev", contra el proyecto dev — probar agregar una fuente y generar un resumen sin que afecte al proyecto prod.
 - [ ] 4.4 `flutter run --dart-define=APP_ENV=prod` y confirmar en el log que arranca en modo "prod", contra el proyecto existente.

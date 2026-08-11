@@ -1,12 +1,13 @@
 import 'dart:convert';
 
 import 'package:newsreader/core/auth/auth_client.dart';
+import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
-const _syncFeedsFunctionUrl =
-    'https://avyaxzhdilhufyimrzzb.supabase.co/functions/v1/sync-feeds';
+String get _syncFeedsFunctionUrl =>
+    '${AppConfig.supabaseUrl}/functions/v1/sync-feeds';
 
 /// `sync-feeds` procesa hasta 20 fuentes de forma secuencial del lado del
 /// servidor (con hasta 10s de timeout cada una si un feed no responde), así

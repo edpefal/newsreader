@@ -1,12 +1,13 @@
 import 'dart:convert';
 
 import 'package:newsreader/core/auth/auth_client.dart';
+import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
 
-const _deleteAccountFunctionUrl =
-    'https://avyaxzhdilhufyimrzzb.supabase.co/functions/v1/delete-account';
+String get _deleteAccountFunctionUrl =>
+    '${AppConfig.supabaseUrl}/functions/v1/delete-account';
 
 /// Elimina irreversiblemente la cuenta del usuario y todos sus datos
 /// asociados. El borrado remoto (Edge Function `delete-account`) SHALL

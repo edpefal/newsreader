@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
@@ -33,10 +34,10 @@ void main() async {
   // 2. Initialize Supabase (usado por AuthClient; el resto de la app sigue
   // llamando a las edge functions vía HttpClient, sin el SDK de Supabase).
   await Supabase.initialize(
-    url: 'https://avyaxzhdilhufyimrzzb.supabase.co',
-    publishableKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2eWF4emhkaWxodWZ5aW1yenpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3OTE1MTMsImV4cCI6MjA5OTM2NzUxM30.LfgL2Arsth-br6qoAUzbAYhMFtiVCXnrnpoWU59Xzh0',
+    url: AppConfig.supabaseUrl,
+    publishableKey: AppConfig.supabaseAnonKey,
   );
+  debugPrint('Ambiente: ${AppConfig.isProd ? 'prod' : 'dev'}');
 
   // 3. Setup dependency injection
   await setupDependencies();
