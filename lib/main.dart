@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:superwallkit_flutter/superwallkit_flutter.dart';
 
+import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/di/injection.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
@@ -38,8 +41,31 @@ void main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2eWF4emhkaWxodWZ5aW1yenpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3OTE1MTMsImV4cCI6MjA5OTM2NzUxM30.LfgL2Arsth-br6qoAUzbAYhMFtiVCXnrnpoWU59Xzh0',
   );
 
+  // 2.5. Configurar Superwall. La API key pública se reemplaza por la real
+  // del proyecto de Superwall antes de publicar — ver
+  // openspec/changes/gate-daily-summary-behind-superwall-paywall/proposal.md.
+  // No es un secreto (es client-side, análoga a una publishable key), pero
+  // sin una key real el SDK no puede resolver placements/paywalls.
+  Superwall.configure('SUPERWALL_API_KEY_PLACEHOLDER');
+
   // 3. Setup dependency injection
   await setupDependencies();
+
+  // 3.5. Identificar al usuario ante Superwall con el mismo user_id de
+  // Supabase Auth, tanto en la sesión ya activa al abrir la app como en
+  // cada login posterior (LoginCubit usa el mismo AuthClient, así que esta
+  // suscripción cubre ambos casos sin duplicar la llamada en cada flujo).
+  final authClient = getIt<AuthClient>();
+  final subscriptionStatusProvider = getIt<SubscriptionStatusProvider>();
+  if (authClient.isSignedIn && authClient.currentUserId != null) {
+    await subscriptionStatusProvider.identify(authClient.currentUserId!);
+  }
+  authClient.authStateChanges.listen((isSignedIn) {
+    final userId = authClient.currentUserId;
+    if (isSignedIn && userId != null) {
+      subscriptionStatusProvider.identify(userId);
+    }
+  });
 
   // 4. One-time migration: remove auto-archived articles from previous behavior
   await getIt<MigrateArchivedArticles>().execute();
