@@ -17,9 +17,9 @@
 
 ## 3. Rotar prod a cuenta paga de Gemini
 
-- [ ] 3.1 **Acción del usuario**: crear/activar una cuenta de Gemini de pago y obtener una API key nueva.
-- [ ] 3.2 Actualizar el secret `GEMINI_API_KEY` del proyecto existente (ahora "prod") con la key nueva de pago.
-- [ ] 3.3 Confirmar en `AppConfig` que los valores de "prod" siguen apuntando al proyecto Supabase existente (no cambian, solo cambia su secret de Gemini).
+- [x] 3.1 **Acción del usuario**: crear/activar una cuenta de Gemini de pago y obtener una API key nueva. (Vinculada a "My Billing Account" compartida en pospago -- el usuario decidió no bloquearse en aislar/prepagar la billing account por ahora, ver conversación.)
+- [x] 3.2 Actualizar el secret `GEMINI_API_KEY` del proyecto existente (ahora "prod") con la key nueva de pago.
+- [x] 3.3 Confirmar en `AppConfig` que los valores de "prod" siguen apuntando al proyecto Supabase existente (no cambian, solo cambia su secret de Gemini).
 
 ## 4. Verificación
 
