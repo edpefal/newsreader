@@ -252,6 +252,7 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
 
   void _onDestinationSelected(BuildContext context, int index) {
     if (_isSearching) _toggleSearch(context);
+    if (index == 0) context.read<InboxCubit>().loadArticles();
     if (index == 1) context.read<FavoritesCubit>().loadFavorites();
     if (index == 2) context.read<ArchiveCubit>().loadArchive();
     if (index == 3) context.read<SourcesCubit>().loadSources();
