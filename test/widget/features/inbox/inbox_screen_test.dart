@@ -6,13 +6,14 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
 
 class MockInboxCubit extends MockCubit<InboxState> implements InboxCubit {}
 
-Widget _buildSubject(InboxCubit cubit) {
+Widget _buildSubject(InboxCubit cubit, {NewsSource? sourceToReturnOnAdd}) {
   final router = GoRouter(
     routes: [
       GoRoute(
@@ -24,7 +25,20 @@ Widget _buildSubject(InboxCubit cubit) {
       ),
       GoRoute(
         path: '/sources/add',
-        builder: (_, __) => const Scaffold(body: Text('Agregar')),
+        builder: (context, __) => Scaffold(
+          body: TextButton(
+            onPressed: () => Navigator.of(context).pop(sourceToReturnOnAdd),
+            child: const Text('Agregar'),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/sources/:id',
+        builder: (_, state) => Scaffold(
+          body: Text(
+            'Detalle${state.uri.queryParameters['justAdded'] == 'true' ? ' (justAdded)' : ''}',
+          ),
+        ),
       ),
       GoRoute(
         path: '/article/:id',
@@ -123,6 +137,32 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Agregar'), findsOneWidget);
+    });
+
+    testWidgets(
+        'botón onboarding, al agregar una fuente, recarga los artículos y '
+        'navega a su detalle con justAdded',
+        (tester) async {
+      when(() => cubit.state)
+          .thenReturn(const InboxLoaded([], hasSources: false));
+      when(() => cubit.loadArticles()).thenAnswer((_) async {});
+      final addedSource = NewsSource(
+        id: 'new-1',
+        name: 'Newsletter Nueva',
+        feedUrl: 'https://nueva.com/feed',
+        addedAt: DateTime(2024),
+      );
+
+      await tester.pumpWidget(
+        _buildSubject(cubit, sourceToReturnOnAdd: addedSource),
+      );
+      await tester.tap(find.text('Agregar tu primera fuente'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Agregar'));
+      await tester.pumpAndSettle();
+
+      verify(() => cubit.loadArticles()).called(1);
+      expect(find.text('Detalle (justAdded)'), findsOneWidget);
     });
 
     testWidgets(

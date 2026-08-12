@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/core/widgets/no_search_results_state.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
@@ -375,9 +376,16 @@ class _OnboardingState extends StatelessWidget {
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () async {
-                await context.push('/sources/add');
+                final addedSource =
+                    await context.push<NewsSource>('/sources/add');
                 if (context.mounted) {
                   context.read<InboxCubit>().loadArticles();
+                }
+                if (addedSource != null && context.mounted) {
+                  context.push(
+                    '/sources/${addedSource.id}?justAdded=true',
+                    extra: addedSource,
+                  );
                 }
               },
               icon: const Icon(Icons.add),
