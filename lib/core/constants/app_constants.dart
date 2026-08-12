@@ -1,3 +1,5 @@
+import 'package:newsreader/core/config/app_config.dart';
+
 class AppConstants {
   AppConstants._();
 
@@ -12,8 +14,19 @@ class AppConstants {
   // artículos remotos con updatedAt anterior al último sync. v3 fuerza que
   // la migración corra de nuevo en dispositivos que ya pasaron por v2.
   static const String settingsArticlesResetV3Key = 'articles_reset_v3';
-  static const String hiveSourcesBox = 'sources';
-  static const String hiveArticlesBox = 'articles';
-  static const String hiveSettingsBox = 'settings';
-  static const String hiveSummariesBox = 'summaries';
+
+  // Nombres de box separados por ambiente: sin esto, un dispositivo usado
+  // para probar dev y prod comparte el mismo caché local de Hive, y sigue
+  // mostrando fuentes/artículos de un ambiente aunque la app esté corriendo
+  // contra el otro (el pull incremental de SyncUserData nunca borra
+  // localmente lo que el otro backend no tiene). Prod mantiene los nombres
+  // originales para no requerir migración en instalaciones existentes.
+  static String get hiveSourcesBox =>
+      AppConfig.isProd ? 'sources' : 'sources_dev';
+  static String get hiveArticlesBox =>
+      AppConfig.isProd ? 'articles' : 'articles_dev';
+  static String get hiveSettingsBox =>
+      AppConfig.isProd ? 'settings' : 'settings_dev';
+  static String get hiveSummariesBox =>
+      AppConfig.isProd ? 'summaries' : 'summaries_dev';
 }
