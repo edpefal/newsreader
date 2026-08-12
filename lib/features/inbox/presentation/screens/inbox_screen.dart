@@ -381,11 +381,19 @@ class _OnboardingState extends StatelessWidget {
                 if (context.mounted) {
                   context.read<InboxCubit>().loadArticles();
                 }
-                if (addedSource != null && context.mounted) {
-                  context.push(
-                    '/sources/${addedSource.id}?justAdded=true',
-                    extra: addedSource,
-                  );
+                if (addedSource == null || !context.mounted) return;
+                // Se espera la vuelta de la pantalla de detalle (que
+                // sincroniza y trae los artículos de la fuente recién
+                // agregada) para recargar el Inbox recién ahí -- si se
+                // recargara antes de este await, la fuente todavía no
+                // tendría artículos y el Inbox quedaría desactualizado
+                // hasta el próximo pull-to-refresh.
+                await context.push(
+                  '/sources/${addedSource.id}?justAdded=true',
+                  extra: addedSource,
+                );
+                if (context.mounted) {
+                  context.read<InboxCubit>().loadArticles();
                 }
               },
               icon: const Icon(Icons.add),

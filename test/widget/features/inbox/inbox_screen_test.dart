@@ -34,9 +34,18 @@ Widget _buildSubject(InboxCubit cubit, {NewsSource? sourceToReturnOnAdd}) {
       ),
       GoRoute(
         path: '/sources/:id',
-        builder: (_, state) => Scaffold(
-          body: Text(
-            'Detalle${state.uri.queryParameters['justAdded'] == 'true' ? ' (justAdded)' : ''}',
+        builder: (context, state) => Scaffold(
+          body: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Detalle${state.uri.queryParameters['justAdded'] == 'true' ? ' (justAdded)' : ''}',
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Volver'),
+              ),
+            ],
           ),
         ),
       ),
@@ -163,6 +172,33 @@ void main() {
 
       verify(() => cubit.loadArticles()).called(1);
       expect(find.text('Detalle (justAdded)'), findsOneWidget);
+    });
+
+    testWidgets(
+        'botón onboarding recarga los artículos otra vez al volver de la '
+        'pantalla de detalle (sincronizada mientras tanto)',
+        (tester) async {
+      when(() => cubit.state)
+          .thenReturn(const InboxLoaded([], hasSources: false));
+      when(() => cubit.loadArticles()).thenAnswer((_) async {});
+      final addedSource = NewsSource(
+        id: 'new-1',
+        name: 'Newsletter Nueva',
+        feedUrl: 'https://nueva.com/feed',
+        addedAt: DateTime(2024),
+      );
+
+      await tester.pumpWidget(
+        _buildSubject(cubit, sourceToReturnOnAdd: addedSource),
+      );
+      await tester.tap(find.text('Agregar tu primera fuente'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Agregar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Volver'));
+      await tester.pumpAndSettle();
+
+      verify(() => cubit.loadArticles()).called(2);
     });
 
     testWidgets(
