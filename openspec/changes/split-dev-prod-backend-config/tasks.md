@@ -26,4 +26,4 @@
 - [x] 4.1 Correr `flutter analyze` sin warnings.
 - [x] 4.2 Correr `flutter test` y confirmar que toda la suite pasa.
 - [ ] 4.3 `flutter run` (sin flags) y confirmar en el log que arranca en modo "dev", contra el proyecto dev — probar agregar una fuente y generar un resumen sin que afecte al proyecto prod.
-- [ ] 4.4 `flutter run --dart-define=APP_ENV=prod` y confirmar en el log que arranca en modo "prod", contra el proyecto existente.
+- [x] 4.4 `flutter run --dart-define=APP_ENV=prod` y confirmar en el log que arranca en modo "prod", contra el proyecto existente. (Requirió subir `minSdk` a 26 por superwallkit_flutter, ver commit aparte.)
