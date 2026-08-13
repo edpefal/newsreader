@@ -32,6 +32,9 @@ class SuperwallSubscriptionStatusProvider implements SubscriptionStatusProvider 
   Future<void> identify(String userId) => Superwall.shared.identify(userId);
 
   @override
+  Future<void> reset() => Superwall.shared.reset();
+
+  @override
   Future<void> showPaywall({
     required Future<void> Function() onSubscribed,
   }) {

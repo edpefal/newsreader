@@ -12,6 +12,12 @@ abstract class SubscriptionStatusProvider {
   /// `user_id` de Supabase Auth, inmediatamente después de un login exitoso.
   Future<void> identify(String userId);
 
+  /// Desvincula al usuario identificado (logout o borrado de cuenta). Sin
+  /// esto, si otra cuenta inicia sesión en el mismo dispositivo, el
+  /// proveedor podría arrastrar por un instante el estado de suscripción de
+  /// la cuenta anterior hasta el próximo `identify()`.
+  Future<void> reset();
+
   /// Muestra el paywall remoto. Si el usuario completa la compra, ejecuta
   /// [onSubscribed] automáticamente a continuación, sin que el usuario
   /// tenga que repetir la acción original.

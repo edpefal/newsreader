@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -42,12 +44,15 @@ void main() async {
   );
   debugPrint('Ambiente: ${AppConfig.isProd ? 'prod' : 'dev'}');
 
-  // 2.5. Configurar Superwall. La API key pública se reemplaza por la real
-  // del proyecto de Superwall antes de publicar — ver
-  // openspec/changes/gate-daily-summary-behind-superwall-paywall/proposal.md.
-  // No es un secreto (es client-side, análoga a una publishable key), pero
-  // sin una key real el SDK no puede resolver placements/paywalls.
-  Superwall.configure('SUPERWALL_API_KEY_PLACEHOLDER');
+  // 2.5. Configurar Superwall. Cada plataforma tiene su propia public API
+  // key (no son secretas -- son client-side, análogas a una publishable
+  // key). Android todavía no tiene la suya: falta agregar esa plataforma en
+  // el dashboard de Superwall (ver
+  // openspec/changes/gate-daily-summary-behind-superwall-paywall/proposal.md).
+  final superwallApiKey = Platform.isIOS
+      ? 'pk_JmLJquLYADH1dqyDv8aH1'
+      : 'SUPERWALL_API_KEY_PLACEHOLDER_ANDROID';
+  Superwall.configure(superwallApiKey);
 
   // 3. Setup dependency injection
   await setupDependencies();
@@ -65,6 +70,11 @@ void main() async {
     final userId = authClient.currentUserId;
     if (isSignedIn && userId != null) {
       subscriptionStatusProvider.identify(userId);
+    } else {
+      // Desvincula al usuario de Superwall en logout/borrado de cuenta, para
+      // que la próxima cuenta que inicie sesión en este dispositivo no
+      // arrastre por un instante el estado de suscripción de la anterior.
+      subscriptionStatusProvider.reset();
     }
   });
 
