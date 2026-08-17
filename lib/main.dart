@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -52,7 +53,17 @@ void main() async {
   final superwallApiKey = Platform.isIOS
       ? 'pk_JmLJquLYADH1dqyDv8aH1'
       : 'SUPERWALL_API_KEY_PLACEHOLDER_ANDROID';
-  Superwall.configure(superwallApiKey);
+  // El lado nativo recién registra el event channel de
+  // `subscriptionStatus` dentro del handler de `configure`, así que hay que
+  // esperar a que termine antes de armar el DI: si
+  // `SuperwallSubscriptionStatusProvider` se suscribe al stream antes de que
+  // el nativo lo registre, tira MissingPluginException.
+  final superwallConfigured = Completer<void>();
+  Superwall.configure(
+    superwallApiKey,
+    completion: () => superwallConfigured.complete(),
+  );
+  await superwallConfigured.future;
 
   // 3. Setup dependency injection
   await setupDependencies();

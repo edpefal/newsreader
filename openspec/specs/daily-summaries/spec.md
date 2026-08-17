@@ -13,9 +13,19 @@ Además del texto combinado, el sistema SHALL persistir junto al `DailySummary` 
 
 La solicitud a la API de IA SHALL autenticarse con el access token de la sesión activa del usuario. El backend SHALL rechazar con un error de autenticación cualquier solicitud cuyo token no corresponda a una sesión de usuario autenticada (incluyendo solicitudes hechas con una key pública/anónima en vez de una sesión real), sin invocar a la API de IA en ese caso.
 
+Generar un resumen SHALL requerir una suscripción activa (ver capability `subscription-entitlements`). El sistema SHALL verificar esto tanto en la UI (mostrando el paywall si no hay suscripción activa, en vez de disparar la generación) como en el backend (rechazando la solicitud sin invocar a la API de IA si el usuario autenticado no tiene una suscripción activa).
+
 #### Scenario: Generar resumen con artículos disponibles
-- **WHEN** el usuario toca "Crear resumen" y el inbox tiene al menos un artículo publicado hoy
+- **WHEN** el usuario con suscripción activa toca "Crear resumen" y el inbox tiene al menos un artículo publicado hoy
 - **THEN** el sistema agrupa esos artículos por fuente, genera un párrafo por cada fuente (prefijado con su nombre) invocando la API de IA, y al finalizar crea o actualiza el `DailySummary` del día de hoy con el texto combinado
+
+#### Scenario: Usuario sin suscripción activa ve el paywall al intentar generar
+- **WHEN** el usuario sin suscripción activa toca "Crear resumen" o "Regenerar resumen de hoy"
+- **THEN** el sistema muestra el paywall de Superwall en vez de disparar la generación
+
+#### Scenario: Backend rechaza la generación sin suscripción activa
+- **WHEN** `summarize-articles` recibe una solicitud de un usuario autenticado cuya suscripción no está activa en la tabla de entitlements
+- **THEN** el backend responde con un error de suscripción requerida y no invoca a la API de IA
 
 #### Scenario: Artículo con contenido completo usa el texto extraído de contentHtml
 - **WHEN** un artículo del inbox de hoy tiene `contentHtml` no truncado (mismo criterio que `FeedContentChecker.isTruncated`)
