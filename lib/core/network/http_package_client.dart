@@ -16,8 +16,12 @@ class HttpPackageClient implements HttpClient {
   Future<String> get(String url, {Duration? timeout}) async {
     final effectiveTimeout = timeout ?? AppConstants.feedFetchTimeout;
     try {
+      // Algunos servidores hacen content negotiation estricto sobre este
+      // header y rechazan con 406 cualquier request que no lo mande — sin
+      // esto, un feed válido puede quedar indetectable aunque la ruta sea
+      // correcta (ver openspec/changes/improve-feed-discovery-coverage).
       final response = await _client
-          .get(Uri.parse(url))
+          .get(Uri.parse(url), headers: const {'Accept': '*/*'})
           .timeout(effectiveTimeout);
       return response.body;
     } on SocketException {

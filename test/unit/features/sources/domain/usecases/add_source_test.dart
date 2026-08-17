@@ -107,7 +107,7 @@ void main() {
     });
 
     test(
-        'etapa 3: si la etapa 2 falla, extrae el link declarado en el HTML de la etapa 1 y lo usa',
+        'extrae el link declarado en el HTML de la etapa 1 y lo usa cuando ningún otro candidato resuelve',
         () async {
       when(() => mockResolver.candidatesFor('https://simonwillison.net'))
           .thenReturn([
@@ -139,7 +139,7 @@ void main() {
     });
 
     test(
-        'etapa 3: si el HTML de la etapa 1 no declara ningún link, falla igual que hoy',
+        'si el HTML de la etapa 1 no declara ningún link, falla igual que hoy',
         () async {
       when(() => mockResolver.candidatesFor('https://sin-feed-ni-link.com'))
           .thenReturn(['https://sin-feed-ni-link.com']);
@@ -155,7 +155,7 @@ void main() {
     });
 
     test(
-        'etapa 3: no se intenta si la etapa 1 falla por red (no hay HTML retenido)',
+        'auto-descubrimiento no se intenta si la etapa 1 falla por red (no hay HTML retenido)',
         () async {
       when(() => mockResolver.candidatesFor('https://timeout.com'))
           .thenReturn(['https://timeout.com']);
@@ -226,6 +226,45 @@ void main() {
       verify(() => mockRepo.sourceExists('https://autor.substack.com/feed'))
           .called(1);
       verifyNever(() => mockRepo.sourceExists('https://autor.substack.com/rss/'));
+    });
+
+    test(
+        'el candidato de auto-descubrimiento gana sobre un candidato heurístico que también resuelve',
+        () async {
+      when(() => mockResolver.candidatesFor('https://simonwillison.net'))
+          .thenReturn([
+        'https://simonwillison.net',
+        'https://simonwillison.net/feed',
+      ]);
+      when(() => mockHttp.get('https://simonwillison.net')).thenAnswer(
+        (_) async => '<html><head>'
+            '<link rel="alternate" type="application/atom+xml" '
+            'href="/atom/everything/">'
+            '</head></html>',
+      );
+      when(() => mockFeedParser.parse(any(that: contains('<html>'))))
+          .thenThrow(const ParseException());
+
+      // Ambos candidatos resuelven: el heurístico (/feed) y el descubierto
+      // por <link rel="alternate">. Debe ganar el descubierto por tener
+      // mayor prioridad, sin importar cuál responda primero.
+      when(() => mockHttp.get('https://simonwillison.net/feed'))
+          .thenAnswer((_) async => '<xml-feed/>');
+      when(() => mockFeedParser.parse('<xml-feed/>')).thenReturn(_tFeedData);
+      when(() => mockHttp.get('https://simonwillison.net/atom/everything/'))
+          .thenAnswer((_) async => '<xml-atom/>');
+      when(() => mockFeedParser.parse('<xml-atom/>')).thenReturn(_tFeedData);
+
+      when(() =>
+              mockRepo.sourceExists('https://simonwillison.net/atom/everything/'))
+          .thenAnswer((_) async => false);
+
+      await sut.execute('https://simonwillison.net');
+
+      verify(() =>
+              mockRepo.sourceExists('https://simonwillison.net/atom/everything/'))
+          .called(1);
+      verifyNever(() => mockRepo.sourceExists('https://simonwillison.net/feed'));
     });
 
     test(

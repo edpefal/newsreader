@@ -4,7 +4,15 @@
 /// plataforma (Substack, Medium) para perfiles/publicaciones que no cuelgan
 /// de la raíz del dominio.
 class FeedUrlResolver {
-  static const _genericSuffixes = ['/feed', '/feed/', '/rss/', '/atom.xml'];
+  static const _genericSuffixes = [
+    '/feed',
+    '/feed/',
+    '/rss/',
+    '/atom.xml',
+    '/rss.xml',
+    '/feed.xml',
+    '/index.xml',
+  ];
 
   /// Devuelve la lista ordenada de candidatos de feed URL a probar, en orden
   /// de prioridad: la URL normalizada (con esquema `https://` agregado si

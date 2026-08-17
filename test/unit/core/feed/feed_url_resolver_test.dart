@@ -18,10 +18,16 @@ void main() {
         'https://stratechery.com/feed/',
         'https://stratechery.com/rss/',
         'https://stratechery.com/atom.xml',
+        'https://stratechery.com/rss.xml',
+        'https://stratechery.com/feed.xml',
+        'https://stratechery.com/index.xml',
         'https://www.stratechery.com/feed',
         'https://www.stratechery.com/feed/',
         'https://www.stratechery.com/rss/',
         'https://www.stratechery.com/atom.xml',
+        'https://www.stratechery.com/rss.xml',
+        'https://www.stratechery.com/feed.xml',
+        'https://www.stratechery.com/index.xml',
       ]);
     });
 
@@ -34,10 +40,16 @@ void main() {
         'https://stratechery.com/feed/',
         'https://stratechery.com/rss/',
         'https://stratechery.com/atom.xml',
+        'https://stratechery.com/rss.xml',
+        'https://stratechery.com/feed.xml',
+        'https://stratechery.com/index.xml',
         'https://www.stratechery.com/feed',
         'https://www.stratechery.com/feed/',
         'https://www.stratechery.com/rss/',
         'https://www.stratechery.com/atom.xml',
+        'https://www.stratechery.com/rss.xml',
+        'https://www.stratechery.com/feed.xml',
+        'https://www.stratechery.com/index.xml',
       ]);
     });
 
@@ -50,10 +62,16 @@ void main() {
         'http://stratechery.com/feed/',
         'http://stratechery.com/rss/',
         'http://stratechery.com/atom.xml',
+        'http://stratechery.com/rss.xml',
+        'http://stratechery.com/feed.xml',
+        'http://stratechery.com/index.xml',
         'http://www.stratechery.com/feed',
         'http://www.stratechery.com/feed/',
         'http://www.stratechery.com/rss/',
         'http://www.stratechery.com/atom.xml',
+        'http://www.stratechery.com/rss.xml',
+        'http://www.stratechery.com/feed.xml',
+        'http://www.stratechery.com/index.xml',
       ]);
     });
 
@@ -66,10 +84,16 @@ void main() {
         'https://autor.substack.com/feed/',
         'https://autor.substack.com/rss/',
         'https://autor.substack.com/atom.xml',
+        'https://autor.substack.com/rss.xml',
+        'https://autor.substack.com/feed.xml',
+        'https://autor.substack.com/index.xml',
         'https://www.autor.substack.com/feed',
         'https://www.autor.substack.com/feed/',
         'https://www.autor.substack.com/rss/',
         'https://www.autor.substack.com/atom.xml',
+        'https://www.autor.substack.com/rss.xml',
+        'https://www.autor.substack.com/feed.xml',
+        'https://www.autor.substack.com/index.xml',
       ]);
     });
 
@@ -83,10 +107,16 @@ void main() {
         'https://stratechery.com/feed/',
         'https://stratechery.com/rss/',
         'https://stratechery.com/atom.xml',
+        'https://stratechery.com/rss.xml',
+        'https://stratechery.com/feed.xml',
+        'https://stratechery.com/index.xml',
         'https://www.stratechery.com/feed',
         'https://www.stratechery.com/feed/',
         'https://www.stratechery.com/rss/',
         'https://www.stratechery.com/atom.xml',
+        'https://www.stratechery.com/rss.xml',
+        'https://www.stratechery.com/feed.xml',
+        'https://www.stratechery.com/index.xml',
       ]);
     });
 
@@ -100,10 +130,16 @@ void main() {
         'https://blog.miempresa.com/feed/',
         'https://blog.miempresa.com/rss/',
         'https://blog.miempresa.com/atom.xml',
+        'https://blog.miempresa.com/rss.xml',
+        'https://blog.miempresa.com/feed.xml',
+        'https://blog.miempresa.com/index.xml',
         'https://www.blog.miempresa.com/feed',
         'https://www.blog.miempresa.com/feed/',
         'https://www.blog.miempresa.com/rss/',
         'https://www.blog.miempresa.com/atom.xml',
+        'https://www.blog.miempresa.com/rss.xml',
+        'https://www.blog.miempresa.com/feed.xml',
+        'https://www.blog.miempresa.com/index.xml',
       ]);
     });
 
@@ -117,10 +153,16 @@ void main() {
         'https://autor.beehiiv.com/feed/',
         'https://autor.beehiiv.com/rss/',
         'https://autor.beehiiv.com/atom.xml',
+        'https://autor.beehiiv.com/rss.xml',
+        'https://autor.beehiiv.com/feed.xml',
+        'https://autor.beehiiv.com/index.xml',
         'https://www.autor.beehiiv.com/feed',
         'https://www.autor.beehiiv.com/feed/',
         'https://www.autor.beehiiv.com/rss/',
         'https://www.autor.beehiiv.com/atom.xml',
+        'https://www.autor.beehiiv.com/rss.xml',
+        'https://www.autor.beehiiv.com/feed.xml',
+        'https://www.autor.beehiiv.com/index.xml',
       ]);
     });
 
@@ -134,6 +176,9 @@ void main() {
         'https://www.readtangle.com/feed/',
         'https://www.readtangle.com/rss/',
         'https://www.readtangle.com/atom.xml',
+        'https://www.readtangle.com/rss.xml',
+        'https://www.readtangle.com/feed.xml',
+        'https://www.readtangle.com/index.xml',
       ]);
     });
 
@@ -146,10 +191,16 @@ void main() {
         'https://autor.substack.com/feed/',
         'https://autor.substack.com/rss/',
         'https://autor.substack.com/atom.xml',
+        'https://autor.substack.com/rss.xml',
+        'https://autor.substack.com/feed.xml',
+        'https://autor.substack.com/index.xml',
         'https://www.autor.substack.com/feed',
         'https://www.autor.substack.com/feed/',
         'https://www.autor.substack.com/rss/',
         'https://www.autor.substack.com/atom.xml',
+        'https://www.autor.substack.com/rss.xml',
+        'https://www.autor.substack.com/feed.xml',
+        'https://www.autor.substack.com/index.xml',
       ]);
     });
 
@@ -165,10 +216,16 @@ void main() {
         'https://substack.com/feed/',
         'https://substack.com/rss/',
         'https://substack.com/atom.xml',
+        'https://substack.com/rss.xml',
+        'https://substack.com/feed.xml',
+        'https://substack.com/index.xml',
         'https://www.substack.com/feed',
         'https://www.substack.com/feed/',
         'https://www.substack.com/rss/',
         'https://www.substack.com/atom.xml',
+        'https://www.substack.com/rss.xml',
+        'https://www.substack.com/feed.xml',
+        'https://www.substack.com/index.xml',
       ]);
     });
 
@@ -183,6 +240,9 @@ void main() {
         'https://www.substack.com/feed/',
         'https://www.substack.com/rss/',
         'https://www.substack.com/atom.xml',
+        'https://www.substack.com/rss.xml',
+        'https://www.substack.com/feed.xml',
+        'https://www.substack.com/index.xml',
       ]);
     });
 
@@ -196,10 +256,16 @@ void main() {
         'https://substack.com/feed/',
         'https://substack.com/rss/',
         'https://substack.com/atom.xml',
+        'https://substack.com/rss.xml',
+        'https://substack.com/feed.xml',
+        'https://substack.com/index.xml',
         'https://www.substack.com/feed',
         'https://www.substack.com/feed/',
         'https://www.substack.com/rss/',
         'https://www.substack.com/atom.xml',
+        'https://www.substack.com/rss.xml',
+        'https://www.substack.com/feed.xml',
+        'https://www.substack.com/index.xml',
       ]);
     });
 
@@ -215,10 +281,16 @@ void main() {
         'https://medium.com/feed/',
         'https://medium.com/rss/',
         'https://medium.com/atom.xml',
+        'https://medium.com/rss.xml',
+        'https://medium.com/feed.xml',
+        'https://medium.com/index.xml',
         'https://www.medium.com/feed',
         'https://www.medium.com/feed/',
         'https://www.medium.com/rss/',
         'https://www.medium.com/atom.xml',
+        'https://www.medium.com/rss.xml',
+        'https://www.medium.com/feed.xml',
+        'https://www.medium.com/index.xml',
       ]);
     });
 
@@ -234,10 +306,16 @@ void main() {
         'https://medium.com/feed/',
         'https://medium.com/rss/',
         'https://medium.com/atom.xml',
+        'https://medium.com/rss.xml',
+        'https://medium.com/feed.xml',
+        'https://medium.com/index.xml',
         'https://www.medium.com/feed',
         'https://www.medium.com/feed/',
         'https://www.medium.com/rss/',
         'https://www.medium.com/atom.xml',
+        'https://www.medium.com/rss.xml',
+        'https://www.medium.com/feed.xml',
+        'https://www.medium.com/index.xml',
       ]);
     });
 
@@ -251,10 +329,16 @@ void main() {
         'https://ederperez.medium.com/feed/',
         'https://ederperez.medium.com/rss/',
         'https://ederperez.medium.com/atom.xml',
+        'https://ederperez.medium.com/rss.xml',
+        'https://ederperez.medium.com/feed.xml',
+        'https://ederperez.medium.com/index.xml',
         'https://www.ederperez.medium.com/feed',
         'https://www.ederperez.medium.com/feed/',
         'https://www.ederperez.medium.com/rss/',
         'https://www.ederperez.medium.com/atom.xml',
+        'https://www.ederperez.medium.com/rss.xml',
+        'https://www.ederperez.medium.com/feed.xml',
+        'https://www.ederperez.medium.com/index.xml',
       ]);
     });
 
@@ -267,10 +351,16 @@ void main() {
         'https://medium.com/feed/',
         'https://medium.com/rss/',
         'https://medium.com/atom.xml',
+        'https://medium.com/rss.xml',
+        'https://medium.com/feed.xml',
+        'https://medium.com/index.xml',
         'https://www.medium.com/feed',
         'https://www.medium.com/feed/',
         'https://www.medium.com/rss/',
         'https://www.medium.com/atom.xml',
+        'https://www.medium.com/rss.xml',
+        'https://www.medium.com/feed.xml',
+        'https://www.medium.com/index.xml',
       ]);
     });
 
@@ -284,10 +374,16 @@ void main() {
         'https://notboring.co/feed/',
         'https://notboring.co/rss/',
         'https://notboring.co/atom.xml',
+        'https://notboring.co/rss.xml',
+        'https://notboring.co/feed.xml',
+        'https://notboring.co/index.xml',
         'https://www.notboring.co/feed',
         'https://www.notboring.co/feed/',
         'https://www.notboring.co/rss/',
         'https://www.notboring.co/atom.xml',
+        'https://www.notboring.co/rss.xml',
+        'https://www.notboring.co/feed.xml',
+        'https://www.notboring.co/index.xml',
       ]);
     });
 
@@ -301,11 +397,38 @@ void main() {
         'https://www.notboring.co/feed/',
         'https://www.notboring.co/rss/',
         'https://www.notboring.co/atom.xml',
+        'https://www.notboring.co/rss.xml',
+        'https://www.notboring.co/feed.xml',
+        'https://www.notboring.co/index.xml',
       ]);
       expect(
         candidates.any((c) => c.contains('www.www.')),
         isFalse,
       );
+    });
+
+    test(
+        'sufijos nuevos (/rss.xml, /feed.xml, /index.xml) se prueban en host original y www',
+        () {
+      final candidates = resolver.candidatesFor('https://androidweekly.net');
+
+      expect(candidates, [
+        'https://androidweekly.net',
+        'https://androidweekly.net/feed',
+        'https://androidweekly.net/feed/',
+        'https://androidweekly.net/rss/',
+        'https://androidweekly.net/atom.xml',
+        'https://androidweekly.net/rss.xml',
+        'https://androidweekly.net/feed.xml',
+        'https://androidweekly.net/index.xml',
+        'https://www.androidweekly.net/feed',
+        'https://www.androidweekly.net/feed/',
+        'https://www.androidweekly.net/rss/',
+        'https://www.androidweekly.net/atom.xml',
+        'https://www.androidweekly.net/rss.xml',
+        'https://www.androidweekly.net/feed.xml',
+        'https://www.androidweekly.net/index.xml',
+      ]);
     });
 
     test('los candidatos www quedan después de todos los del host original',

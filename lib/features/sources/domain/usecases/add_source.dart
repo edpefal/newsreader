@@ -51,16 +51,17 @@ class AddSource {
     return _sourceRepository.addSource(source);
   }
 
-  /// Resolución en tres etapas: primero prueba [rawUrl] en solitario (etapa
-  /// 1); si no resulta un feed válido, dispara el resto de los candidatos
-  /// heurísticos en paralelo (etapa 2) y elige el ganador respetando el
-  /// orden de prioridad de [FeedUrlResolver.candidatesFor], no el orden en
-  /// que respondieron por red — así el resultado es determinista para el
-  /// mismo input. Si la etapa 2 tampoco resuelve nada, y la etapa 1 alcanzó
-  /// a descargar HTML (falló el parseo como feed, no la conexión), se
-  /// intenta un último candidato extraído de un `<link rel="alternate">`
-  /// declarado en ese HTML (etapa 3, auto-descubrimiento) — ver
-  /// [HtmlFeedLinkExtractor].
+  /// Resolución en dos etapas: primero prueba [rawUrl] en solitario (etapa
+  /// 1); si no resulta un feed válido, dispara en paralelo (etapa 2) tanto
+  /// el resto de los candidatos heurísticos como — si el HTML descargado en
+  /// la etapa 1 declara un `<link rel="alternate">` (ver
+  /// [HtmlFeedLinkExtractor]) — la URL que ese link declara, antepuesta a la
+  /// lista con la prioridad más alta por ser la señal más confiable (el
+  /// sitio la declara explícitamente, no es una adivinanza). El ganador se
+  /// elige respetando ese orden de prioridad, no el orden en que
+  /// respondieron por red — así el resultado es determinista para el mismo
+  /// input. No se realiza ningún request de red adicional para obtener el
+  /// HTML: se reusa el ya descargado en la etapa 1.
   Future<({String feedUrl, FeedData feedData})> _resolveFeed(
     String rawUrl,
     void Function()? onHeuristicStageStarted,
@@ -71,6 +72,18 @@ class AddSource {
     if (firstStage.result != null) return firstStage.result!;
 
     final heuristicCandidates = candidates.skip(1).toList();
+
+    final retainedHtml = firstStage.html;
+    if (retainedHtml != null) {
+      final discoveredUrl = HtmlFeedLinkExtractor.extract(
+        retainedHtml,
+        Uri.parse(candidates.first),
+      );
+      if (discoveredUrl != null) {
+        heuristicCandidates.insert(0, discoveredUrl);
+      }
+    }
+
     if (heuristicCandidates.isNotEmpty) {
       onHeuristicStageStarted?.call();
 
@@ -83,27 +96,14 @@ class AddSource {
       }
     }
 
-    final retainedHtml = firstStage.html;
-    if (retainedHtml != null) {
-      final discoveredUrl = HtmlFeedLinkExtractor.extract(
-        retainedHtml,
-        Uri.parse(candidates.first),
-      );
-      if (discoveredUrl != null) {
-        final discoveredResult =
-            await _tryCandidateIgnoringErrors(discoveredUrl);
-        if (discoveredResult != null) return discoveredResult;
-      }
-    }
-
     throw const FeedDiscoveryException();
   }
 
   /// Prueba el candidato de la etapa 1. A diferencia de [_tryCandidate],
   /// retiene el HTML descargado cuando el parseo como feed falla, para que
-  /// la etapa 3 (auto-descubrimiento) pueda inspeccionarlo sin volver a
-  /// pedirlo. Un error de red/timeout se sigue propagando tal cual (aborta
-  /// la detección, no pasa a ninguna etapa siguiente).
+  /// la etapa 2 pueda inspeccionarlo en busca de un `<link rel="alternate">`
+  /// sin volver a pedirlo. Un error de red/timeout se sigue propagando tal
+  /// cual (aborta la detección, no pasa a la etapa siguiente).
   Future<({({String feedUrl, FeedData feedData})? result, String? html})>
       _tryFirstStageCandidate(String candidate) async {
     final content = await _httpClient.get(candidate);
