@@ -155,7 +155,7 @@ emit(state..articles.add(article)); // mutación
 ## Reglas de negocio clave
 
 - Artículo se marca como leído automáticamente al abrirlo.
-- Artículos no leídos > 30 días se archivan (no se eliminan).
+- No hay archivado ni borrado automático por antigüedad: los artículos no leídos permanecen en el inbox indefinidamente, y los leídos permanecen en "Leídos" indefinidamente (ver `openspec/specs/article-lifecycle/spec.md`).
 - Favoritos nunca se eliminan automáticamente.
 - Contenido truncado: `contentHtml == null || contentHtml.length < 500`.
 - Timeout por feed durante sync: 10 segundos. Un fallo no interrumpe las demás fuentes.
