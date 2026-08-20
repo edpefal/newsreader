@@ -282,7 +282,18 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
                 ),
                 onChanged: (query) => _search(context, query),
               )
-            : Text(_titles[currentIndex]),
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/reevo_logo.png',
+                    width: 20,
+                    height: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(_titles[currentIndex]),
+                ],
+              ),
         actions: [
           if (isSearchable)
             IconButton(

@@ -7,6 +7,21 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 import 'package:newsreader/features/reader/presentation/screens/reader_screen.dart';
+import 'package:newsreader/features/reader/presentation/widgets/reading_progress_bar.dart';
+import 'package:newsreader/presentation/theme/app_theme.dart';
+
+int _filledSegmentCount(WidgetTester tester) {
+  final accentColor = AppTheme.light.extension<ReevoAccent>()!.unreadFavoriteAmber;
+  return tester
+      .widgetList<ColoredBox>(
+        find.descendant(
+          of: find.byType(ReadingProgressBar),
+          matching: find.byType(ColoredBox),
+        ),
+      )
+      .where((box) => box.color == accentColor)
+      .length;
+}
 
 class MockMarkArticleAsRead extends Mock implements MarkArticleAsRead {}
 
@@ -29,7 +44,7 @@ Widget _buildSubject(
       ),
     ],
   );
-  return MaterialApp.router(routerConfig: router);
+  return MaterialApp.router(theme: AppTheme.light, routerConfig: router);
 }
 
 void main() {
@@ -61,7 +76,14 @@ void main() {
           _buildSubject(articleCorto, mockMarkAsRead, mockToggleFavorite));
       await tester.pumpAndSettle();
 
-      expect(find.byType(FractionallySizedBox), findsNothing);
+      expect(find.byType(ReadingProgressBar), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(ReadingProgressBar),
+          matching: find.byType(ColoredBox),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets(
@@ -81,11 +103,8 @@ void main() {
           _buildSubject(articleLargo, mockMarkAsRead, mockToggleFavorite));
       await tester.pumpAndSettle();
 
-      expect(find.byType(FractionallySizedBox), findsOneWidget);
-
-      final barAntes =
-          tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox));
-      expect(barAntes.heightFactor, 0);
+      expect(find.byType(ReadingProgressBar), findsOneWidget);
+      expect(_filledSegmentCount(tester), 0);
 
       await tester.drag(
         find.byType(SingleChildScrollView),
@@ -93,9 +112,7 @@ void main() {
       );
       await tester.pump();
 
-      final barDespues =
-          tester.widget<FractionallySizedBox>(find.byType(FractionallySizedBox));
-      expect(barDespues.heightFactor, greaterThan(0));
+      expect(_filledSegmentCount(tester), greaterThan(0));
     });
   });
 }

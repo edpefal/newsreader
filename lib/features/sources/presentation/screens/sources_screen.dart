@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/widgets/chamfered_box.dart';
 import 'package:newsreader/core/widgets/no_search_results_state.dart';
+import 'package:newsreader/core/widgets/paper_texture.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/features/sources/presentation/widgets/delete_source_dialog.dart';
 import 'package:newsreader/features/sources/presentation/widgets/edit_source_name_dialog.dart';
@@ -22,38 +24,45 @@ class SourcesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<SourcesCubit, SourcesState>(
-        builder: (context, state) {
-          if (state is SourcesLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final loaded = state as SourcesLoaded;
-          final sources = loaded.visibleSources;
-          if (sources.isEmpty) {
-            return loaded.searchQuery.isNotEmpty
-                ? const NoSearchResultsState()
-                : const _EmptySourcesState();
-          }
-          return ListView.builder(
-            itemCount: sources.length,
-            itemBuilder: (context, index) =>
-                _SourceTile(source: sources[index]),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final addedSource = await context.push<NewsSource>('/sources/add');
-          if (addedSource != null && context.mounted) {
-            context.read<SourcesCubit>().loadSources();
-            context.push(
-              '/sources/${addedSource.id}?justAdded=true',
-              extra: addedSource,
+      body: PaperBackground(
+        child: BlocBuilder<SourcesCubit, SourcesState>(
+          builder: (context, state) {
+            if (state is SourcesLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final loaded = state as SourcesLoaded;
+            final sources = loaded.visibleSources;
+            if (sources.isEmpty) {
+              return loaded.searchQuery.isNotEmpty
+                  ? const NoSearchResultsState()
+                  : const _EmptySourcesState();
+            }
+            return ListView.builder(
+              itemCount: sources.length,
+              itemBuilder: (context, index) =>
+                  _SourceTile(source: sources[index]),
             );
-          }
-        },
-        tooltip: 'Agregar fuente',
-        child: const Icon(Icons.add),
+          },
+        ),
+      ),
+      floatingActionButton: ChamferedBox(
+        chamferSize: 14,
+        child: FloatingActionButton(
+          onPressed: () async {
+            final addedSource = await context.push<NewsSource>(
+              '/sources/add',
+            );
+            if (addedSource != null && context.mounted) {
+              context.read<SourcesCubit>().loadSources();
+              context.push(
+                '/sources/${addedSource.id}?justAdded=true',
+                extra: addedSource,
+              );
+            }
+          },
+          tooltip: 'Agregar fuente',
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

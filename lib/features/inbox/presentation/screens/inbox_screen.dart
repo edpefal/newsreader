@@ -6,6 +6,7 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/core/widgets/no_search_results_state.dart';
+import 'package:newsreader/core/widgets/paper_texture.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 
@@ -85,11 +86,13 @@ class _InboxViewState extends State<InboxView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          const _BackgroundSyncIndicator(),
-          Expanded(child: _buildInboxBody(context)),
-        ],
+      body: PaperBackground(
+        child: Column(
+          children: [
+            const _BackgroundSyncIndicator(),
+            Expanded(child: _buildInboxBody(context)),
+          ],
+        ),
       ),
     );
   }

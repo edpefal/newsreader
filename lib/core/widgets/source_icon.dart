@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:newsreader/core/widgets/cached_network_image_widget.dart';
+import 'package:newsreader/core/widgets/chamfered_box.dart';
 
 class SourceIcon extends StatelessWidget {
   final String? iconUrl;
@@ -17,21 +18,33 @@ class SourceIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    final theme = Theme.of(context);
 
-    Widget buildPlaceholder(BuildContext _) => CircleAvatar(
-          radius: size / 2,
-          child: Text(
-            initial,
-            style: TextStyle(fontSize: size * 0.4),
+    Widget buildPlaceholder(BuildContext _) => ColoredBox(
+          color: theme.colorScheme.primary,
+          child: Center(
+            child: Text(
+              initial,
+              style: TextStyle(
+                fontSize: size * 0.4,
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onPrimary,
+              ),
+            ),
           ),
         );
 
-    return ClipOval(
-      child: CachedNetworkImageWidget(
-        imageUrl: iconUrl,
+    return ChamferedBox(
+      chamferSize: size * 0.28,
+      child: SizedBox(
         width: size,
         height: size,
-        placeholderBuilder: buildPlaceholder,
+        child: CachedNetworkImageWidget(
+          imageUrl: iconUrl,
+          width: size,
+          height: size,
+          placeholderBuilder: buildPlaceholder,
+        ),
       ),
     );
   }

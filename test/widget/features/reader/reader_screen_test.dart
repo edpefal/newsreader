@@ -222,7 +222,7 @@ void main() {
           _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
 
       expect(
-        find.widgetWithIcon(IconButton, Icons.open_in_browser),
+        find.widgetWithIcon(IconButton, Icons.public),
         findsOneWidget,
       );
     });
@@ -231,7 +231,7 @@ void main() {
       await tester.pumpWidget(
           _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
       await tester.tap(
-        find.widgetWithIcon(IconButton, Icons.open_in_browser),
+        find.widgetWithIcon(IconButton, Icons.public),
       );
       await tester.pumpAndSettle();
 

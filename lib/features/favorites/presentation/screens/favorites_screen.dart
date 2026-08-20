@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/core/widgets/no_search_results_state.dart';
+import 'package:newsreader/core/widgets/paper_texture.dart';
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 
@@ -40,41 +41,43 @@ class FavoritesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<FavoritesCubit, FavoritesState>(
-        builder: (context, state) {
-          if (state is FavoritesLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final loaded = state as FavoritesLoaded;
-          if (loaded.visibleArticles.isEmpty) {
-            return loaded.searchQuery.isNotEmpty
-                ? const NoSearchResultsState()
-                : const _EmptyFavoritesState();
-          }
-          final items = _buildGroupedItems(loaded.visibleArticles);
-          return ListView.builder(
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final item = items[index];
-              if (item is DateTime) {
-                return DateSeparator(day: item);
-              }
-              final article = item as Article;
-              return ArticleInboxTile(
-                article: article,
-                onTap: () async {
-                  await context.push(
-                    '/article/${article.id}',
-                    extra: article,
-                  );
-                  if (context.mounted) {
-                    context.read<FavoritesCubit>().loadFavorites();
-                  }
-                },
-              );
-            },
-          );
-        },
+      body: PaperBackground(
+        child: BlocBuilder<FavoritesCubit, FavoritesState>(
+          builder: (context, state) {
+            if (state is FavoritesLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final loaded = state as FavoritesLoaded;
+            if (loaded.visibleArticles.isEmpty) {
+              return loaded.searchQuery.isNotEmpty
+                  ? const NoSearchResultsState()
+                  : const _EmptyFavoritesState();
+            }
+            final items = _buildGroupedItems(loaded.visibleArticles);
+            return ListView.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                if (item is DateTime) {
+                  return DateSeparator(day: item);
+                }
+                final article = item as Article;
+                return ArticleInboxTile(
+                  article: article,
+                  onTap: () async {
+                    await context.push(
+                      '/article/${article.id}',
+                      extra: article,
+                    );
+                    if (context.mounted) {
+                      context.read<FavoritesCubit>().loadFavorites();
+                    }
+                  },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
