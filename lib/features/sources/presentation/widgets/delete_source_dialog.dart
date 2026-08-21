@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:newsreader/l10n/app_localizations.dart';
+
 class DeleteSourceDialog extends StatelessWidget {
   final String sourceName;
   final VoidCallback onConfirm;
@@ -12,15 +14,14 @@ class DeleteSourceDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Eliminar fuente'),
-      content: Text(
-        '¿Eliminar "$sourceName"? También se eliminarán sus artículos no guardados como favoritos.',
-      ),
+      title: Text(l10n.sourcesDeleteDialogTitle),
+      content: Text(l10n.sourcesDeleteDialogBody(sourceName)),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(l10n.commonCancel),
         ),
         TextButton(
           onPressed: () {
@@ -30,7 +31,7 @@ class DeleteSourceDialog extends StatelessWidget {
           style: TextButton.styleFrom(
             foregroundColor: Theme.of(context).colorScheme.error,
           ),
-          child: const Text('Eliminar'),
+          child: Text(l10n.commonDelete),
         ),
       ],
     );

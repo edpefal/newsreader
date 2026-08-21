@@ -9,6 +9,8 @@ import 'package:newsreader/core/domain/entities/summary_source_block.dart';
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summary_detail_screen.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 class MockResolveSummaryArticles extends Mock
     implements ResolveSummaryArticles {}
 
@@ -39,7 +41,12 @@ Widget _buildSubject(DailySummary summary, ResolveSummaryArticles resolver) {
       ),
     ],
   );
-  return MaterialApp.router(routerConfig: router);
+  return MaterialApp.router(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
+    routerConfig: router,
+  );
 }
 
 void main() {
@@ -68,7 +75,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('5 artículos resumidos'), findsOneWidget);
-    expect(find.textContaining('9 jul. 2026'), findsOneWidget);
+    expect(find.textContaining('9 jul 2026'), findsOneWidget);
   });
 
   testWidgets('muestra el nombre de la fuente en negrita', (tester) async {

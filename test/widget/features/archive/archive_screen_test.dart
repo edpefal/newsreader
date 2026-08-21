@@ -9,6 +9,8 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
 import 'package:newsreader/features/archive/presentation/screens/archive_screen.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 class MockArchiveCubit extends MockCubit<ArchiveState>
     implements ArchiveCubit {}
 
@@ -28,7 +30,12 @@ Widget _buildSubject(ArchiveCubit cubit) {
       ),
     ],
   );
-  return MaterialApp.router(routerConfig: router);
+  return MaterialApp.router(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
+    routerConfig: router,
+  );
 }
 
 void main() {

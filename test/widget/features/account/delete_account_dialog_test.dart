@@ -3,8 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:newsreader/features/account/presentation/widgets/delete_account_dialog.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 Widget _buildSubject({required VoidCallback onConfirm}) {
   return MaterialApp(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
     home: Material(child: DeleteAccountDialog(onConfirm: onConfirm)),
   );
 }

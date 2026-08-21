@@ -9,6 +9,8 @@ import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.d
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 import 'package:newsreader/features/reader/presentation/screens/reader_screen.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 class MockMarkArticleAsRead extends Mock implements MarkArticleAsRead {}
 
 class MockToggleFavorite extends Mock implements ToggleFavorite {}
@@ -34,7 +36,12 @@ Widget _buildSubject(
       ),
     ],
   );
-  return MaterialApp.router(routerConfig: router);
+  return MaterialApp.router(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
+    routerConfig: router,
+  );
 }
 
 void main() {
@@ -93,7 +100,7 @@ void main() {
           _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
 
       expect(find.textContaining('Juan Pérez'), findsOneWidget);
-      expect(find.textContaining('15/3/2024'), findsOneWidget);
+      expect(find.textContaining('15 mar 2024'), findsOneWidget);
     });
 
     testWidgets('muestra HtmlWidget cuando hay contentHtml', (tester) async {

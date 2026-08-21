@@ -11,6 +11,7 @@ flutter test test/widget/                # solo widget tests
 flutter analyze                          # lint (correr antes de considerar algo listo)
 dart run build_runner build              # regenerar TypeAdapters de Hive CE
 dart run build_runner build --delete-conflicting-outputs  # si hay conflictos
+flutter gen-l10n                         # regenerar AppLocalizations tras tocar lib/l10n/*.arb
 ```
 
 Correr `flutter analyze` después de cualquier cambio de código. No dejar warnings sin resolver.
@@ -123,6 +124,18 @@ emit(state..articles.add(article)); // mutación
 - IDs de tipo reservados: `0` = `NewsSourceModel`, `1` = `ArticleModel`.
 - Nunca llamar `Hive.box()` fuera de las clases datasource en `core/data/datasources/local/`.
 - Las boxes se abren **una sola vez** en `main.dart` antes de `runApp`.
+
+## Internacionalización (i18n)
+
+La app soporta inglés, español (neutro) y francés, vía el mecanismo oficial de Flutter — `flutter_localizations` + archivos `.arb` + `flutter gen-l10n` (no `easy_localization` ni ningún otro paquete de terceros).
+
+- Claves en `lib/l10n/app_en.arb` (template, siempre completo), `app_es.arb` (contenido real en español neutro con tuteo) y `app_fr.arb` (hoy con placeholders en inglés — el contenido francés real está pendiente).
+- Después de tocar cualquier `.arb`, correr `flutter gen-l10n` para regenerar `lib/l10n/app_localizations.dart`.
+- En `presentation/`, obtener las traducciones con `AppLocalizations.of(context)` (sin `!`, `nullable-getter: false` en `l10n.yaml`) e importar `package:newsreader/l10n/app_localizations.dart`.
+- Convención de nombres de clave: `<feature><Descripción>` (ej. `sourcesEmptyTitle`), con un grupo `common*` para texto genuinamente compartido entre features (`commonCancel`, `commonDelete`, etc.) — no dupliques la traducción de la misma palabra con dos claves distintas.
+- **Español neutro, sin voseo**: nunca "tocá", "agregá", "suscribí" — sí "toca", "agrega", "suscribe". El test `test/unit/l10n/neutral_spanish_test.dart` falla si aparece una conjugación de voseo conocida en `app_es.arb`; agregá ahí cualquier forma nueva que encuentres.
+- Fechas: nunca formatear a mano (`'${date.day}/${date.month}'` ni arrays de nombres de mes). Usar `LocalizedDateFormatter` (`core/utils/localized_date_formatter.dart`), que ya resuelve idioma/orden/nombres de mes vía `DateFormat` de `intl`.
+- **Excepción conocida**: los mensajes de `AppException` y sus subclases (`core/errors/app_exception.dart`), y los `String message`/`errorMessage` que via Cubits terminan mostrando ese texto (p. ej. `AddSourceError.message`, `ImportOpmlError.message`), siguen hardcodeados en español — esto es deuda pendiente hasta que esas excepciones dejen de cargar texto humano y pasen a ser identificables por tipo/código (change futuro). No agregues código nuevo que dependa de que ese texto esté traducido.
 
 ## Convenciones de código
 

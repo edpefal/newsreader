@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'package:newsreader/core/widgets/article_web_view.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 class WebviewFlutterArticleWebView extends ArticleWebView {
   const WebviewFlutterArticleWebView({
@@ -35,7 +36,7 @@ class _WebviewFlutterArticleWebViewState
           icon: const Icon(Icons.close),
           onPressed: widget.onClose ?? () => Navigator.of(context).pop(),
         ),
-        title: const Text('Artículo original'),
+        title: Text(AppLocalizations.of(context).webViewOriginalArticle),
       ),
       body: WebViewWidget(controller: _controller),
     );

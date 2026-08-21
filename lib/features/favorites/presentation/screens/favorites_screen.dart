@@ -8,6 +8,7 @@ import 'package:newsreader/core/widgets/no_search_results_state.dart';
 import 'package:newsreader/core/widgets/paper_texture.dart';
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
@@ -88,6 +89,7 @@ class _EmptyFavoritesState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -101,12 +103,12 @@ class _EmptyFavoritesState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sin favoritos aún',
+              l10n.favoritesEmptyTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Abre un artículo y toca la estrella para guardarlo aquí.',
+              l10n.favoritesEmptySubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

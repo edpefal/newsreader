@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/utils/feed_content_checker.dart';
+import 'package:newsreader/core/utils/localized_date_formatter.dart';
 import 'package:newsreader/core/widgets/chamfered_box.dart';
 import 'package:newsreader/core/widgets/fwh_html_content_renderer.dart';
 import 'package:newsreader/core/widgets/paper_texture.dart';
@@ -10,6 +11,7 @@ import 'package:newsreader/core/widgets/source_icon.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 import 'package:newsreader/features/reader/presentation/widgets/reading_progress_bar.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 import 'package:newsreader/presentation/theme/app_theme.dart';
 
 class ReaderScreen extends StatefulWidget {
@@ -85,6 +87,7 @@ class _ReaderScreenState extends State<ReaderScreen>
     final article = widget.article;
     final theme = Theme.of(context);
     final accent = theme.extension<ReevoAccent>();
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -121,8 +124,8 @@ class _ReaderScreenState extends State<ReaderScreen>
                     color: _isFavorite ? accent?.unreadFavoriteAmber : null,
                   ),
                   tooltip: _isFavorite
-                      ? 'Quitar de favoritos'
-                      : 'Agregar a favoritos',
+                      ? l10n.readerRemoveFavoriteTooltip
+                      : l10n.readerAddFavoriteTooltip,
                   onPressed: _onToggleFavorite,
                 ),
               ),
@@ -130,7 +133,7 @@ class _ReaderScreenState extends State<ReaderScreen>
           ),
           IconButton(
             icon: const Icon(Icons.public),
-            tooltip: 'Ver en navegador',
+            tooltip: l10n.readerOpenInBrowserTooltip,
             onPressed: () => context.push(
               '/article/${article.id}/web',
               extra: article,
@@ -155,7 +158,7 @@ class _ReaderScreenState extends State<ReaderScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _buildMeta(article),
+                    _buildMeta(context, article),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -212,8 +215,7 @@ class _ReaderScreenState extends State<ReaderScreen>
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Este feed no incluye el artículo completo. Tocá acá para '
-              'leerlo en el sitio original.',
+              AppLocalizations.of(context).readerTruncatedContentHint,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: color,
                 fontStyle: FontStyle.italic,
@@ -225,9 +227,11 @@ class _ReaderScreenState extends State<ReaderScreen>
     );
   }
 
-  String _buildMeta(Article article) {
-    final date = article.publishedAt;
-    final dateStr = '${date.day}/${date.month}/${date.year}';
+  String _buildMeta(BuildContext context, Article article) {
+    final dateStr = LocalizedDateFormatter.longDate(
+      context,
+      article.publishedAt,
+    );
     if (article.author != null) {
       return '${article.author} · $dateStr';
     }

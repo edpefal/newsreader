@@ -11,6 +11,8 @@ import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 class MockInboxCubit extends MockCubit<InboxState> implements InboxCubit {}
 
 Widget _buildSubject(InboxCubit cubit, {NewsSource? sourceToReturnOnAdd}) {
@@ -55,7 +57,12 @@ Widget _buildSubject(InboxCubit cubit, {NewsSource? sourceToReturnOnAdd}) {
       ),
     ],
   );
-  return MaterialApp.router(routerConfig: router);
+  return MaterialApp.router(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
+    routerConfig: router,
+  );
 }
 
 void main() {
@@ -101,7 +108,7 @@ void main() {
       await tester.pumpWidget(_buildSubject(cubit));
 
       expect(find.text('Bienvenido a Reevo'), findsOneWidget);
-      expect(find.text('Agregar tu primera fuente'), findsOneWidget);
+      expect(find.text('Agrega tu primera fuente'), findsOneWidget);
     });
 
     testWidgets(
@@ -142,7 +149,7 @@ void main() {
       when(() => cubit.loadArticles()).thenAnswer((_) async {});
 
       await tester.pumpWidget(_buildSubject(cubit));
-      await tester.tap(find.text('Agregar tu primera fuente'));
+      await tester.tap(find.text('Agrega tu primera fuente'));
       await tester.pumpAndSettle();
 
       expect(find.text('Agregar'), findsOneWidget);
@@ -165,7 +172,7 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(cubit, sourceToReturnOnAdd: addedSource),
       );
-      await tester.tap(find.text('Agregar tu primera fuente'));
+      await tester.tap(find.text('Agrega tu primera fuente'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Agregar'));
       await tester.pumpAndSettle();
@@ -191,7 +198,7 @@ void main() {
       await tester.pumpWidget(
         _buildSubject(cubit, sourceToReturnOnAdd: addedSource),
       );
-      await tester.tap(find.text('Agregar tu primera fuente'));
+      await tester.tap(find.text('Agrega tu primera fuente'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Agregar'));
       await tester.pumpAndSettle();
@@ -279,7 +286,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.textContaining('2 fuente(s) no pudieron sincronizarse.'),
+        find.textContaining('2 fuentes no pudieron sincronizarse.'),
         findsOneWidget,
       );
     });

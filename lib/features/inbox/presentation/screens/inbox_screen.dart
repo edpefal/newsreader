@@ -9,6 +9,7 @@ import 'package:newsreader/core/widgets/no_search_results_state.dart';
 import 'package:newsreader/core/widgets/paper_texture.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 // ---------------------------------------------------------------------------
 // Modelo interno de la lista plana (artículos + separadores de fecha)
@@ -116,14 +117,15 @@ class _InboxViewState extends State<InboxView> {
           (curr is InboxLoaded && curr.readArticleId == null),
       builder: (context, state) {
         if (state is InboxLoading) {
+          final l10n = AppLocalizations.of(context);
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const CircularProgressIndicator(),
-                if (state.message != null) ...[
+                if (state.isSyncing) ...[
                   const SizedBox(height: 16),
-                  Text(state.message!),
+                  Text(l10n.inboxSyncingSources),
                 ],
               ],
             ),
@@ -300,21 +302,18 @@ class _InboxViewState extends State<InboxView> {
 // ---------------------------------------------------------------------------
 
 Future<void> _onRefresh(BuildContext context) async {
+  final l10n = AppLocalizations.of(context);
   final result = await context.read<InboxCubit>().syncAndReload();
   if (!context.mounted) return;
   if (result.isNetworkError) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Sin conexión. Los artículos descargados siguen disponibles.',
-        ),
-      ),
+      SnackBar(content: Text(l10n.inboxOfflineSyncMessage)),
     );
   } else if (result.failedSourceIds.isNotEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '${result.failedSourceIds.length} fuente(s) no pudieron sincronizarse.',
+          l10n.inboxSourcesFailedToSync(result.failedSourceIds.length),
         ),
       ),
     );
@@ -351,6 +350,7 @@ class _OnboardingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -364,13 +364,13 @@ class _OnboardingState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Bienvenido a Reevo',
+              l10n.inboxOnboardingTitle,
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Tu espacio para leer tus fuentes fuera del email.',
+              l10n.inboxOnboardingSubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -400,7 +400,7 @@ class _OnboardingState extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.add),
-              label: const Text('Agregar tu primera fuente'),
+              label: Text(l10n.inboxOnboardingAddFirstSourceButton),
             ),
           ],
         ),
@@ -432,6 +432,7 @@ class _UpToDateState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -445,12 +446,12 @@ class _UpToDateState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Estás al día',
+              l10n.inboxUpToDateTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Desliza para actualizar.',
+              l10n.inboxUpToDateSubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),

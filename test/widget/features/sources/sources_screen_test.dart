@@ -9,6 +9,8 @@ import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 class MockSourcesCubit extends MockCubit<SourcesState>
     implements SourcesCubit {}
 
@@ -41,7 +43,12 @@ Widget _buildSubject(SourcesCubit cubit, {NewsSource? sourceToReturnOnAdd}) {
       ),
     ],
   );
-  return MaterialApp.router(routerConfig: router);
+  return MaterialApp.router(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
+    routerConfig: router,
+  );
 }
 
 void main() {
@@ -82,7 +89,7 @@ void main() {
       await tester.pumpWidget(_buildSubject(cubit));
 
       expect(find.text('Aún no tienes fuentes'), findsOneWidget);
-      expect(find.text('Agregar mi primera fuente'), findsOneWidget);
+      expect(find.text('Agrega mi primera fuente'), findsOneWidget);
     });
 
     testWidgets(
@@ -185,7 +192,7 @@ void main() {
       await tester.pumpAndSettle();
 
       verifyNever(() => cubit.loadSources());
-      expect(find.text('Agregar mi primera fuente'), findsOneWidget);
+      expect(find.text('Agrega mi primera fuente'), findsOneWidget);
     });
 
     testWidgets('el menú muestra opciones Editar y Eliminar', (tester) async {

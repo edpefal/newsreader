@@ -6,6 +6,7 @@ import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/utils/date_key.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/widgets/summary_list_item.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 class SummariesScreen extends StatelessWidget {
   const SummariesScreen({super.key});
@@ -19,6 +20,7 @@ class SummariesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: BlocBuilder<SummariesCubit, SummariesState>(
         builder: (context, state) {
@@ -71,12 +73,12 @@ class SummariesView extends StatelessWidget {
                           : const Icon(Icons.auto_awesome),
                       label: Text(
                         isGenerating
-                            ? 'Generando resumen...'
+                            ? l10n.summariesGenerating
                             : summaries.any(
                                 (s) => s.id == dateKey(DateTime.now()),
                               )
-                                ? 'Regenerar resumen de hoy'
-                                : 'Crear resumen de hoy',
+                                ? l10n.summariesRegenerateTodayButton
+                                : l10n.summariesCreateTodayButton,
                       ),
                     ),
                     if (errorMessage != null) ...[
@@ -122,6 +124,7 @@ class _EmptySummariesState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -135,12 +138,12 @@ class _EmptySummariesState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sin resúmenes todavía',
+              l10n.summariesEmptyTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Creá el resumen de hoy para ver de qué trataron tus noticias.',
+              l10n.summariesEmptySubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

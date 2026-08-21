@@ -46,7 +46,7 @@ class InboxCubit extends Cubit<InboxState> {
   /// estado vacío de antes del login (sin spinner) durante los segundos
   /// que tarda `SyncUserData`, dando la impresión de que no hay fuentes.
   Future<void> syncAfterSignIn() async {
-    emit(const InboxLoading(message: 'Sincronizando fuentes...'));
+    emit(const InboxLoading(isSyncing: true));
     await _syncUserData.execute();
     await _reload();
     unawaited(_silentFeedRefresh());

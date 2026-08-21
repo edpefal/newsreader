@@ -7,6 +7,7 @@ import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/core/widgets/no_search_results_state.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 class ArchiveScreen extends StatelessWidget {
   const ArchiveScreen({super.key});
@@ -85,6 +86,7 @@ class _EmptyArchiveState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -98,12 +100,12 @@ class _EmptyArchiveState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sin artículos leídos',
+              l10n.archiveEmptyTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Los artículos leídos y no leídos se archivarán automáticamente.',
+              l10n.archiveEmptySubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

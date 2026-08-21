@@ -169,7 +169,7 @@ void main() {
       act: (cubit) => cubit.syncAfterSignIn(),
       wait: const Duration(milliseconds: 10),
       expect: () => [
-        const InboxLoading(message: 'Sincronizando fuentes...'),
+        const InboxLoading(isSyncing: true),
         InboxLoaded(tArticles, hasSources: true),
         InboxLoaded(tArticles, hasSources: true, isSyncingInBackground: true),
         InboxLoaded(tArticles, hasSources: true),
@@ -200,7 +200,7 @@ void main() {
       act: (cubit) => cubit.syncAfterSignIn(),
       wait: const Duration(milliseconds: 10),
       expect: () => [
-        const InboxLoading(message: 'Sincronizando fuentes...'),
+        const InboxLoading(isSyncing: true),
         InboxLoaded(tArticles, hasSources: true),
         InboxLoaded(tArticles, hasSources: true, isSyncingInBackground: true),
         InboxLoaded(tArticlesRefreshed, hasSources: true),
@@ -223,7 +223,7 @@ void main() {
       act: (cubit) => cubit.syncAfterSignIn(),
       wait: const Duration(milliseconds: 10),
       expect: () => [
-        const InboxLoading(message: 'Sincronizando fuentes...'),
+        const InboxLoading(isSyncing: true),
         InboxLoaded(tArticles, hasSources: true),
         InboxLoaded(tArticles, hasSources: true, isSyncingInBackground: true),
         InboxLoaded(tArticles, hasSources: true),

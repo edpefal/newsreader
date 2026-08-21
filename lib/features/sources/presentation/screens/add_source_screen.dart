@@ -9,6 +9,7 @@ import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/generate_email_feed.dart';
 import 'package:newsreader/features/sources/presentation/cubit/add_source_cubit.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 class AddSourceScreen extends StatelessWidget {
   const AddSourceScreen({super.key});
@@ -62,12 +63,15 @@ class _AddSourceViewState extends State<AddSourceView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return BlocListener<AddSourceCubit, AddSourceState>(
       listener: (context, state) {
         if (state is AddSourceSuccess) {
           setState(() => _emailCardExpanded = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('"${state.source.name}" agregado.')),
+            SnackBar(
+              content: Text(l10n.sourcesAddedSnackbar(state.source.name)),
+            ),
           );
           Navigator.of(context).pop(state.source);
         } else if (state is AddSourceError) {
@@ -85,14 +89,14 @@ class _AddSourceViewState extends State<AddSourceView> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Agregar fuente')),
+        appBar: AppBar(title: Text(l10n.sourcesAddScreenTitle)),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Pega el link del sitio (o la URL del feed RSS si la tienes).',
+                l10n.sourcesAddInstructions,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -104,11 +108,11 @@ class _AddSourceViewState extends State<AddSourceView> {
                 keyboardType: TextInputType.url,
                 autocorrect: false,
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'URL del feed',
+                decoration: InputDecoration(
+                  labelText: l10n.sourcesFeedUrlLabel,
                   hintText: 'https://autor.substack.com',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.rss_feed),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.rss_feed),
                 ),
                 onSubmitted: (_) => _submit(context),
               ),
@@ -133,17 +137,17 @@ class _AddSourceViewState extends State<AddSourceView> {
                               ),
                               if (state is AddSourceValidatingHeuristics) ...[
                                 const SizedBox(width: 12),
-                                const Text('Buscando en varios lugares posibles...'),
+                                Text(l10n.sourcesSearchingHeuristics),
                               ],
                             ],
                           )
-                        : const Text('Agregar'),
+                        : Text(l10n.commonAdd),
                   );
                 },
               ),
               const SizedBox(height: 32),
               Text(
-                'Otras formas de agregar',
+                l10n.sourcesOtherWaysToAdd,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -151,8 +155,8 @@ class _AddSourceViewState extends State<AddSourceView> {
               const SizedBox(height: 12),
               _SourceOptionCard(
                 icon: Icons.upload_file_outlined,
-                title: 'Importar desde OPML',
-                description: 'Traé tus suscripciones desde otro lector de feeds.',
+                title: l10n.sourcesImportOpmlTitle,
+                description: l10n.sourcesImportOpmlDescription,
                 onTap: () => _importOpml(context),
               ),
               const SizedBox(height: 12),
@@ -207,7 +211,7 @@ class _AddSourceViewState extends State<AddSourceView> {
                 constraints: const BoxConstraints(),
                 iconSize: 20,
                 icon: const Icon(Icons.close),
-                tooltip: 'Cerrar',
+                tooltip: AppLocalizations.of(context).commonClose,
                 color: onError,
                 onPressed: () =>
                     ScaffoldMessenger.of(context).hideCurrentSnackBar(),
@@ -243,18 +247,16 @@ class _AddSourceViewState extends State<AddSourceView> {
     GeneratedEmailFeed feed,
   ) async {
     final cubit = context.read<AddSourceCubit>();
+    final l10n = AppLocalizations.of(context);
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Dirección generada'),
+        title: Text(l10n.sourcesEmailGeneratedDialogTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Suscribí el newsletter usando esta dirección. El primer '
-              'correo puede tardar unos minutos en aparecer.',
-            ),
+            Text(l10n.sourcesEmailGeneratedDialogBody),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -266,11 +268,11 @@ class _AddSourceViewState extends State<AddSourceView> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.copy_outlined),
-                  tooltip: 'Copiar',
+                  tooltip: l10n.commonCopy,
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: feed.email));
                     ScaffoldMessenger.of(dialogContext).showSnackBar(
-                      const SnackBar(content: Text('Dirección copiada.')),
+                      SnackBar(content: Text(l10n.sourcesEmailCopiedSnackbar)),
                     );
                   },
                 ),
@@ -281,14 +283,14 @@ class _AddSourceViewState extends State<AddSourceView> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
+            child: Text(l10n.commonCancel),
           ),
           FilledButton(
             onPressed: () {
               Navigator.of(dialogContext).pop();
               cubit.addSource(feed.feedUrl);
             },
-            child: const Text('Ya me suscribí'),
+            child: Text(l10n.sourcesAlreadySubscribedButton),
           ),
         ],
       ),
@@ -369,6 +371,7 @@ class _EmailFeedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
     return Card(
       elevation: 0,
       margin: EdgeInsets.zero,
@@ -398,13 +401,12 @@ class _EmailFeedCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Generar dirección de email',
+                            l10n.sourcesGenerateEmailTitle,
                             style: textTheme.titleSmall,
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Para newsletters sin RSS: los correos se '
-                            'convierten en artículos.',
+                            l10n.sourcesGenerateEmailDescription,
                             style: textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -423,8 +425,7 @@ class _EmailFeedCard extends StatelessWidget {
                 if (expanded) ...[
                   const SizedBox(height: 12),
                   Text(
-                    'Te damos una dirección única. Suscribí el newsletter '
-                    'con ella y cada correo que llegue aparecerá acá.',
+                    l10n.sourcesGenerateEmailExpandedHint,
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -440,7 +441,7 @@ class _EmailFeedCard extends StatelessWidget {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Generar dirección de email'),
+                          : Text(l10n.sourcesGenerateEmailTitle),
                     ),
                   ),
                 ],

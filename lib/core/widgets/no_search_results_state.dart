@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:newsreader/l10n/app_localizations.dart';
+
 /// Estado vacío mostrado cuando una búsqueda activa no arroja resultados,
 /// distinguible del estado vacío "sin artículos" de cada pantalla.
 class NoSearchResultsState extends StatelessWidget {
@@ -20,7 +22,7 @@ class NoSearchResultsState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sin resultados',
+              AppLocalizations.of(context).commonNoSearchResults,
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ],

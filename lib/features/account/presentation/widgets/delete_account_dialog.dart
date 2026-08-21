@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:newsreader/l10n/app_localizations.dart';
+
 class DeleteAccountDialog extends StatelessWidget {
   final VoidCallback onConfirm;
 
@@ -7,17 +9,14 @@ class DeleteAccountDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Eliminar cuenta'),
-      content: const Text(
-        'Esta acción es irreversible: se eliminarán tu cuenta y todos tus '
-        'datos (fuentes, artículos, favoritos y resúmenes). No se puede '
-        'deshacer.',
-      ),
+      title: Text(l10n.accountDeleteDialogTitle),
+      content: Text(l10n.accountDeleteDialogBody),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(l10n.commonCancel),
         ),
         TextButton(
           onPressed: () {
@@ -27,7 +26,7 @@ class DeleteAccountDialog extends StatelessWidget {
           style: TextButton.styleFrom(
             foregroundColor: Theme.of(context).colorScheme.error,
           ),
-          child: const Text('Eliminar cuenta'),
+          child: Text(l10n.accountDeleteDialogTitle),
         ),
       ],
     );

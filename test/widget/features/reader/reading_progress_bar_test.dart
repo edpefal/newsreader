@@ -10,6 +10,8 @@ import 'package:newsreader/features/reader/presentation/screens/reader_screen.da
 import 'package:newsreader/features/reader/presentation/widgets/reading_progress_bar.dart';
 import 'package:newsreader/presentation/theme/app_theme.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 int _filledSegmentCount(WidgetTester tester) {
   final accentColor = AppTheme.light.extension<ReevoAccent>()!.unreadFavoriteAmber;
   return tester
@@ -44,7 +46,13 @@ Widget _buildSubject(
       ),
     ],
   );
-  return MaterialApp.router(theme: AppTheme.light, routerConfig: router);
+  return MaterialApp.router(
+    theme: AppTheme.light,
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
+    routerConfig: router,
+  );
 }
 
 void main() {

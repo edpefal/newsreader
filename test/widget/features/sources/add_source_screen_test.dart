@@ -10,11 +10,16 @@ import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/features/sources/presentation/cubit/add_source_cubit.dart';
 import 'package:newsreader/features/sources/presentation/screens/add_source_screen.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 class MockAddSourceCubit extends MockCubit<AddSourceState>
     implements AddSourceCubit {}
 
 Widget _buildSubject(AddSourceCubit cubit) {
   return MaterialApp(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
     home: BlocProvider<AddSourceCubit>.value(
       value: cubit,
       child: const AddSourceView(),
@@ -30,6 +35,9 @@ Widget _buildSubjectWithPopObserver(
   void Function(NewsSource?) onPopped,
 ) {
   return MaterialApp(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
     home: Builder(
       builder: (context) => Scaffold(
         body: Center(
@@ -57,6 +65,9 @@ Widget _buildSubjectWithPopObserver(
 /// para poder navegar hacia atrás con el botón de back del `AppBar`.
 Widget _buildSubjectPushed(AddSourceCubit cubit) {
   return MaterialApp(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
     home: Builder(
       builder: (context) => Scaffold(
         body: Center(
@@ -288,7 +299,7 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.byTooltip('Back'));
+      await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
 
       expect(
@@ -311,8 +322,8 @@ void main() {
       );
       expect(
         find.text(
-          'Te damos una dirección única. Suscribí el newsletter con ella '
-          'y cada correo que llegue aparecerá acá.',
+          'Te damos una dirección única. Suscribe el newsletter con ella '
+          'y cada correo que llegue aparecerá aquí.',
         ),
         findsNothing,
       );
@@ -327,8 +338,8 @@ void main() {
 
       expect(
         find.text(
-          'Te damos una dirección única. Suscribí el newsletter con ella '
-          'y cada correo que llegue aparecerá acá.',
+          'Te damos una dirección única. Suscribe el newsletter con ella '
+          'y cada correo que llegue aparecerá aquí.',
         ),
         findsOneWidget,
       );
@@ -371,8 +382,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text(
-          'Te damos una dirección única. Suscribí el newsletter con ella '
-          'y cada correo que llegue aparecerá acá.',
+          'Te damos una dirección única. Suscribe el newsletter con ella '
+          'y cada correo que llegue aparecerá aquí.',
         ),
         findsOneWidget,
       );
@@ -384,8 +395,8 @@ void main() {
 
       expect(
         find.text(
-          'Te damos una dirección única. Suscribí el newsletter con ella '
-          'y cada correo que llegue aparecerá acá.',
+          'Te damos una dirección única. Suscribe el newsletter con ella '
+          'y cada correo que llegue aparecerá aquí.',
         ),
         findsNothing,
       );
@@ -415,8 +426,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text(
-          'Te damos una dirección única. Suscribí el newsletter con ella '
-          'y cada correo que llegue aparecerá acá.',
+          'Te damos una dirección única. Suscribe el newsletter con ella '
+          'y cada correo que llegue aparecerá aquí.',
         ),
         findsOneWidget,
       );

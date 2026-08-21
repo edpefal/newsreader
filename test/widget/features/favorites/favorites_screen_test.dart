@@ -9,6 +9,8 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 class MockFavoritesCubit extends MockCubit<FavoritesState>
     implements FavoritesCubit {}
 
@@ -28,7 +30,12 @@ Widget _buildSubject(FavoritesCubit cubit) {
       ),
     ],
   );
-  return MaterialApp.router(routerConfig: router);
+  return MaterialApp.router(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
+    routerConfig: router,
+  );
 }
 
 void main() {

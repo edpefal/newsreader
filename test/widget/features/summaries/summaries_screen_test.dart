@@ -9,6 +9,8 @@ import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summaries_screen.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 class MockSummariesCubit extends MockCubit<SummariesState>
     implements SummariesCubit {}
 
@@ -28,7 +30,12 @@ Widget _buildSubject(SummariesCubit cubit) {
       ),
     ],
   );
-  return MaterialApp.router(routerConfig: router);
+  return MaterialApp.router(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
+    routerConfig: router,
+  );
 }
 
 void main() {

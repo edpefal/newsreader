@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/di/injection.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
@@ -100,6 +101,15 @@ class _AppState extends State<App> with WidgetsBindingObserver {
             themeMode: themeMode,
             routerConfig: appRouter,
             debugShowCheckedModeBanner: false,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            // Inglés primero: es el idioma por defecto al que cae la
+            // resolución de locale de Flutter cuando el dispositivo usa un
+            // idioma no soportado (sin necesidad de localeResolutionCallback).
+            supportedLocales: const [
+              Locale('en'),
+              Locale('es'),
+              Locale('fr'),
+            ],
           );
         },
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -18,6 +19,7 @@ class LoginScreen extends StatelessWidget {
       },
       builder: (context, state) {
         final isLoading = state is LoginInProgress;
+        final l10n = AppLocalizations.of(context);
 
         return Scaffold(
           body: SafeArea(
@@ -30,13 +32,13 @@ class LoginScreen extends StatelessWidget {
                   Image.asset('assets/reevo_logo.png', height: 72),
                   const SizedBox(height: 16),
                   Text(
-                    'Reevo',
+                    l10n.appTitle,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Iniciá sesión para continuar',
+                    l10n.loginSubtitle,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -48,7 +50,7 @@ class LoginScreen extends StatelessWidget {
                         ? null
                         : () => context.read<LoginCubit>().signInWithGoogle(),
                     icon: const Icon(Icons.g_mobiledata),
-                    label: const Text('Continuar con Google'),
+                    label: Text(l10n.loginContinueWithGoogle),
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
@@ -56,7 +58,7 @@ class LoginScreen extends StatelessWidget {
                         ? null
                         : () => context.read<LoginCubit>().signInWithApple(),
                     icon: const Icon(Icons.apple),
-                    label: const Text('Continuar con Apple'),
+                    label: Text(l10n.loginContinueWithApple),
                   ),
                   if (isLoading) ...[
                     const SizedBox(height: 24),

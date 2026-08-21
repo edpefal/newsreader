@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:newsreader/l10n/app_localizations.dart';
+
 class EditSourceNameDialog extends StatefulWidget {
   final String initialName;
   final void Function(String name) onSave;
@@ -32,20 +34,21 @@ class _EditSourceNameDialogState extends State<EditSourceNameDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Editar nombre'),
+      title: Text(l10n.sourcesEditNameDialogTitle),
       content: TextField(
         controller: _controller,
         autofocus: true,
-        decoration: const InputDecoration(
-          labelText: 'Nombre',
-          border: OutlineInputBorder(),
+        decoration: InputDecoration(
+          labelText: l10n.sourcesEditNameFieldLabel,
+          border: const OutlineInputBorder(),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(l10n.commonCancel),
         ),
         ValueListenableBuilder<TextEditingValue>(
           valueListenable: _controller,
@@ -58,7 +61,7 @@ class _EditSourceNameDialogState extends State<EditSourceNameDialog> {
                       Navigator.of(context).pop();
                     }
                   : null,
-              child: const Text('Guardar'),
+              child: Text(l10n.commonSave),
             );
           },
         ),

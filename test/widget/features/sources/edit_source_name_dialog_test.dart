@@ -3,11 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:newsreader/features/sources/presentation/widgets/edit_source_name_dialog.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 Widget _buildSubject({
   String initialName = 'Newsletter A',
   required void Function(String) onSave,
 }) {
   return MaterialApp(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
     home: Material(
       child: EditSourceNameDialog(
         initialName: initialName,

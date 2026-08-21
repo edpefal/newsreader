@@ -10,6 +10,7 @@ import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_til
 import 'package:newsreader/features/sources/domain/usecases/get_source_articles.dart';
 import 'package:newsreader/features/sources/presentation/cubit/source_detail_cubit.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 class SourceDetailScreen extends StatelessWidget {
   final NewsSource source;
@@ -118,6 +119,7 @@ class _EmptySourceDetailState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -131,12 +133,12 @@ class _EmptySourceDetailState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sin publicaciones',
+              l10n.sourceDetailEmptyTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Aún no hay artículos de esta fuente.',
+              l10n.sourceDetailEmptySubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

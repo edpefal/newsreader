@@ -3,11 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:newsreader/features/sources/presentation/widgets/delete_source_dialog.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 Widget _buildSubject({
   String sourceName = 'Newsletter A',
   required VoidCallback onConfirm,
 }) {
   return MaterialApp(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
     home: Material(
       child: DeleteSourceDialog(
         sourceName: sourceName,

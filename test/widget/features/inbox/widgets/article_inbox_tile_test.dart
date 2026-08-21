@@ -6,6 +6,8 @@ import 'package:newsreader/core/widgets/chamfered_box.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 import 'package:newsreader/presentation/theme/app_theme.dart';
 
+import '../../../../support/pump_localized_app.dart';
+
 Article _article({
   String? imageUrl,
   bool isRead = false,
@@ -23,8 +25,13 @@ Article _article({
       isFavorite: isFavorite,
     );
 
-Widget _wrap(Widget child) =>
-    MaterialApp(theme: AppTheme.light, home: Scaffold(body: child));
+Widget _wrap(Widget child) => MaterialApp(
+      theme: AppTheme.light,
+      locale: testLocale,
+      localizationsDelegates: testLocalizationsDelegates,
+      supportedLocales: testSupportedLocales,
+      home: Scaffold(body: child),
+    );
 
 void main() {
   testWidgets('no muestra thumbnail cuando el artículo no tiene imagen', (tester) async {

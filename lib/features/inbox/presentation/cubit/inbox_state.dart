@@ -5,12 +5,12 @@ sealed class InboxState extends Equatable {
 }
 
 final class InboxLoading extends InboxState {
-  final String? message;
+  final bool isSyncing;
 
-  const InboxLoading({this.message});
+  const InboxLoading({this.isSyncing = false});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [isSyncing];
 }
 
 final class InboxLoaded extends InboxState {

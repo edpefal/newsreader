@@ -10,6 +10,7 @@ import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dar
 import 'package:newsreader/features/sources/presentation/widgets/delete_source_dialog.dart';
 import 'package:newsreader/features/sources/presentation/widgets/edit_source_name_dialog.dart';
 import 'package:newsreader/features/sources/presentation/widgets/source_icon.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 class SourcesScreen extends StatelessWidget {
   const SourcesScreen({super.key});
@@ -60,7 +61,7 @@ class SourcesView extends StatelessWidget {
               );
             }
           },
-          tooltip: 'Agregar fuente',
+          tooltip: AppLocalizations.of(context).sourcesAddSourceTooltip,
           child: const Icon(Icons.add),
         ),
       ),
@@ -73,6 +74,7 @@ class _EmptySourcesState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -86,12 +88,12 @@ class _EmptySourcesState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Aún no tienes fuentes',
+              l10n.sourcesEmptyTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Agrega tu primera fuente para empezar a leer.',
+              l10n.sourcesEmptySubtitle,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -106,7 +108,7 @@ class _EmptySourcesState extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.add),
-              label: const Text('Agregar mi primera fuente'),
+              label: Text(l10n.sourcesAddFirstSourceButton),
             ),
           ],
         ),
@@ -152,14 +154,14 @@ class _SourceTile extends StatelessWidget {
             );
           }
         },
-        itemBuilder: (_) => const [
+        itemBuilder: (context) => [
           PopupMenuItem(
             value: _SourceAction.edit,
-            child: Text('Editar nombre'),
+            child: Text(AppLocalizations.of(context).sourcesEditNameMenuItem),
           ),
           PopupMenuItem(
             value: _SourceAction.delete,
-            child: Text('Eliminar'),
+            child: Text(AppLocalizations.of(context).commonDelete),
           ),
         ],
       ),

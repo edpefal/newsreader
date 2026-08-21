@@ -9,6 +9,8 @@ import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/presentation/cubit/import_opml_cubit.dart';
 import 'package:newsreader/features/sources/presentation/screens/import_opml_screen.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 class MockImportOpmlCubit extends MockCubit<ImportOpmlState>
     implements ImportOpmlCubit {}
 
@@ -16,6 +18,9 @@ class MockInboxCubit extends MockCubit<InboxState> implements InboxCubit {}
 
 Widget _buildSubject(ImportOpmlCubit cubit, {InboxCubit? inboxCubit}) {
   return MaterialApp(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
     home: MultiBlocProvider(
       providers: [
         BlocProvider<ImportOpmlCubit>.value(value: cubit),

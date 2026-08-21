@@ -13,11 +13,15 @@ import 'package:newsreader/features/sources/presentation/cubit/source_detail_cub
 import 'package:newsreader/features/sources/presentation/screens/source_detail_screen.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 
+import '../../../support/pump_localized_app.dart';
+
 class MockSourceDetailCubit extends MockCubit<SourceDetailState>
     implements SourceDetailCubit {}
 
 class MockGetSourceArticles extends Mock implements GetSourceArticles {}
+
 class MockFeedSyncTrigger extends Mock implements FeedSyncTrigger {}
+
 class MockSyncUserData extends Mock implements SyncUserData {}
 
 Widget _buildSubject(SourceDetailCubit cubit, String sourceName) {
@@ -36,7 +40,12 @@ Widget _buildSubject(SourceDetailCubit cubit, String sourceName) {
       ),
     ],
   );
-  return MaterialApp.router(routerConfig: router);
+  return MaterialApp.router(
+    locale: testLocale,
+    localizationsDelegates: testLocalizationsDelegates,
+    supportedLocales: testSupportedLocales,
+    routerConfig: router,
+  );
 }
 
 void main() {
@@ -73,8 +82,9 @@ void main() {
   });
 
   group('SourceDetailScreen', () {
-    testWidgets('muestra spinner cuando estado es SourceDetailLoading',
-        (tester) async {
+    testWidgets('muestra spinner cuando estado es SourceDetailLoading', (
+      tester,
+    ) async {
       when(() => cubit.state).thenReturn(const SourceDetailLoading());
 
       await tester.pumpWidget(_buildSubject(cubit, tSource.name));
@@ -99,8 +109,9 @@ void main() {
       expect(find.byIcon(Icons.article_outlined), findsOneWidget);
     });
 
-    testWidgets('muestra lista de artículos cuando hay publicaciones',
-        (tester) async {
+    testWidgets('muestra lista de artículos cuando hay publicaciones', (
+      tester,
+    ) async {
       when(() => cubit.state).thenReturn(SourceDetailLoaded(tArticles));
 
       await tester.pumpWidget(_buildSubject(cubit, tSource.name));
@@ -109,8 +120,9 @@ void main() {
       expect(find.text('Artículo dos'), findsOneWidget);
     });
 
-    testWidgets('muestra separadores de fecha agrupando artículos por día',
-        (tester) async {
+    testWidgets('muestra separadores de fecha agrupando artículos por día', (
+      tester,
+    ) async {
       final now = DateTime.now();
       final yesterday = now.subtract(const Duration(days: 1));
       final articles = [
@@ -127,8 +139,12 @@ void main() {
           sourceId: 's1',
           sourceName: 'Newsletter A',
           title: 'Artículo de ayer',
-          publishedAt:
-              DateTime(yesterday.year, yesterday.month, yesterday.day, 10),
+          publishedAt: DateTime(
+            yesterday.year,
+            yesterday.month,
+            yesterday.day,
+            10,
+          ),
           articleUrl: 'https://example.com/ayer',
         ),
       ];
@@ -172,23 +188,30 @@ void main() {
           ),
         ],
       );
-      return MaterialApp.router(routerConfig: router);
+      return MaterialApp.router(
+        locale: testLocale,
+        localizationsDelegates: testLocalizationsDelegates,
+        supportedLocales: testSupportedLocales,
+        routerConfig: router,
+      );
     }
 
     setUp(() {
       mockGetSourceArticles = MockGetSourceArticles();
       mockFeedSyncTrigger = MockFeedSyncTrigger();
       mockSyncUserData = MockSyncUserData();
-      when(() => mockGetSourceArticles.execute(any()))
-          .thenAnswer((_) async => tArticles);
+      when(
+        () => mockGetSourceArticles.execute(any()),
+      ).thenAnswer((_) async => tArticles);
       when(() => mockFeedSyncTrigger.execute()).thenAnswer(
         (_) async => const FeedSyncResult(synced: 0, failedSourceIds: []),
       );
       when(() => mockSyncUserData.execute()).thenAnswer((_) async {});
     });
 
-    testWidgets('syncOnOpen: true dispara sincronización antes de cargar',
-        (tester) async {
+    testWidgets('syncOnOpen: true dispara sincronización antes de cargar', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildScreen(syncOnOpen: true));
       await tester.pumpAndSettle();
 
@@ -197,8 +220,9 @@ void main() {
       verify(() => mockGetSourceArticles.execute('s1')).called(1);
     });
 
-    testWidgets('syncOnOpen: false (default) solo carga lo local',
-        (tester) async {
+    testWidgets('syncOnOpen: false (default) solo carga lo local', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildScreen(syncOnOpen: false));
       await tester.pumpAndSettle();
 

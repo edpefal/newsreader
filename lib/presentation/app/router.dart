@@ -44,6 +44,7 @@ import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_ar
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summaries_screen.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summary_detail_screen.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 /// Convierte el stream de cambios de sesión de [AuthClient] en un
 /// [Listenable], que es lo que espera `refreshListenable` de go_router para
@@ -216,7 +217,13 @@ class _ScaffoldWithNavBar extends StatefulWidget {
 }
 
 class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
-  static const _titles = ['Inbox', 'Favoritos', 'Leídos', 'Fuentes', 'Resúmenes'];
+  List<String> _titles(AppLocalizations l10n) => [
+        l10n.navInbox,
+        l10n.navFavorites,
+        l10n.navArchive,
+        l10n.navSources,
+        l10n.navSummaries,
+      ];
 
   bool _isSearching = false;
   final _searchController = TextEditingController();
@@ -268,6 +275,7 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
   Widget build(BuildContext context) {
     final currentIndex = widget.navigationShell.currentIndex;
     final isSearchable = _searchableTabIndices.contains(currentIndex);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
@@ -276,8 +284,8 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: currentIndex == 3
-                      ? 'Buscar por nombre o autor...'
-                      : 'Buscar por título, fuente o autor...',
+                      ? l10n.navSearchHintSources
+                      : l10n.navSearchHintArticles,
                   border: InputBorder.none,
                 ),
                 onChanged: (query) => _search(context, query),
@@ -291,7 +299,7 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
                     height: 20,
                   ),
                   const SizedBox(width: 10),
-                  Text(_titles[currentIndex]),
+                  Text(_titles(l10n)[currentIndex]),
                 ],
               ),
         actions: [
@@ -307,10 +315,10 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
         selectedIndex: currentIndex,
         onDestinationSelected: (index) => _onDestinationSelected(context, index),
         children: [
-          const DrawerHeader(
+          DrawerHeader(
             child: Text(
-              'Reevo',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              l10n.appTitle,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
           NavigationDrawerDestination(
@@ -334,37 +342,37 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
                 );
               },
             ),
-            label: const Text('Inbox'),
+            label: Text(l10n.navInbox),
           ),
-          const NavigationDrawerDestination(
-            icon: Icon(Icons.star_outline),
-            selectedIcon: Icon(Icons.star),
-            label: Text('Favoritos'),
+          NavigationDrawerDestination(
+            icon: const Icon(Icons.star_outline),
+            selectedIcon: const Icon(Icons.star),
+            label: Text(l10n.navFavorites),
           ),
-          const NavigationDrawerDestination(
-            icon: Icon(Icons.archive_outlined),
-            selectedIcon: Icon(Icons.archive),
-            label: Text('Leídos'),
+          NavigationDrawerDestination(
+            icon: const Icon(Icons.archive_outlined),
+            selectedIcon: const Icon(Icons.archive),
+            label: Text(l10n.navArchive),
           ),
-          const NavigationDrawerDestination(
-            icon: Icon(Icons.rss_feed_outlined),
-            selectedIcon: Icon(Icons.rss_feed),
-            label: Text('Fuentes'),
+          NavigationDrawerDestination(
+            icon: const Icon(Icons.rss_feed_outlined),
+            selectedIcon: const Icon(Icons.rss_feed),
+            label: Text(l10n.navSources),
           ),
-          const NavigationDrawerDestination(
-            icon: Icon(Icons.auto_awesome_outlined),
-            selectedIcon: Icon(Icons.auto_awesome),
-            label: Text('Resúmenes'),
+          NavigationDrawerDestination(
+            icon: const Icon(Icons.auto_awesome_outlined),
+            selectedIcon: const Icon(Icons.auto_awesome),
+            label: Text(l10n.navSummaries),
           ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.ios_share),
-            title: const Text('Exportar mis datos'),
+            title: Text(l10n.navExportData),
             onTap: () => _exportUserData(context),
           ),
           ListTile(
             leading: const Icon(Icons.logout),
-            title: const Text('Cerrar sesión'),
+            title: Text(l10n.navSignOut),
             onTap: () async {
               // Se limpian los datos locales antes de cerrar sesión para
               // que la próxima cuenta que inicie sesión en este
@@ -380,7 +388,7 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
               color: Theme.of(context).colorScheme.error,
             ),
             title: Text(
-              'Eliminar cuenta',
+              l10n.accountDeleteDialogTitle,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
             onTap: () => _confirmDeleteAccount(context),

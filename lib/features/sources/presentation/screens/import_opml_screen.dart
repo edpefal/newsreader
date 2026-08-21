@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:newsreader/core/widgets/source_icon.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/presentation/cubit/import_opml_cubit.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 class ImportOpmlScreen extends StatefulWidget {
   final String xmlContent;
@@ -23,12 +24,16 @@ class _ImportOpmlScreenState extends State<ImportOpmlScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return BlocConsumer<ImportOpmlCubit, ImportOpmlState>(
       listener: (context, state) {
         if (state is ImportOpmlDone) {
           final message = state.failedCount == 0
-              ? '${state.importedCount} fuente${state.importedCount == 1 ? '' : 's'} importada${state.importedCount == 1 ? '' : 's'}.'
-              : '${state.importedCount} importada${state.importedCount == 1 ? '' : 's'}, ${state.failedCount} fallida${state.failedCount == 1 ? '' : 's'}.';
+              ? l10n.sourcesOpmlImportedOnly(state.importedCount)
+              : l10n.sourcesOpmlImportedWithFailures(
+                  state.importedCount,
+                  state.failedCount,
+                );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(message)),
           );
@@ -38,7 +43,7 @@ class _ImportOpmlScreenState extends State<ImportOpmlScreen> {
       },
       builder: (context, state) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Importar OPML')),
+          appBar: AppBar(title: Text(l10n.sourcesImportOpmlScreenTitle)),
           body: switch (state) {
             ImportOpmlValidating() => const _ValidatingView(),
             ImportOpmlPreview() => _PreviewView(state: state),
@@ -57,13 +62,13 @@ class _ValidatingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text('Validando feeds…'),
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          Text(AppLocalizations.of(context).sourcesValidatingFeeds),
         ],
       ),
     );
@@ -75,13 +80,13 @@ class _ImportingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(),
-          SizedBox(height: 16),
-          Text('Importando fuentes…'),
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          Text(AppLocalizations.of(context).sourcesImportingSources),
         ],
       ),
     );
@@ -127,6 +132,7 @@ class _PreviewView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectedCount = state.selectedFeeds.length;
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       children: [
@@ -145,7 +151,7 @@ class _PreviewView extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 12),
                   child: Text(
-                    'Validando ${state.pendingCount} feed${state.pendingCount == 1 ? '' : 's'} más…',
+                    l10n.sourcesValidatingMoreFeeds(state.pendingCount),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context)
                               .colorScheme
@@ -175,8 +181,8 @@ class _PreviewView extends StatelessWidget {
               ),
               child: Text(
                 selectedCount > 0
-                    ? 'Importar ($selectedCount)'
-                    : 'Importar',
+                    ? l10n.sourcesImportButtonWithCount(selectedCount)
+                    : l10n.sourcesImportButton,
               ),
             ),
           ),
@@ -222,7 +228,7 @@ class _DuplicateFeedTile extends StatelessWidget {
       enabled: false,
       leading: SourceIcon(iconUrl: item.iconUrl, name: item.name, size: 40),
       title: Text(item.name),
-      subtitle: const Text('Ya suscrito'),
+      subtitle: Text(AppLocalizations.of(context).sourcesAlreadySubscribed),
       trailing: const Icon(Icons.check_circle_outline),
     );
   }
@@ -243,7 +249,10 @@ class _ErrorFeedTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: Text(item.errorMessage ?? 'No se pudo validar el feed.'),
+      subtitle: Text(
+        item.errorMessage ??
+            AppLocalizations.of(context).sourcesFeedValidationFailed,
+      ),
       trailing: Icon(
         Icons.warning_amber_outlined,
         color: Theme.of(context).colorScheme.error,

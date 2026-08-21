@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/domain/entities/summary_source_block.dart';
+import 'package:newsreader/core/utils/localized_date_formatter.dart';
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
+import 'package:newsreader/l10n/app_localizations.dart';
 
 /// Un bloque parseado de `DailySummary.content`: [title] es el nombre de
 /// fuente (línea inicial del bloque) cuando se pudo identificar, `null` si
@@ -51,11 +53,6 @@ class SummaryDetailScreen extends StatefulWidget {
 }
 
 class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
-  static const _months = [
-    'ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.',
-    'jul.', 'ago.', 'sep.', 'oct.', 'nov.', 'dic.',
-  ];
-
   Map<String, Article> _resolvedArticles = const {};
 
   @override
@@ -73,9 +70,6 @@ class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
     if (mounted) setState(() => _resolvedArticles = resolved);
   }
 
-  String _formatDate(DateTime date) =>
-      '${date.day} ${_months[date.month - 1]} ${date.year}';
-
   SummarySourceBlock? _matchingSourceBlock(String title) {
     final blocks = widget.summary.sourceBlocks;
     if (blocks == null) return null;
@@ -88,10 +82,15 @@ class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final blocks = _parseBlocks(widget.summary.content);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Resumen del ${_formatDate(widget.summary.date)}'),
+        title: Text(
+          l10n.summaryDetailTitle(
+            LocalizedDateFormatter.longDate(context, widget.summary.date),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -99,7 +98,7 @@ class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${widget.summary.articleCount} artículos resumidos',
+              l10n.summaryDetailArticleCount(widget.summary.articleCount),
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
