@@ -12,175 +12,176 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appTitle => 'Reevo';
 
   @override
-  String get commonCancel => 'Cancel';
+  String get commonCancel => 'Annuler';
 
   @override
-  String get commonDelete => 'Delete';
+  String get commonDelete => 'Supprimer';
 
   @override
-  String get commonEdit => 'Edit';
+  String get commonEdit => 'Modifier';
 
   @override
-  String get commonSave => 'Save';
+  String get commonSave => 'Enregistrer';
 
   @override
-  String get commonToday => 'Today';
+  String get commonToday => 'Aujourd\'hui';
 
   @override
-  String get commonYesterday => 'Yesterday';
+  String get commonYesterday => 'Hier';
 
   @override
-  String get inboxSyncingSources => 'Syncing sources...';
+  String get inboxSyncingSources => 'Synchronisation des sources...';
 
   @override
   String get inboxOfflineSyncMessage =>
-      'You\'re offline. Downloaded articles are still available.';
+      'Tu es hors ligne. Les articles téléchargés restent disponibles.';
 
   @override
   String inboxSourcesFailedToSync(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count sources couldn\'t sync.',
-      one: '1 source couldn\'t sync.',
+      other: '$count sources n\'ont pas pu être synchronisées.',
+      one: '1 source n\'a pas pu être synchronisée.',
     );
     return '$_temp0';
   }
 
   @override
-  String get inboxOnboardingTitle => 'Welcome to Reevo';
+  String get inboxOnboardingTitle => 'Bienvenue sur Reevo';
 
   @override
   String get inboxOnboardingSubtitle =>
-      'Your space to read your sources outside of email.';
+      'Ton espace pour lire tes sources en dehors de l\'e-mail.';
 
   @override
-  String get inboxOnboardingAddFirstSourceButton => 'Add your first source';
+  String get inboxOnboardingAddFirstSourceButton => 'Ajoute ta première source';
 
   @override
-  String get inboxUpToDateTitle => 'You\'re all caught up';
+  String get inboxUpToDateTitle => 'Tu es à jour';
 
   @override
-  String get inboxUpToDateSubtitle => 'Pull to refresh.';
+  String get inboxUpToDateSubtitle => 'Tire pour actualiser.';
 
   @override
-  String get readerRemoveFavoriteTooltip => 'Remove from favorites';
+  String get readerRemoveFavoriteTooltip => 'Retirer des favoris';
 
   @override
-  String get readerAddFavoriteTooltip => 'Add to favorites';
+  String get readerAddFavoriteTooltip => 'Ajouter aux favoris';
 
   @override
-  String get readerOpenInBrowserTooltip => 'View in browser';
+  String get readerOpenInBrowserTooltip => 'Voir dans le navigateur';
 
   @override
   String get readerTruncatedContentHint =>
-      'This feed doesn\'t include the full article. Tap here to read it on the original site.';
+      'Ce flux n\'inclut pas l\'article complet. Touche ici pour le lire sur le site d\'origine.';
 
   @override
-  String get favoritesEmptyTitle => 'No favorites yet';
+  String get favoritesEmptyTitle => 'Aucun favori pour l\'instant';
 
   @override
   String get favoritesEmptySubtitle =>
-      'Open an article and tap the star to save it here.';
+      'Ouvre un article et touche l\'étoile pour l\'enregistrer ici.';
 
   @override
-  String get archiveEmptyTitle => 'No read articles';
+  String get archiveEmptyTitle => 'Aucun article lu';
 
   @override
   String get archiveEmptySubtitle =>
-      'Read and unread articles will be archived automatically.';
+      'Les articles lus et non lus seront archivés automatiquement.';
 
   @override
-  String get commonAdd => 'Add';
+  String get commonAdd => 'Ajouter';
 
   @override
-  String get commonClose => 'Close';
+  String get commonClose => 'Fermer';
 
   @override
-  String get commonCopy => 'Copy';
+  String get commonCopy => 'Copier';
 
   @override
-  String get sourcesAddSourceTooltip => 'Add source';
+  String get sourcesAddSourceTooltip => 'Ajouter une source';
 
   @override
-  String get sourcesEmptyTitle => 'You don\'t have any sources yet';
+  String get sourcesEmptyTitle => 'Tu n\'as pas encore de source';
 
   @override
-  String get sourcesEmptySubtitle => 'Add your first source to start reading.';
+  String get sourcesEmptySubtitle =>
+      'Ajoute ta première source pour commencer à lire.';
 
   @override
-  String get sourcesAddFirstSourceButton => 'Add my first source';
+  String get sourcesAddFirstSourceButton => 'Ajoute ma première source';
 
   @override
-  String get sourcesEditNameMenuItem => 'Edit name';
+  String get sourcesEditNameMenuItem => 'Modifier le nom';
 
   @override
   String sourcesAddedSnackbar(String name) {
-    return '\"$name\" added.';
+    return '\"$name\" ajouté.';
   }
 
   @override
-  String get sourcesAddScreenTitle => 'Add source';
+  String get sourcesAddScreenTitle => 'Ajouter une source';
 
   @override
   String get sourcesAddInstructions =>
-      'Paste the site link (or the RSS feed URL if you have it).';
+      'Colle le lien du site (ou l\'URL du flux RSS si tu l\'as).';
 
   @override
-  String get sourcesFeedUrlLabel => 'Feed URL';
+  String get sourcesFeedUrlLabel => 'URL du flux';
 
   @override
   String get sourcesSearchingHeuristics =>
-      'Searching several possible places...';
+      'Recherche à plusieurs endroits possibles...';
 
   @override
-  String get sourcesOtherWaysToAdd => 'Other ways to add';
+  String get sourcesOtherWaysToAdd => 'Autres façons d\'ajouter';
 
   @override
-  String get sourcesImportOpmlTitle => 'Import from OPML';
+  String get sourcesImportOpmlTitle => 'Importer depuis OPML';
 
   @override
   String get sourcesImportOpmlDescription =>
-      'Bring your subscriptions from another feed reader.';
+      'Récupère tes abonnements depuis un autre lecteur de flux.';
 
   @override
-  String get sourcesEmailGeneratedDialogTitle => 'Address generated';
+  String get sourcesEmailGeneratedDialogTitle => 'Adresse générée';
 
   @override
   String get sourcesEmailGeneratedDialogBody =>
-      'Subscribe to the newsletter using this address. The first email may take a few minutes to arrive.';
+      'Abonne-toi à la newsletter avec cette adresse. Le premier e-mail peut prendre quelques minutes pour arriver.';
 
   @override
-  String get sourcesEmailCopiedSnackbar => 'Address copied.';
+  String get sourcesEmailCopiedSnackbar => 'Adresse copiée.';
 
   @override
-  String get sourcesAlreadySubscribedButton => 'I already subscribed';
+  String get sourcesAlreadySubscribedButton => 'Je suis déjà abonné';
 
   @override
-  String get sourcesGenerateEmailTitle => 'Generate email address';
+  String get sourcesGenerateEmailTitle => 'Générer une adresse e-mail';
 
   @override
   String get sourcesGenerateEmailDescription =>
-      'For newsletters without RSS: emails become articles.';
+      'Pour les newsletters sans RSS : les e-mails deviennent des articles.';
 
   @override
   String get sourcesGenerateEmailExpandedHint =>
-      'We\'ll give you a unique address. Subscribe the newsletter with it and every email that arrives will appear here.';
+      'On te donne une adresse unique. Abonne la newsletter avec elle et chaque e-mail qui arrive apparaîtra ici.';
 
   @override
-  String get sourceDetailEmptyTitle => 'No posts';
+  String get sourceDetailEmptyTitle => 'Aucune publication';
 
   @override
   String get sourceDetailEmptySubtitle =>
-      'There are no articles from this source yet.';
+      'Il n\'y a pas encore d\'articles de cette source.';
 
   @override
   String sourcesOpmlImportedOnly(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count sources imported.',
-      one: '1 source imported.',
+      other: '$count sources importées.',
+      one: '1 source importée.',
     );
     return '$_temp0';
   }
@@ -190,85 +191,85 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       imported,
       locale: localeName,
-      other: '$imported imported',
-      one: '1 imported',
+      other: '$imported importées',
+      one: '1 importée',
     );
     String _temp1 = intl.Intl.pluralLogic(
       failed,
       locale: localeName,
-      other: '$failed failed',
-      one: '1 failed',
+      other: '$failed échouées',
+      one: '1 échouée',
     );
     return '$_temp0, $_temp1.';
   }
 
   @override
-  String get sourcesImportOpmlScreenTitle => 'Import OPML';
+  String get sourcesImportOpmlScreenTitle => 'Importer OPML';
 
   @override
-  String get sourcesValidatingFeeds => 'Validating feeds…';
+  String get sourcesValidatingFeeds => 'Validation des flux…';
 
   @override
-  String get sourcesImportingSources => 'Importing sources…';
+  String get sourcesImportingSources => 'Importation des sources…';
 
   @override
   String sourcesValidatingMoreFeeds(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Validating $count more feeds…',
-      one: 'Validating 1 more feed…',
+      other: 'Validation de $count flux supplémentaires…',
+      one: 'Validation d\'1 flux supplémentaire…',
     );
     return '$_temp0';
   }
 
   @override
-  String get sourcesImportButton => 'Import';
+  String get sourcesImportButton => 'Importer';
 
   @override
   String sourcesImportButtonWithCount(int count) {
-    return 'Import ($count)';
+    return 'Importer ($count)';
   }
 
   @override
-  String get sourcesAlreadySubscribed => 'Already subscribed';
+  String get sourcesAlreadySubscribed => 'Déjà abonné';
 
   @override
-  String get sourcesFeedValidationFailed => 'Couldn\'t validate the feed.';
+  String get sourcesFeedValidationFailed => 'Impossible de valider le flux.';
 
   @override
-  String get sourcesDeleteDialogTitle => 'Delete source';
+  String get sourcesDeleteDialogTitle => 'Supprimer la source';
 
   @override
   String sourcesDeleteDialogBody(String name) {
-    return 'Delete \"$name\"? Its articles that aren\'t saved as favorites will also be deleted.';
+    return 'Supprimer \"$name\" ? Ses articles qui ne sont pas enregistrés comme favoris seront aussi supprimés.';
   }
 
   @override
-  String get sourcesEditNameDialogTitle => 'Edit name';
+  String get sourcesEditNameDialogTitle => 'Modifier le nom';
 
   @override
-  String get sourcesEditNameFieldLabel => 'Name';
+  String get sourcesEditNameFieldLabel => 'Nom';
 
   @override
-  String get summariesGenerating => 'Generating summary...';
+  String get summariesGenerating => 'Génération du résumé...';
 
   @override
-  String get summariesRegenerateTodayButton => 'Regenerate today\'s summary';
+  String get summariesRegenerateTodayButton => 'Régénérer le résumé du jour';
 
   @override
-  String get summariesCreateTodayButton => 'Create today\'s summary';
+  String get summariesCreateTodayButton => 'Créer le résumé du jour';
 
   @override
-  String get summariesEmptyTitle => 'No summaries yet';
+  String get summariesEmptyTitle => 'Aucun résumé pour l\'instant';
 
   @override
   String get summariesEmptySubtitle =>
-      'Create today\'s summary to see what your news was about.';
+      'Crée le résumé du jour pour voir de quoi parlaient tes actualités.';
 
   @override
   String summaryDetailTitle(String date) {
-    return 'Summary for $date';
+    return 'Résumé du $date';
   }
 
   @override
@@ -276,8 +277,8 @@ class AppLocalizationsFr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count articles summarized',
-      one: '1 article summarized',
+      other: '$count articles résumés',
+      one: '1 article résumé',
     );
     return '$_temp0';
   }
@@ -294,47 +295,48 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get loginSubtitle => 'Sign in to continue';
+  String get loginSubtitle => 'Connecte-toi pour continuer';
 
   @override
-  String get loginContinueWithGoogle => 'Continue with Google';
+  String get loginContinueWithGoogle => 'Continuer avec Google';
 
   @override
-  String get loginContinueWithApple => 'Continue with Apple';
+  String get loginContinueWithApple => 'Continuer avec Apple';
 
   @override
-  String get accountDeleteDialogTitle => 'Delete account';
+  String get accountDeleteDialogTitle => 'Supprimer le compte';
 
   @override
   String get accountDeleteDialogBody =>
-      'This action is irreversible: your account and all your data (sources, articles, favorites, and summaries) will be deleted. This cannot be undone.';
+      'Cette action est irréversible : ton compte et toutes tes données (sources, articles, favoris et résumés) seront supprimés. Cette action ne peut pas être annulée.';
 
   @override
   String get navInbox => 'Inbox';
 
   @override
-  String get navFavorites => 'Favorites';
+  String get navFavorites => 'Favoris';
 
   @override
-  String get navArchive => 'Read';
+  String get navArchive => 'Lus';
 
   @override
   String get navSources => 'Sources';
 
   @override
-  String get navSummaries => 'Summaries';
+  String get navSummaries => 'Résumés';
 
   @override
-  String get navSearchHintSources => 'Search by name or author...';
+  String get navSearchHintSources => 'Rechercher par nom ou auteur...';
 
   @override
-  String get navSearchHintArticles => 'Search by title, source or author...';
+  String get navSearchHintArticles =>
+      'Rechercher par titre, source ou auteur...';
 
   @override
-  String get navExportData => 'Export my data';
+  String get navExportData => 'Exporter mes données';
 
   @override
-  String get navSignOut => 'Sign out';
+  String get navSignOut => 'Se déconnecter';
 
   @override
   String commonDaysAgoShort(int count) {
@@ -342,8 +344,8 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get commonNoSearchResults => 'No results';
+  String get commonNoSearchResults => 'Aucun résultat';
 
   @override
-  String get webViewOriginalArticle => 'Original article';
+  String get webViewOriginalArticle => 'Article original';
 }

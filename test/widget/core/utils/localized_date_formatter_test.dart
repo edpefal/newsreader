@@ -31,7 +31,7 @@ void main() {
 
       expect(results[const Locale('en')], 'Today');
       expect(results[const Locale('es')], 'Hoy');
-      expect(results[const Locale('fr')], 'Today'); // placeholder fr = en
+      expect(results[const Locale('fr')], "Aujourd'hui");
     });
 
     testWidgets('devuelve la etiqueta de "ayer" en español', (tester) async {
