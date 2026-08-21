@@ -347,4 +347,60 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get webViewOriginalArticle => 'Artículo original';
+
+  @override
+  String get errorNetwork => 'Sin conexión a internet';
+
+  @override
+  String get errorTimeout => 'La solicitud tardó demasiado';
+
+  @override
+  String get errorInvalidFeedUrl => 'No encontramos un feed válido en esta URL';
+
+  @override
+  String get errorInvalidOpmlFile => 'Este archivo no es un OPML válido';
+
+  @override
+  String get errorDuplicateSource => 'Ya estás suscrito a esta fuente';
+
+  @override
+  String get errorNotFound => 'No encontrado';
+
+  @override
+  String get errorFeedDiscoveryFailed =>
+      'No pudimos detectar el feed automáticamente. Pega la URL exacta del feed RSS (por ejemplo, que termine en /feed o .xml).';
+
+  @override
+  String get errorNoActiveSession => 'Necesitas una sesión activa para esto';
+
+  @override
+  String get errorAccountDeletionFailed =>
+      'No pudimos eliminar tu cuenta. Intenta de nuevo.';
+
+  @override
+  String get errorGoogleTokenMissing =>
+      'Google no devolvió un token válido. Intenta de nuevo.';
+
+  @override
+  String get errorAppleTokenMissing =>
+      'Apple no devolvió un token válido. Intenta de nuevo.';
+
+  @override
+  String get errorAuthProviderError =>
+      'Algo salió mal al iniciar sesión. Intenta de nuevo.';
+
+  @override
+  String get errorEmptyUrl => 'Ingresa una URL válida';
+
+  @override
+  String get errorOpmlNoFeedsFound => 'No se encontraron feeds en este archivo';
+
+  @override
+  String get errorNoArticlesToday => 'No hay artículos nuevos hoy para resumir';
+
+  @override
+  String get errorGenerationFailed => 'Algo salió mal. Intenta de nuevo.';
+
+  @override
+  String get errorUnknown => 'Ocurrió un error inesperado';
 }

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summaries_screen.dart';
 
@@ -137,14 +138,14 @@ void main() {
         const SummaryGenerationError(
           summaries: [],
           canGenerateToday: true,
-          message: 'No se pudo generar el resumen. Intentá de nuevo.',
+          code: AppErrorCode.generationFailed,
         ),
       );
 
       await tester.pumpWidget(_buildSubject(cubit));
 
       expect(
-        find.text('No se pudo generar el resumen. Intentá de nuevo.'),
+        find.text('Algo salió mal. Intenta de nuevo.'),
         findsOneWidget,
       );
     });

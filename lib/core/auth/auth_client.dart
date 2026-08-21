@@ -1,3 +1,5 @@
+import 'package:newsreader/core/errors/app_error_code.dart';
+
 /// Resultado de un intento de login. [cancelled] indica que el usuario
 /// abandonó el flujo nativo (selector de cuenta, diálogo de Apple) antes de
 /// completarlo — no es un error, la UI debe volver a la pantalla de login
@@ -35,10 +37,10 @@ abstract class AuthClient {
 }
 
 class AuthException implements Exception {
-  final String message;
+  final AppErrorCode code;
 
-  const AuthException(this.message);
+  const AuthException(this.code);
 
   @override
-  String toString() => 'AuthException: $message';
+  String toString() => 'AuthException: $code';
 }

@@ -1,5 +1,6 @@
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
 import 'package:newsreader/core/network/http_client.dart';
@@ -11,14 +12,14 @@ class OpmlFeedValidation {
   final String name;
   final String? iconUrl;
   final OpmlFeedValidationStatus status;
-  final String? errorMessage;
+  final AppErrorCode? errorCode;
 
   const OpmlFeedValidation({
     required this.url,
     required this.name,
     this.iconUrl,
     required this.status,
-    this.errorMessage,
+    this.errorCode,
   });
 }
 
@@ -89,14 +90,14 @@ class ImportOpml {
         url: url,
         name: url,
         status: OpmlFeedValidationStatus.error,
-        errorMessage: e.message,
+        errorCode: e.code,
       );
     } catch (_) {
       return OpmlFeedValidation(
         url: url,
         name: url,
         status: OpmlFeedValidationStatus.error,
-        errorMessage: 'Error al validar el feed.',
+        errorCode: AppErrorCode.opmlFeedValidationFailed,
       );
     }
   }

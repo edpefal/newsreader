@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/auth/auth_client.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 
 part 'login_state.dart';
 
@@ -24,9 +25,9 @@ class LoginCubit extends Cubit<LoginState> {
       // botón en loading si la redirección tarda un instante.
       emit(const LoginIdle());
     } on AuthException catch (e) {
-      emit(LoginError(e.message));
-    } catch (e) {
-      emit(LoginError(e.toString()));
+      emit(LoginError(e.code));
+    } catch (_) {
+      emit(const LoginError(AppErrorCode.unknown));
     }
   }
 }

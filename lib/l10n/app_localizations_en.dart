@@ -346,4 +346,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get webViewOriginalArticle => 'Original article';
+
+  @override
+  String get errorNetwork => 'No internet connection';
+
+  @override
+  String get errorTimeout => 'The request took too long';
+
+  @override
+  String get errorInvalidFeedUrl =>
+      'We couldn\'t find a valid feed at this URL';
+
+  @override
+  String get errorInvalidOpmlFile => 'This file isn\'t a valid OPML file';
+
+  @override
+  String get errorDuplicateSource =>
+      'You\'re already subscribed to this source';
+
+  @override
+  String get errorNotFound => 'Not found';
+
+  @override
+  String get errorFeedDiscoveryFailed =>
+      'We couldn\'t detect the feed automatically. Paste the exact RSS feed URL (for example, ending in /feed or .xml).';
+
+  @override
+  String get errorNoActiveSession => 'You need an active session for this';
+
+  @override
+  String get errorAccountDeletionFailed =>
+      'We couldn\'t delete your account. Please try again.';
+
+  @override
+  String get errorGoogleTokenMissing =>
+      'Google didn\'t return a valid token. Please try again.';
+
+  @override
+  String get errorAppleTokenMissing =>
+      'Apple didn\'t return a valid token. Please try again.';
+
+  @override
+  String get errorAuthProviderError =>
+      'Something went wrong signing you in. Please try again.';
+
+  @override
+  String get errorEmptyUrl => 'Enter a valid URL';
+
+  @override
+  String get errorOpmlNoFeedsFound => 'No feeds were found in this file';
+
+  @override
+  String get errorNoArticlesToday =>
+      'There are no new articles today to summarize';
+
+  @override
+  String get errorGenerationFailed => 'Something went wrong. Please try again.';
+
+  @override
+  String get errorUnknown => 'Something unexpected happened';
 }

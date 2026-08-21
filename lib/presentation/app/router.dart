@@ -11,6 +11,7 @@ import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
+import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/navigation/route_extra_resolver.dart';
@@ -403,8 +404,9 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
       await getIt<ExportUserData>().execute();
     } on AppException catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.code.localize(AppLocalizations.of(context)))),
+        );
       }
     }
   }
@@ -423,8 +425,9 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
       await getIt<DeleteAccount>().execute();
     } on AppException catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.code.localize(AppLocalizations.of(context)))),
+        );
       }
     }
   }

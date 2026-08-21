@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/config/app_config.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
@@ -28,7 +29,7 @@ class DeleteAccount {
   Future<void> execute() async {
     final accessToken = _authClient.currentAccessToken;
     if (accessToken == null) {
-      throw const AccountDeletionException('No hay sesión activa.');
+      throw const AccountDeletionException(AppErrorCode.noActiveSession);
     }
 
     final responseBody = await _httpClient.post(
@@ -39,10 +40,7 @@ class DeleteAccount {
 
     final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
     if (decoded['success'] != true) {
-      throw AccountDeletionException(
-        decoded['error'] as String? ??
-            'No pudimos eliminar tu cuenta. Intentá de nuevo.',
-      );
+      throw const AccountDeletionException(AppErrorCode.accountDeletionFailed);
     }
 
     await _clearLocalUserData.execute();

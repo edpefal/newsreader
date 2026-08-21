@@ -1,5 +1,6 @@
 import 'package:webfeed_plus/webfeed_plus.dart';
 
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/feed/feed_data.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
@@ -13,7 +14,7 @@ class WebfeedFeedParser implements FeedParser {
       try {
         return _tryAtom(xmlContent);
       } catch (_) {
-        throw const ParseException();
+        throw const ParseException(AppErrorCode.invalidFeedUrl);
       }
     }
   }

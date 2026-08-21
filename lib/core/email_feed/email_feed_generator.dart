@@ -1,3 +1,5 @@
+import 'package:newsreader/core/errors/app_error_code.dart';
+
 /// Dirección de email y feed URL generados para un newsletter sin RSS.
 typedef GeneratedEmailFeed = ({String email, String feedUrl});
 
@@ -10,10 +12,10 @@ abstract class EmailFeedGenerator {
 }
 
 class EmailFeedGenerationException implements Exception {
-  final String message;
+  final AppErrorCode code;
 
-  const EmailFeedGenerationException(this.message);
+  const EmailFeedGenerationException(this.code);
 
   @override
-  String toString() => 'EmailFeedGenerationException: $message';
+  String toString() => 'EmailFeedGenerationException: $code';
 }

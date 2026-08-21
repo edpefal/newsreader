@@ -3,6 +3,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import 'package:newsreader/core/auth/auth_client.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 
 /// client ID "web" de Google configurado en Supabase Auth. Se usa como
 /// serverClientId para que Google emita un ID token válido para el
@@ -47,9 +48,7 @@ class SupabaseAuthClient implements AuthClient {
       final googleAuth = await account.authentication;
       final idToken = googleAuth.idToken;
       if (idToken == null) {
-        throw const AuthException(
-          'Google no devolvió un token válido. Intentá de nuevo.',
-        );
+        throw const AuthException(AppErrorCode.googleTokenMissing);
       }
 
       await _supabase.auth.signInWithIdToken(
@@ -60,8 +59,8 @@ class SupabaseAuthClient implements AuthClient {
       return AuthResult.success;
     } on AuthException {
       rethrow;
-    } catch (e) {
-      throw AuthException(e.toString());
+    } catch (_) {
+      throw const AuthException(AppErrorCode.unknown);
     }
   }
 
@@ -77,9 +76,7 @@ class SupabaseAuthClient implements AuthClient {
 
       final idToken = credential.identityToken;
       if (idToken == null) {
-        throw const AuthException(
-          'Apple no devolvió un token válido. Intentá de nuevo.',
-        );
+        throw const AuthException(AppErrorCode.appleTokenMissing);
       }
 
       await _supabase.auth.signInWithIdToken(
@@ -91,11 +88,11 @@ class SupabaseAuthClient implements AuthClient {
       if (e.code == AuthorizationErrorCode.canceled) {
         return AuthResult.cancelled;
       }
-      throw AuthException(e.message);
+      throw const AuthException(AppErrorCode.authProviderError);
     } on AuthException {
       rethrow;
-    } catch (e) {
-      throw AuthException(e.toString());
+    } catch (_) {
+      throw const AuthException(AppErrorCode.unknown);
     }
   }
 

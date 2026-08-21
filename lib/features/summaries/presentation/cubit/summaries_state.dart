@@ -36,14 +36,14 @@ final class SummaryGenerating extends SummariesState {
 final class SummaryGenerationError extends SummariesState {
   final List<DailySummary> summaries;
   final bool canGenerateToday;
-  final String message;
+  final AppErrorCode code;
 
   const SummaryGenerationError({
     required this.summaries,
     required this.canGenerateToday,
-    required this.message,
+    required this.code,
   });
 
   @override
-  List<Object?> get props => [summaries, canGenerateToday, message];
+  List<Object?> get props => [summaries, canGenerateToday, code];
 }

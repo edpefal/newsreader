@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/feed/feed_data.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
 import 'package:newsreader/core/feed/feed_url_resolver.dart';
@@ -76,7 +77,7 @@ void main() {
       when(() => mockHttp.get('https://autor.substack.com/p/x'))
           .thenAnswer((_) async => '<html></html>');
       when(() => mockFeedParser.parse('<html></html>'))
-          .thenThrow(const ParseException());
+          .thenThrow(const ParseException(AppErrorCode.invalidFeedUrl));
       when(() => mockHttp.get('https://autor.substack.com/feed'))
           .thenAnswer((_) async => '<xml/>');
       when(() => mockFeedParser.parse('<xml/>')).thenReturn(_tFeedData);
@@ -98,7 +99,7 @@ void main() {
       when(() => mockHttp.get('https://sitio-desconocido.com'))
           .thenAnswer((_) async => '<html></html>');
       when(() => mockFeedParser.parse('<html></html>'))
-          .thenThrow(const ParseException());
+          .thenThrow(const ParseException(AppErrorCode.invalidFeedUrl));
 
       expect(
         () => sut.execute('https://sitio-desconocido.com'),
@@ -121,7 +122,7 @@ void main() {
             '</head></html>',
       );
       when(() => mockFeedParser.parse(any(that: contains('<html>'))))
-          .thenThrow(const ParseException());
+          .thenThrow(const ParseException(AppErrorCode.invalidFeedUrl));
       when(() => mockHttp.get('https://simonwillison.net/feed'))
           .thenThrow(const NetworkException());
       when(() => mockHttp.get('https://simonwillison.net/atom/everything/'))
@@ -146,7 +147,7 @@ void main() {
       when(() => mockHttp.get('https://sin-feed-ni-link.com'))
           .thenAnswer((_) async => '<html><head></head></html>');
       when(() => mockFeedParser.parse('<html><head></head></html>'))
-          .thenThrow(const ParseException());
+          .thenThrow(const ParseException(AppErrorCode.invalidFeedUrl));
 
       expect(
         () => sut.execute('https://sin-feed-ni-link.com'),
@@ -199,7 +200,7 @@ void main() {
       when(() => mockHttp.get('https://autor.substack.com/p/x'))
           .thenAnswer((_) async => '<html></html>');
       when(() => mockFeedParser.parse('<html></html>'))
-          .thenThrow(const ParseException());
+          .thenThrow(const ParseException(AppErrorCode.invalidFeedUrl));
 
       // El candidato de menor prioridad resuelve más rápido...
       when(() => mockHttp.get('https://autor.substack.com/rss/'))
@@ -243,7 +244,7 @@ void main() {
             '</head></html>',
       );
       when(() => mockFeedParser.parse(any(that: contains('<html>'))))
-          .thenThrow(const ParseException());
+          .thenThrow(const ParseException(AppErrorCode.invalidFeedUrl));
 
       // Ambos candidatos resuelven: el heurístico (/feed) y el descubierto
       // por <link rel="alternate">. Debe ganar el descubierto por tener
@@ -279,7 +280,7 @@ void main() {
       when(() => mockHttp.get('https://autor.substack.com/p/x'))
           .thenAnswer((_) async => '<html></html>');
       when(() => mockFeedParser.parse('<html></html>'))
-          .thenThrow(const ParseException());
+          .thenThrow(const ParseException(AppErrorCode.invalidFeedUrl));
 
       when(() => mockHttp.get('https://autor.substack.com/feed'))
           .thenThrow(const NetworkException());
@@ -307,7 +308,7 @@ void main() {
       when(() => mockHttp.get('https://autor.substack.com/p/x'))
           .thenAnswer((_) async => '<html></html>');
       when(() => mockFeedParser.parse('<html></html>'))
-          .thenThrow(const ParseException());
+          .thenThrow(const ParseException(AppErrorCode.invalidFeedUrl));
       when(() => mockHttp.get('https://autor.substack.com/feed'))
           .thenAnswer((_) async => '<xml/>');
       when(() => mockFeedParser.parse('<xml/>')).thenReturn(_tFeedData);
@@ -352,7 +353,7 @@ void main() {
       when(() => mockHttp.get('https://autor.substack.com/p/x'))
           .thenAnswer((_) async => '<html></html>');
       when(() => mockFeedParser.parse('<html></html>'))
-          .thenThrow(const ParseException());
+          .thenThrow(const ParseException(AppErrorCode.invalidFeedUrl));
       when(() => mockHttp.get('https://autor.substack.com/feed'))
           .thenAnswer((_) async => '<xml/>');
       when(() => mockFeedParser.parse('<xml/>')).thenReturn(_tFeedData);

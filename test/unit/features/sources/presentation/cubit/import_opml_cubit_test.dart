@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 import 'package:newsreader/features/sources/presentation/cubit/import_opml_cubit.dart';
@@ -108,12 +109,12 @@ void main() {
       build: buildCubit,
       setUp: () {
         when(() => mockImportOpml.parseUrls(any()))
-            .thenThrow(const ParseException('XML inválido'));
+            .thenThrow(const ParseException(AppErrorCode.invalidOpmlFile));
       },
       act: (cubit) => cubit.loadPreview('no xml'),
       expect: () => [
         const ImportOpmlValidating(),
-        const ImportOpmlError('XML inválido'),
+        const ImportOpmlError(AppErrorCode.invalidOpmlFile),
       ],
     );
 

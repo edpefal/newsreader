@@ -7,7 +7,7 @@ class OpmlFeedItem extends Equatable {
   final String name;
   final String? iconUrl;
   final OpmlFeedStatus status;
-  final String? errorMessage;
+  final AppErrorCode? errorCode;
   final bool selected;
 
   const OpmlFeedItem({
@@ -15,7 +15,7 @@ class OpmlFeedItem extends Equatable {
     required this.name,
     this.iconUrl,
     required this.status,
-    this.errorMessage,
+    this.errorCode,
     this.selected = false,
   });
 
@@ -25,13 +25,13 @@ class OpmlFeedItem extends Equatable {
       name: name,
       iconUrl: iconUrl,
       status: status,
-      errorMessage: errorMessage,
+      errorCode: errorCode,
       selected: selected ?? this.selected,
     );
   }
 
   @override
-  List<Object?> get props => [url, name, iconUrl, status, errorMessage, selected];
+  List<Object?> get props => [url, name, iconUrl, status, errorCode, selected];
 }
 
 sealed class ImportOpmlState extends Equatable {
@@ -81,10 +81,10 @@ final class ImportOpmlDone extends ImportOpmlState {
 }
 
 final class ImportOpmlError extends ImportOpmlState {
-  final String message;
+  final AppErrorCode code;
 
-  const ImportOpmlError(this.message);
+  const ImportOpmlError(this.code);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [code];
 }

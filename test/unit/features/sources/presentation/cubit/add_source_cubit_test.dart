@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/generate_email_feed.dart';
@@ -85,7 +86,7 @@ void main() {
       build: buildCubit,
       act: (cubit) => cubit.addSource('   '),
       expect: () => [
-        const AddSourceError('Ingresa una URL válida.'),
+        const AddSourceError(AppErrorCode.emptyUrl),
       ],
       verify: (_) => verifyNever(() => mockAddSource.execute(any())),
     );
@@ -97,13 +98,13 @@ void main() {
               any(),
               onHeuristicStageStarted: any(named: 'onHeuristicStageStarted'),
             ))
-            .thenThrow(const ParseException());
+            .thenThrow(const ParseException(AppErrorCode.invalidFeedUrl));
         return buildCubit();
       },
       act: (cubit) => cubit.addSource('https://example.com/not-a-feed'),
       expect: () => [
         const AddSourceValidating(),
-        const AddSourceError('No se encontró un feed válido en esta URL'),
+        const AddSourceError(AppErrorCode.invalidFeedUrl),
       ],
     );
 
@@ -120,7 +121,7 @@ void main() {
       act: (cubit) => cubit.addSource('https://example.com/feed'),
       expect: () => [
         const AddSourceValidating(),
-        const AddSourceError('Sin conexión a internet'),
+        const AddSourceError(AppErrorCode.network),
       ],
     );
 
@@ -137,7 +138,7 @@ void main() {
       act: (cubit) => cubit.addSource('https://example.com/feed'),
       expect: () => [
         const AddSourceValidating(),
-        const AddSourceError('Ya estás suscrito a esta fuente'),
+        const AddSourceError(AppErrorCode.duplicateSource),
       ],
     );
 
@@ -154,7 +155,7 @@ void main() {
       act: (cubit) => cubit.addSource('https://example.com/feed'),
       expect: () => [
         const AddSourceValidating(),
-        const AddSourceError('La solicitud tardó demasiado'),
+        const AddSourceError(AppErrorCode.timeout),
       ],
     );
 
@@ -172,8 +173,7 @@ void main() {
       expect: () => [
         const AddSourceValidating(),
         const AddSourceFeedDiscoveryFailed(
-          'No pudimos detectar el feed automáticamente. Pega la URL exacta '
-              'del feed RSS (por ejemplo, que termine en /feed o .xml).',
+          AppErrorCode.feedDiscoveryFailed,
           'https://sitio-desconocido.com',
         ),
       ],
@@ -197,20 +197,20 @@ void main() {
       'emite [GeneratingEmailFeed, Error] cuando falla la generación',
       build: () {
         when(() => mockGenerateEmailFeed.execute(label: any(named: 'label')))
-            .thenThrow(const EmailFeedGenerationException('Límite alcanzado'));
+            .thenThrow(const EmailFeedGenerationException(AppErrorCode.generationFailed));
         return buildCubit();
       },
       act: (cubit) => cubit.generateEmailFeed(),
       expect: () => [
         const AddSourceGeneratingEmailFeed(),
-        const AddSourceError('Límite alcanzado'),
+        const AddSourceError(AppErrorCode.generationFailed),
       ],
     );
 
     blocTest<AddSourceCubit, AddSourceState>(
       'reset() vuelve a AddSourceInitial',
       build: buildCubit,
-      seed: () => const AddSourceError('error previo'),
+      seed: () => const AddSourceError(AppErrorCode.unknown),
       act: (cubit) => cubit.reset(),
       expect: () => [const AddSourceInitial()],
     );

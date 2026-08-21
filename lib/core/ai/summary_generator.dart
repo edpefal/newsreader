@@ -1,3 +1,5 @@
+import 'package:newsreader/core/errors/app_error_code.dart';
+
 /// Título, extracto y fuente de un artículo, listos para incluir en el
 /// prompt de resumen. Se incluye [sourceName] para que el backend pueda
 /// agrupar y organizar el resumen por fuente en una sola llamada.
@@ -12,10 +14,10 @@ abstract class SummaryGenerator {
 }
 
 class SummaryGenerationException implements Exception {
-  final String message;
+  final AppErrorCode code;
 
-  const SummaryGenerationException(this.message);
+  const SummaryGenerationException(this.code);
 
   @override
-  String toString() => 'SummaryGenerationException: $message';
+  String toString() => 'SummaryGenerationException: $code';
 }

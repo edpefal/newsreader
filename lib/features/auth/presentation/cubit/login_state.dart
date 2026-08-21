@@ -19,10 +19,10 @@ final class LoginInProgress extends LoginState {
 }
 
 final class LoginError extends LoginState {
-  final String message;
+  final AppErrorCode code;
 
-  const LoginError(this.message);
+  const LoginError(this.code);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [code];
 }

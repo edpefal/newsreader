@@ -1,38 +1,34 @@
+import 'package:newsreader/core/errors/app_error_code.dart';
+
 sealed class AppException implements Exception {
-  final String message;
-  const AppException(this.message);
+  final AppErrorCode code;
+  const AppException(this.code);
 }
 
 class NetworkException extends AppException {
-  const NetworkException([super.message = 'Sin conexión a internet']);
+  const NetworkException() : super(AppErrorCode.network);
 }
 
 class TimeoutException extends AppException {
-  const TimeoutException([super.message = 'La solicitud tardó demasiado']);
+  const TimeoutException() : super(AppErrorCode.timeout);
 }
 
 class ParseException extends AppException {
-  const ParseException([super.message = 'No se encontró un feed válido en esta URL']);
+  const ParseException(super.code);
 }
 
 class DuplicateSourceException extends AppException {
-  const DuplicateSourceException([super.message = 'Ya estás suscrito a esta fuente']);
+  const DuplicateSourceException() : super(AppErrorCode.duplicateSource);
 }
 
 class NotFoundException extends AppException {
-  const NotFoundException([super.message = 'No encontrado']);
+  const NotFoundException() : super(AppErrorCode.notFound);
 }
 
 class FeedDiscoveryException extends AppException {
-  const FeedDiscoveryException([
-    super.message =
-        'No pudimos detectar el feed automáticamente. Pega la URL exacta '
-            'del feed RSS (por ejemplo, que termine en /feed o .xml).',
-  ]);
+  const FeedDiscoveryException() : super(AppErrorCode.feedDiscoveryFailed);
 }
 
 class AccountDeletionException extends AppException {
-  const AccountDeletionException([
-    super.message = 'No pudimos eliminar tu cuenta. Intentá de nuevo.',
-  ]);
+  const AccountDeletionException(super.code);
 }

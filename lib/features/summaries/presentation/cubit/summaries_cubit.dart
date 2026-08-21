@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/summaries/domain/usecases/generate_daily_summary.dart';
 import 'package:newsreader/features/summaries/domain/usecases/get_daily_summaries.dart';
@@ -61,14 +62,14 @@ class SummariesCubit extends Cubit<SummariesState> {
       emit(SummaryGenerationError(
         summaries: summaries,
         canGenerateToday: false,
-        message: 'No hay artículos nuevos hoy para resumir.',
+        code: AppErrorCode.noArticlesToday,
       ));
-    } catch (e) {
+    } catch (_) {
       final canGenerateToday = await _generateDailySummary.countTodayArticles() > 0;
       emit(SummaryGenerationError(
         summaries: summaries,
         canGenerateToday: canGenerateToday,
-        message: 'No se pudo generar el resumen. Intentá de nuevo.',
+        code: AppErrorCode.generationFailed,
       ));
     }
   }

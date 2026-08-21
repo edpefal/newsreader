@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 
@@ -18,7 +19,7 @@ class ImportOpmlCubit extends Cubit<ImportOpmlState> {
       final urls = _importOpml.parseUrls(xmlContent);
 
       if (urls.isEmpty) {
-        emit(const ImportOpmlError('No se encontraron feeds en este archivo.'));
+        emit(const ImportOpmlError(AppErrorCode.opmlNoFeedsFound));
         return;
       }
 
@@ -31,16 +32,16 @@ class ImportOpmlCubit extends Cubit<ImportOpmlState> {
           name: v.name,
           iconUrl: v.iconUrl,
           status: _toItemStatus(v.status),
-          errorMessage: v.errorMessage,
+          errorCode: v.errorCode,
           selected: v.status == OpmlFeedValidationStatus.valid,
         ));
         pending--;
         emit(ImportOpmlPreview(List.unmodifiable(items), pendingCount: pending));
       });
     } on ParseException catch (e) {
-      emit(ImportOpmlError(e.message));
+      emit(ImportOpmlError(e.code));
     } catch (_) {
-      emit(const ImportOpmlError('Ocurrió un error al leer el archivo.'));
+      emit(const ImportOpmlError(AppErrorCode.invalidOpmlFile));
     }
   }
 

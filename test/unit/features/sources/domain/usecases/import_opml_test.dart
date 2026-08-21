@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/feed/feed_data.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
@@ -83,14 +84,13 @@ void main() {
 
     test('llama onResult con error cuando el HTTP falla', () async {
       when(() => mockRepo.sourceExists(any())).thenAnswer((_) async => false);
-      when(() => mockHttp.get(any()))
-          .thenThrow(const NetworkException('Sin conexión'));
+      when(() => mockHttp.get(any())).thenThrow(const NetworkException());
 
       final results = <OpmlFeedValidation>[];
       await sut.validateFeeds(['https://a.com/feed'], onResult: results.add);
 
       expect(results.first.status, OpmlFeedValidationStatus.error);
-      expect(results.first.errorMessage, 'Sin conexión');
+      expect(results.first.errorCode, AppErrorCode.network);
     });
 
     test('clasifica correctamente una combinación de feeds mixtos', () async {

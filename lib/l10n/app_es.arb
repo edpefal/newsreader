@@ -102,5 +102,23 @@
   "commonDaysAgoShort": "{count}d",
   "commonNoSearchResults": "Sin resultados",
 
-  "webViewOriginalArticle": "Artículo original"
+  "webViewOriginalArticle": "Artículo original",
+
+  "errorNetwork": "Sin conexión a internet",
+  "errorTimeout": "La solicitud tardó demasiado",
+  "errorInvalidFeedUrl": "No encontramos un feed válido en esta URL",
+  "errorInvalidOpmlFile": "Este archivo no es un OPML válido",
+  "errorDuplicateSource": "Ya estás suscrito a esta fuente",
+  "errorNotFound": "No encontrado",
+  "errorFeedDiscoveryFailed": "No pudimos detectar el feed automáticamente. Pega la URL exacta del feed RSS (por ejemplo, que termine en /feed o .xml).",
+  "errorNoActiveSession": "Necesitas una sesión activa para esto",
+  "errorAccountDeletionFailed": "No pudimos eliminar tu cuenta. Intenta de nuevo.",
+  "errorGoogleTokenMissing": "Google no devolvió un token válido. Intenta de nuevo.",
+  "errorAppleTokenMissing": "Apple no devolvió un token válido. Intenta de nuevo.",
+  "errorAuthProviderError": "Algo salió mal al iniciar sesión. Intenta de nuevo.",
+  "errorEmptyUrl": "Ingresa una URL válida",
+  "errorOpmlNoFeedsFound": "No se encontraron feeds en este archivo",
+  "errorNoArticlesToday": "No hay artículos nuevos hoy para resumir",
+  "errorGenerationFailed": "Algo salió mal. Intenta de nuevo.",
+  "errorUnknown": "Ocurrió un error inesperado"
 }

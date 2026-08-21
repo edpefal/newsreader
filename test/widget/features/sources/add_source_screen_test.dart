@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/features/sources/presentation/cubit/add_source_cubit.dart';
 import 'package:newsreader/features/sources/presentation/screens/add_source_screen.dart';
 
@@ -142,7 +143,7 @@ void main() {
         cubit,
         Stream.fromIterable([
           const AddSourceValidating(),
-          const AddSourceError('No se encontró un feed válido en esta URL'),
+          const AddSourceError(AppErrorCode.invalidFeedUrl),
         ]),
         initialState: const AddSourceInitial(),
       );
@@ -151,7 +152,7 @@ void main() {
       await tester.pump();
 
       expect(
-        find.text('No se encontró un feed válido en esta URL'),
+        find.text('No encontramos un feed válido en esta URL'),
         findsOneWidget,
       );
     });
@@ -179,7 +180,7 @@ void main() {
         Stream.fromIterable([
           const AddSourceValidating(),
           const AddSourceFeedDiscoveryFailed(
-            'No pudimos detectar el feed automáticamente.',
+            AppErrorCode.feedDiscoveryFailed,
             'https://sin-feed.com',
           ),
         ]),
@@ -193,7 +194,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('No pudimos detectar el feed automáticamente.'),
+        find.text(
+          'No pudimos detectar el feed automáticamente. Pega la URL exacta '
+          'del feed RSS (por ejemplo, que termine en /feed o .xml).',
+        ),
         findsOneWidget,
       );
       expect(find.text('Generar email'), findsNothing);
@@ -207,7 +211,7 @@ void main() {
         Stream.fromIterable([
           const AddSourceValidating(),
           const AddSourceFeedDiscoveryFailed(
-            'No pudimos detectar el feed automáticamente.',
+            AppErrorCode.feedDiscoveryFailed,
             'https://sin-feed.com',
           ),
         ]),
@@ -221,7 +225,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('No pudimos detectar el feed automáticamente.'),
+        find.text(
+          'No pudimos detectar el feed automáticamente. Pega la URL exacta '
+          'del feed RSS (por ejemplo, que termine en /feed o .xml).',
+        ),
         findsOneWidget,
       );
 
@@ -229,7 +236,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('No pudimos detectar el feed automáticamente.'),
+        find.text(
+          'No pudimos detectar el feed automáticamente. Pega la URL exacta '
+          'del feed RSS (por ejemplo, que termine en /feed o .xml).',
+        ),
         findsNothing,
       );
     });
@@ -244,7 +254,7 @@ void main() {
         Stream.fromIterable([
           const AddSourceValidating(),
           const AddSourceFeedDiscoveryFailed(
-            'No pudimos detectar el feed automáticamente.',
+            AppErrorCode.feedDiscoveryFailed,
             'https://sin-feed.com',
           ),
         ]),
@@ -258,7 +268,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('No pudimos detectar el feed automáticamente.'),
+        find.text(
+          'No pudimos detectar el feed automáticamente. Pega la URL exacta '
+          'del feed RSS (por ejemplo, que termine en /feed o .xml).',
+        ),
         findsOneWidget,
       );
 
@@ -267,7 +280,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('No pudimos detectar el feed automáticamente.'),
+        find.text(
+          'No pudimos detectar el feed automáticamente. Pega la URL exacta '
+          'del feed RSS (por ejemplo, que termine en /feed o .xml).',
+        ),
         findsNothing,
       );
     });
@@ -280,7 +296,7 @@ void main() {
         Stream.fromIterable([
           const AddSourceValidating(),
           const AddSourceFeedDiscoveryFailed(
-            'No pudimos detectar el feed automáticamente.',
+            AppErrorCode.feedDiscoveryFailed,
             'https://sin-feed.com',
           ),
         ]),
@@ -295,7 +311,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('No pudimos detectar el feed automáticamente.'),
+        find.text(
+          'No pudimos detectar el feed automáticamente. Pega la URL exacta '
+          'del feed RSS (por ejemplo, que termine en /feed o .xml).',
+        ),
         findsOneWidget,
       );
 
@@ -303,7 +322,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('No pudimos detectar el feed automáticamente.'),
+        find.text(
+          'No pudimos detectar el feed automáticamente. Pega la URL exacta '
+          'del feed RSS (por ejemplo, que termine en /feed o .xml).',
+        ),
         findsNothing,
       );
     });

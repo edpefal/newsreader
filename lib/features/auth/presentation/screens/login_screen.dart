@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 
@@ -13,7 +14,9 @@ class LoginScreen extends StatelessWidget {
       listener: (context, state) {
         if (state is LoginError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
+            SnackBar(
+              content: Text(state.code.localize(AppLocalizations.of(context))),
+            ),
           );
         }
       },

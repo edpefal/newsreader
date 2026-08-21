@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/generate_email_feed.dart';
@@ -19,7 +20,7 @@ class AddSourceCubit extends Cubit<AddSourceState> {
   Future<void> addSource(String url) async {
     final trimmed = url.trim();
     if (trimmed.isEmpty) {
-      emit(const AddSourceError('Ingresa una URL válida.'));
+      emit(const AddSourceError(AppErrorCode.emptyUrl));
       return;
     }
 
@@ -32,11 +33,11 @@ class AddSourceCubit extends Cubit<AddSourceState> {
       );
       emit(AddSourceSuccess(source));
     } on FeedDiscoveryException catch (e) {
-      emit(AddSourceFeedDiscoveryFailed(e.message, trimmed));
+      emit(AddSourceFeedDiscoveryFailed(e.code, trimmed));
     } on AppException catch (e) {
-      emit(AddSourceError(e.message));
+      emit(AddSourceError(e.code));
     } catch (_) {
-      emit(const AddSourceError('Ocurrió un error inesperado.'));
+      emit(const AddSourceError(AppErrorCode.unknown));
     }
   }
 
@@ -47,9 +48,9 @@ class AddSourceCubit extends Cubit<AddSourceState> {
       final feed = await _generateEmailFeed.execute(label: label);
       emit(AddSourceEmailFeedGenerated(feed));
     } on EmailFeedGenerationException catch (e) {
-      emit(AddSourceError(e.message));
+      emit(AddSourceError(e.code));
     } catch (_) {
-      emit(const AddSourceError('Ocurrió un error inesperado.'));
+      emit(const AddSourceError(AppErrorCode.unknown));
     }
   }
 

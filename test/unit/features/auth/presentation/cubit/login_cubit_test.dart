@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/auth/auth_client.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 
 class MockAuthClient extends Mock implements AuthClient {}
@@ -47,11 +48,11 @@ void main() {
       'signInWithGoogle() emite LoginError si falla el intercambio de token',
       build: () {
         when(() => mockAuthClient.signInWithGoogle())
-            .thenThrow(const AuthException('Token inválido'));
+            .thenThrow(const AuthException(AppErrorCode.authProviderError));
         return buildCubit();
       },
       act: (cubit) => cubit.signInWithGoogle(),
-      expect: () => [const LoginInProgress(), const LoginError('Token inválido')],
+      expect: () => [const LoginInProgress(), const LoginError(AppErrorCode.authProviderError)],
     );
 
     blocTest<LoginCubit, LoginState>(
@@ -69,11 +70,11 @@ void main() {
       'signInWithApple() emite LoginError si falla el intercambio de token',
       build: () {
         when(() => mockAuthClient.signInWithApple())
-            .thenThrow(const AuthException('Token inválido'));
+            .thenThrow(const AuthException(AppErrorCode.authProviderError));
         return buildCubit();
       },
       act: (cubit) => cubit.signInWithApple(),
-      expect: () => [const LoginInProgress(), const LoginError('Token inválido')],
+      expect: () => [const LoginInProgress(), const LoginError(AppErrorCode.authProviderError)],
     );
   });
 }

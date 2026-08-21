@@ -102,5 +102,23 @@
   "commonDaysAgoShort": "{count} j",
   "commonNoSearchResults": "Aucun résultat",
 
-  "webViewOriginalArticle": "Article original"
+  "webViewOriginalArticle": "Article original",
+
+  "errorNetwork": "Pas de connexion internet",
+  "errorTimeout": "La requête a pris trop de temps",
+  "errorInvalidFeedUrl": "Nous n'avons pas trouvé de flux valide à cette URL",
+  "errorInvalidOpmlFile": "Ce fichier n'est pas un fichier OPML valide",
+  "errorDuplicateSource": "Tu es déjà abonné à cette source",
+  "errorNotFound": "Introuvable",
+  "errorFeedDiscoveryFailed": "Nous n'avons pas pu détecter le flux automatiquement. Colle l'URL exacte du flux RSS (par exemple, se terminant par /feed ou .xml).",
+  "errorNoActiveSession": "Tu as besoin d'une session active pour ça",
+  "errorAccountDeletionFailed": "Nous n'avons pas pu supprimer ton compte. Réessaie.",
+  "errorGoogleTokenMissing": "Google n'a pas renvoyé de jeton valide. Réessaie.",
+  "errorAppleTokenMissing": "Apple n'a pas renvoyé de jeton valide. Réessaie.",
+  "errorAuthProviderError": "Une erreur est survenue lors de la connexion. Réessaie.",
+  "errorEmptyUrl": "Entre une URL valide",
+  "errorOpmlNoFeedsFound": "Aucun flux n'a été trouvé dans ce fichier",
+  "errorNoArticlesToday": "Il n'y a pas de nouveaux articles aujourd'hui à résumer",
+  "errorGenerationFailed": "Une erreur est survenue. Réessaie.",
+  "errorUnknown": "Une erreur inattendue s'est produite"
 }

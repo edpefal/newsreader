@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
 /// Llama a la Supabase Edge Function que genera una dirección de email y su
@@ -22,7 +23,7 @@ class SupabaseEmailFeedGenerator implements EmailFeedGenerator {
   Future<GeneratedEmailFeed> generate({String? label}) async {
     final accessToken = _authClient.currentAccessToken;
     if (accessToken == null) {
-      throw const EmailFeedGenerationException('Se requiere sesión activa.');
+      throw const EmailFeedGenerationException(AppErrorCode.noActiveSession);
     }
 
     try {
@@ -39,15 +40,13 @@ class SupabaseEmailFeedGenerator implements EmailFeedGenerator {
       final email = decoded['email'];
       final feedUrl = decoded['feedUrl'];
       if (email is! String || email.isEmpty || feedUrl is! String || feedUrl.isEmpty) {
-        throw EmailFeedGenerationException(
-          decoded['error'] as String? ?? 'Respuesta inválida del backend.',
-        );
+        throw const EmailFeedGenerationException(AppErrorCode.generationFailed);
       }
       return (email: email, feedUrl: feedUrl);
     } on EmailFeedGenerationException {
       rethrow;
-    } catch (e) {
-      throw EmailFeedGenerationException(e.toString());
+    } catch (_) {
+      throw const EmailFeedGenerationException(AppErrorCode.unknown);
     }
   }
 }

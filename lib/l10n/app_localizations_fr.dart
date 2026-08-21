@@ -348,4 +348,65 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get webViewOriginalArticle => 'Article original';
+
+  @override
+  String get errorNetwork => 'Pas de connexion internet';
+
+  @override
+  String get errorTimeout => 'La requête a pris trop de temps';
+
+  @override
+  String get errorInvalidFeedUrl =>
+      'Nous n\'avons pas trouvé de flux valide à cette URL';
+
+  @override
+  String get errorInvalidOpmlFile =>
+      'Ce fichier n\'est pas un fichier OPML valide';
+
+  @override
+  String get errorDuplicateSource => 'Tu es déjà abonné à cette source';
+
+  @override
+  String get errorNotFound => 'Introuvable';
+
+  @override
+  String get errorFeedDiscoveryFailed =>
+      'Nous n\'avons pas pu détecter le flux automatiquement. Colle l\'URL exacte du flux RSS (par exemple, se terminant par /feed ou .xml).';
+
+  @override
+  String get errorNoActiveSession =>
+      'Tu as besoin d\'une session active pour ça';
+
+  @override
+  String get errorAccountDeletionFailed =>
+      'Nous n\'avons pas pu supprimer ton compte. Réessaie.';
+
+  @override
+  String get errorGoogleTokenMissing =>
+      'Google n\'a pas renvoyé de jeton valide. Réessaie.';
+
+  @override
+  String get errorAppleTokenMissing =>
+      'Apple n\'a pas renvoyé de jeton valide. Réessaie.';
+
+  @override
+  String get errorAuthProviderError =>
+      'Une erreur est survenue lors de la connexion. Réessaie.';
+
+  @override
+  String get errorEmptyUrl => 'Entre une URL valide';
+
+  @override
+  String get errorOpmlNoFeedsFound =>
+      'Aucun flux n\'a été trouvé dans ce fichier';
+
+  @override
+  String get errorNoArticlesToday =>
+      'Il n\'y a pas de nouveaux articles aujourd\'hui à résumer';
+
+  @override
+  String get errorGenerationFailed => 'Une erreur est survenue. Réessaie.';
+
+  @override
+  String get errorUnknown => 'Une erreur inattendue s\'est produite';
 }

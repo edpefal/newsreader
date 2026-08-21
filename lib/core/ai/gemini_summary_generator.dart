@@ -4,6 +4,7 @@ import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
 /// Genera resúmenes vía una Supabase Edge Function que hace de proxy a la
@@ -23,12 +24,12 @@ class GeminiSummaryGenerator implements SummaryGenerator {
   @override
   Future<String> summarize(List<ArticleExcerpt> articles) async {
     if (articles.isEmpty) {
-      throw const SummaryGenerationException('No hay artículos para resumir.');
+      throw const SummaryGenerationException(AppErrorCode.noArticlesToday);
     }
 
     final accessToken = _authClient.currentAccessToken;
     if (accessToken == null) {
-      throw const SummaryGenerationException('Se requiere sesión activa.');
+      throw const SummaryGenerationException(AppErrorCode.noActiveSession);
     }
 
     try {
@@ -56,15 +57,13 @@ class GeminiSummaryGenerator implements SummaryGenerator {
       final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
       final summary = decoded['summary'];
       if (summary is! String || summary.trim().isEmpty) {
-        throw SummaryGenerationException(
-          decoded['error'] as String? ?? 'Respuesta inválida del backend.',
-        );
+        throw const SummaryGenerationException(AppErrorCode.generationFailed);
       }
       return summary.trim();
     } on SummaryGenerationException {
       rethrow;
-    } catch (e) {
-      throw SummaryGenerationException(e.toString());
+    } catch (_) {
+      throw const SummaryGenerationException(AppErrorCode.unknown);
     }
   }
 }

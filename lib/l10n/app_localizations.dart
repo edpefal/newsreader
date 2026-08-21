@@ -621,6 +621,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Original article'**
   String get webViewOriginalArticle;
+
+  /// No description provided for @errorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection'**
+  String get errorNetwork;
+
+  /// No description provided for @errorTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The request took too long'**
+  String get errorTimeout;
+
+  /// No description provided for @errorInvalidFeedUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find a valid feed at this URL'**
+  String get errorInvalidFeedUrl;
+
+  /// No description provided for @errorInvalidOpmlFile.
+  ///
+  /// In en, this message translates to:
+  /// **'This file isn\'t a valid OPML file'**
+  String get errorInvalidOpmlFile;
+
+  /// No description provided for @errorDuplicateSource.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re already subscribed to this source'**
+  String get errorDuplicateSource;
+
+  /// No description provided for @errorNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Not found'**
+  String get errorNotFound;
+
+  /// No description provided for @errorFeedDiscoveryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t detect the feed automatically. Paste the exact RSS feed URL (for example, ending in /feed or .xml).'**
+  String get errorFeedDiscoveryFailed;
+
+  /// No description provided for @errorNoActiveSession.
+  ///
+  /// In en, this message translates to:
+  /// **'You need an active session for this'**
+  String get errorNoActiveSession;
+
+  /// No description provided for @errorAccountDeletionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t delete your account. Please try again.'**
+  String get errorAccountDeletionFailed;
+
+  /// No description provided for @errorGoogleTokenMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Google didn\'t return a valid token. Please try again.'**
+  String get errorGoogleTokenMissing;
+
+  /// No description provided for @errorAppleTokenMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple didn\'t return a valid token. Please try again.'**
+  String get errorAppleTokenMissing;
+
+  /// No description provided for @errorAuthProviderError.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong signing you in. Please try again.'**
+  String get errorAuthProviderError;
+
+  /// No description provided for @errorEmptyUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid URL'**
+  String get errorEmptyUrl;
+
+  /// No description provided for @errorOpmlNoFeedsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No feeds were found in this file'**
+  String get errorOpmlNoFeedsFound;
+
+  /// No description provided for @errorNoArticlesToday.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no new articles today to summarize'**
+  String get errorNoArticlesToday;
+
+  /// No description provided for @errorGenerationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get errorGenerationFailed;
+
+  /// No description provided for @errorUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something unexpected happened'**
+  String get errorUnknown;
 }
 
 class _AppLocalizationsDelegate

@@ -8,13 +8,13 @@ sealed class AddSourceState extends Equatable {
 /// (`FeedDiscoveryException`). A diferencia de [AddSourceError], ofrece la
 /// alternativa de generar una dirección de email.
 final class AddSourceFeedDiscoveryFailed extends AddSourceState {
-  final String message;
+  final AppErrorCode code;
   final String originalUrl;
 
-  const AddSourceFeedDiscoveryFailed(this.message, this.originalUrl);
+  const AddSourceFeedDiscoveryFailed(this.code, this.originalUrl);
 
   @override
-  List<Object?> get props => [message, originalUrl];
+  List<Object?> get props => [code, originalUrl];
 }
 
 final class AddSourceGeneratingEmailFeed extends AddSourceState {
@@ -66,10 +66,10 @@ final class AddSourceSuccess extends AddSourceState {
 }
 
 final class AddSourceError extends AddSourceState {
-  final String message;
+  final AppErrorCode code;
 
-  const AddSourceError(this.message);
+  const AddSourceError(this.code);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [code];
 }

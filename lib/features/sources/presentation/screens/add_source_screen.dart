@@ -8,6 +8,7 @@ import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/generate_email_feed.dart';
+import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/features/sources/presentation/cubit/add_source_cubit.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 
@@ -77,12 +78,12 @@ class _AddSourceViewState extends State<AddSourceView> {
         } else if (state is AddSourceError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
+              content: Text(state.code.localize(l10n)),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         } else if (state is AddSourceFeedDiscoveryFailed) {
-          _showFeedDiscoveryFailedSnackBar(context, state.message);
+          _showFeedDiscoveryFailedSnackBar(context, state.code.localize(l10n));
         } else if (state is AddSourceEmailFeedGenerated) {
           setState(() => _emailCardExpanded = false);
           _showGeneratedEmailDialog(context, state.feed);

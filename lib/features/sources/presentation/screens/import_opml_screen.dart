@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:newsreader/core/errors/app_error_code.dart';
+import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/core/widgets/source_icon.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/presentation/cubit/import_opml_cubit.dart';
@@ -48,7 +50,7 @@ class _ImportOpmlScreenState extends State<ImportOpmlScreen> {
             ImportOpmlValidating() => const _ValidatingView(),
             ImportOpmlPreview() => _PreviewView(state: state),
             ImportOpmlImporting() => const _ImportingView(),
-            ImportOpmlError() => _ErrorView(message: state.message),
+            ImportOpmlError() => _ErrorView(message: state.code.localize(l10n)),
             _ => const SizedBox.shrink(),
           },
         );
@@ -250,8 +252,8 @@ class _ErrorFeedTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        item.errorMessage ??
-            AppLocalizations.of(context).sourcesFeedValidationFailed,
+        (item.errorCode ?? AppErrorCode.opmlFeedValidationFailed)
+            .localize(AppLocalizations.of(context)),
       ),
       trailing: Icon(
         Icons.warning_amber_outlined,

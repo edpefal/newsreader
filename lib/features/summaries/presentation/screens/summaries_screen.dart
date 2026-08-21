@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/core/utils/date_key.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/widgets/summary_list_item.dart';
@@ -45,9 +46,9 @@ class SummariesView extends StatelessWidget {
             SummaryGenerationError(
               :final summaries,
               :final canGenerateToday,
-              :final message,
+              :final code,
             ) =>
-              (summaries, canGenerateToday, false, message),
+              (summaries, canGenerateToday, false, code.localize(l10n)),
             SummariesLoading() => (const <DailySummary>[], false, false, null),
           };
 

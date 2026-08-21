@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/presentation/cubit/import_opml_cubit.dart';
@@ -133,12 +134,12 @@ void main() {
     testWidgets('muestra mensaje de error en estado ImportOpmlError',
         (tester) async {
       when(() => cubit.state).thenReturn(
-        const ImportOpmlError('El archivo no es un OPML válido'),
+        const ImportOpmlError(AppErrorCode.invalidOpmlFile),
       );
 
       await tester.pumpWidget(_buildSubject(cubit, inboxCubit: inboxCubit));
 
-      expect(find.text('El archivo no es un OPML válido'), findsOneWidget);
+      expect(find.text('Este archivo no es un OPML válido'), findsOneWidget);
     });
 
     testWidgets('llama syncAndReload en InboxCubit al completar importación',
