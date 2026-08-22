@@ -135,7 +135,7 @@ La app soporta inglés, español (neutro) y francés, vía el mecanismo oficial 
 - Convención de nombres de clave: `<feature><Descripción>` (ej. `sourcesEmptyTitle`), con un grupo `common*` para texto genuinamente compartido entre features (`commonCancel`, `commonDelete`, etc.) — no dupliques la traducción de la misma palabra con dos claves distintas.
 - **Español neutro, sin voseo**: nunca "tocá", "agregá", "suscribí" — sí "toca", "agrega", "suscribe". El test `test/unit/l10n/neutral_spanish_test.dart` falla si aparece una conjugación de voseo conocida en `app_es.arb`; agregá ahí cualquier forma nueva que encuentres.
 - Fechas: nunca formatear a mano (`'${date.day}/${date.month}'` ni arrays de nombres de mes). Usar `LocalizedDateFormatter` (`core/utils/localized_date_formatter.dart`), que ya resuelve idioma/orden/nombres de mes vía `DateFormat` de `intl`.
-- **Excepción conocida**: los mensajes de `AppException` y sus subclases (`core/errors/app_exception.dart`), y los `String message`/`errorMessage` que via Cubits terminan mostrando ese texto (p. ej. `AddSourceError.message`, `ImportOpmlError.message`), siguen hardcodeados en español — esto es deuda pendiente hasta que esas excepciones dejen de cargar texto humano y pasen a ser identificables por tipo/código (change futuro). No agregues código nuevo que dependa de que ese texto esté traducido.
+- `AppException` y sus subclases (`core/errors/app_exception.dart`) ya no cargan texto humano: se identifican por `AppErrorCode`, que se traduce en la capa de presentación (ver `add-localized-error-codes`, archivado). No reintroduzcas un `String message` para mostrarle algo al usuario — agregá un `AppErrorCode` nuevo en su lugar.
 
 ## Convenciones de código
 
