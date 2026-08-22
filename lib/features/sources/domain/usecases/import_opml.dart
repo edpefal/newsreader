@@ -4,6 +4,7 @@ import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
 import 'package:newsreader/core/network/http_client.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
 import 'package:newsreader/core/opml/opml_parser.dart';
 import 'package:newsreader/core/utils/id_generator.dart';
 
@@ -43,6 +44,7 @@ class ImportOpml {
   final FeedParser _feedParser;
   final SourceRepository _sourceRepository;
   final IdGenerator _idGenerator;
+  final ObservabilityClient _observabilityClient;
 
   const ImportOpml(
     this._opmlParser,
@@ -50,6 +52,7 @@ class ImportOpml {
     this._feedParser,
     this._sourceRepository,
     this._idGenerator,
+    this._observabilityClient,
   );
 
   List<String> parseUrls(String xmlContent) => _opmlParser.parse(xmlContent);
@@ -93,6 +96,10 @@ class ImportOpml {
         errorCode: e.code,
       );
     } catch (_) {
+      // No se reporta a observabilidad a propósito: validar una URL
+      // individual dentro de un OPML es lo mismo que el parser de feeds,
+      // control de flujo esperado sobre input del usuario (ver design.md
+      // de add-observability-provider, sección 4).
       return OpmlFeedValidation(
         url: url,
         name: url,
@@ -144,7 +151,8 @@ class ImportOpml {
       return _ImportSuccess(await _sourceRepository.addSource(source));
     } on DuplicateSourceException {
       return _ImportDuplicate(url);
-    } catch (_) {
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
       return _ImportFailure(url);
     }
   }

@@ -15,6 +15,9 @@ class XmlOpmlParser implements OPMLParser {
       _collectUrls(document.rootElement, urls);
       return urls;
     } catch (_) {
+      // No se reporta a observabilidad a propósito: un OPML mal formado es
+      // input del usuario, no un bug (ver design.md de
+      // add-observability-provider, sección 4).
       throw const ParseException(AppErrorCode.invalidOpmlFile);
     }
   }

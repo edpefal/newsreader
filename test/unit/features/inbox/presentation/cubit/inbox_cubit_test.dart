@@ -13,6 +13,8 @@ import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 
+import '../../../../../support/fake_observability_client.dart';
+
 class MockGetInboxArticles extends Mock implements GetInboxArticles {}
 
 class MockGetSources extends Mock implements GetSources {}
@@ -29,6 +31,7 @@ void main() {
   late MockFeedSyncTrigger mockFeedSyncTrigger;
   late MockMarkArticleAsRead mockMarkArticleAsRead;
   late MockSyncUserData mockSyncUserData;
+  late MockObservabilityClient mockObservabilityClient;
 
   final tArticles = [
     Article(
@@ -68,6 +71,7 @@ void main() {
         mockFeedSyncTrigger,
         mockMarkArticleAsRead,
         mockSyncUserData,
+        mockObservabilityClient,
       );
 
   setUp(() {
@@ -76,6 +80,7 @@ void main() {
     mockFeedSyncTrigger = MockFeedSyncTrigger();
     mockMarkArticleAsRead = MockMarkArticleAsRead();
     mockSyncUserData = MockSyncUserData();
+    mockObservabilityClient = MockObservabilityClient();
     when(() => mockSyncUserData.execute()).thenAnswer((_) async {});
   });
 
@@ -428,6 +433,7 @@ void main() {
         mockFeedSyncTrigger,
         mockMarkArticleAsRead,
         mockSyncUserData,
+        mockObservabilityClient,
       );
       cubit.emit(InboxLoaded(tSearchableArticles, hasSources: true));
 

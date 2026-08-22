@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/summaries/domain/usecases/generate_daily_summary.dart';
 import 'package:newsreader/features/summaries/domain/usecases/get_daily_summaries.dart';
@@ -13,11 +14,13 @@ class SummariesCubit extends Cubit<SummariesState> {
   final GetDailySummaries _getDailySummaries;
   final GenerateDailySummary _generateDailySummary;
   final SubscriptionStatusProvider _subscriptionStatusProvider;
+  final ObservabilityClient _observabilityClient;
 
   SummariesCubit(
     this._getDailySummaries,
     this._generateDailySummary,
     this._subscriptionStatusProvider,
+    this._observabilityClient,
   ) : super(const SummariesLoading());
 
   Future<void> loadSummaries() async {
@@ -64,7 +67,8 @@ class SummariesCubit extends Cubit<SummariesState> {
         canGenerateToday: false,
         code: AppErrorCode.noArticlesToday,
       ));
-    } catch (_) {
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
       final canGenerateToday = await _generateDailySummary.countTodayArticles() > 0;
       emit(SummaryGenerationError(
         summaries: summaries,

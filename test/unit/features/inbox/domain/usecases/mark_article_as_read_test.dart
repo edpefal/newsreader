@@ -7,6 +7,8 @@ import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 
+import '../../../../../support/fake_observability_client.dart';
+
 class MockArticleRepository extends Mock implements ArticleRepository {}
 
 class MockCloudSyncClient extends Mock implements CloudSyncClient {}
@@ -27,6 +29,7 @@ void main() {
   late MockArticleRepository mockRepository;
   late MockCloudSyncClient mockCloudSyncClient;
   late MockAuthClient mockAuthClient;
+  late MockObservabilityClient mockObservabilityClient;
   late MarkArticleAsRead sut;
 
   setUpAll(() {
@@ -38,7 +41,13 @@ void main() {
     mockRepository = MockArticleRepository();
     mockCloudSyncClient = MockCloudSyncClient();
     mockAuthClient = MockAuthClient();
-    sut = MarkArticleAsRead(mockRepository, mockCloudSyncClient, mockAuthClient);
+    mockObservabilityClient = MockObservabilityClient();
+    sut = MarkArticleAsRead(
+      mockRepository,
+      mockCloudSyncClient,
+      mockAuthClient,
+      mockObservabilityClient,
+    );
 
     when(() => mockRepository.updateArticle(any())).thenAnswer((_) async {});
     when(() => mockCloudSyncClient.updatePartial(any(), any()))

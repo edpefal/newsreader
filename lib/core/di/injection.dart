@@ -17,6 +17,8 @@ import 'package:newsreader/core/navigation/app_navigator.dart';
 import 'package:newsreader/core/navigation/go_router_navigator.dart';
 import 'package:newsreader/core/network/http_client.dart';
 import 'package:newsreader/core/network/http_package_client.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/sentry_observability_client.dart';
 import 'package:newsreader/core/utils/id_generator.dart';
 import 'package:newsreader/core/utils/uuid_id_generator.dart';
 import 'package:newsreader/core/data/datasources/local/article_local_datasource.dart';
@@ -77,7 +79,9 @@ final getIt = GetIt.instance;
 
 Future<void> setupDependencies() async {
   // Core — abstractions
-  getIt.registerLazySingleton<AuthClient>(() => SupabaseAuthClient());
+  getIt.registerLazySingleton<AuthClient>(
+    () => SupabaseAuthClient(observabilityClient: getIt()),
+  );
   getIt.registerLazySingleton<CloudSyncClient>(() => SupabaseCloudSyncClient());
   getIt.registerLazySingleton<HttpClient>(() => HttpPackageClient());
   getIt.registerLazySingleton<FeedParser>(() => WebfeedFeedParser());
@@ -89,14 +93,17 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton<AppNavigator>(() => const GoRouterNavigator());
   getIt.registerLazySingleton<OPMLParser>(() => const XmlOpmlParser());
   getIt.registerLazySingleton<SummaryGenerator>(
-    () => GeminiSummaryGenerator(getIt(), getIt()),
+    () => GeminiSummaryGenerator(getIt(), getIt(), getIt()),
   );
   getIt.registerLazySingleton<EmailFeedGenerator>(
-    () => SupabaseEmailFeedGenerator(getIt(), getIt()),
+    () => SupabaseEmailFeedGenerator(getIt(), getIt(), getIt()),
   );
   getIt.registerLazySingleton<FileSharer>(() => SharePlusFileSharer());
   getIt.registerLazySingleton<SubscriptionStatusProvider>(
     () => SuperwallSubscriptionStatusProvider(),
+  );
+  getIt.registerLazySingleton<ObservabilityClient>(
+    () => SentryObservabilityClient(),
   );
 
   // Data sources
@@ -137,13 +144,17 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton(() => GetSources(getIt()));
   getIt.registerLazySingleton(() => GetSourceArticles(getIt()));
   getIt.registerLazySingleton(
-    () => ImportOpml(getIt(), getIt(), getIt(), getIt(), getIt()),
+    () => ImportOpml(getIt(), getIt(), getIt(), getIt(), getIt(), getIt()),
   );
 
   // Use cases — Articles
   getIt.registerLazySingleton(() => GetInboxArticles(getIt()));
-  getIt.registerLazySingleton(() => MarkArticleAsRead(getIt(), getIt(), getIt()));
-  getIt.registerLazySingleton(() => ToggleFavorite(getIt(), getIt(), getIt()));
+  getIt.registerLazySingleton(
+    () => MarkArticleAsRead(getIt(), getIt(), getIt(), getIt()),
+  );
+  getIt.registerLazySingleton(
+    () => ToggleFavorite(getIt(), getIt(), getIt(), getIt()),
+  );
   getIt.registerLazySingleton(() => GetFavorites(getIt()));
   getIt.registerLazySingleton(() => GetArchive(getIt()));
 
@@ -190,12 +201,12 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton(() => ExportUserData(getIt(), getIt(), getIt()));
 
   // Presentation
-  getIt.registerFactory<LoginCubit>(() => LoginCubit(getIt()));
+  getIt.registerFactory<LoginCubit>(() => LoginCubit(getIt(), getIt()));
   getIt.registerSingleton<ThemeCubit>(
     ThemeCubit(Hive.box<dynamic>(AppConstants.hiveSettingsBox)),
   );
   getIt.registerSingleton<InboxCubit>(
-    InboxCubit(getIt(), getIt(), getIt(), getIt(), getIt()),
+    InboxCubit(getIt(), getIt(), getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerSingleton<FavoritesCubit>(FavoritesCubit(getIt()));
   getIt.registerSingleton<ArchiveCubit>(ArchiveCubit(getIt()));
@@ -203,6 +214,6 @@ Future<void> setupDependencies() async {
     SourcesCubit(getIt(), getIt(), getIt()),
   );
   getIt.registerSingleton<SummariesCubit>(
-    SummariesCubit(getIt(), getIt(), getIt()),
+    SummariesCubit(getIt(), getIt(), getIt(), getIt()),
   );
 }

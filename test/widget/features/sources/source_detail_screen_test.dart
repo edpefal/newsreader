@@ -13,6 +13,7 @@ import 'package:newsreader/features/sources/presentation/cubit/source_detail_cub
 import 'package:newsreader/features/sources/presentation/screens/source_detail_screen.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 
+import '../../../support/fake_observability_client.dart';
 import '../../../support/pump_localized_app.dart';
 
 class MockSourceDetailCubit extends MockCubit<SourceDetailState>
@@ -172,6 +173,7 @@ void main() {
     late MockGetSourceArticles mockGetSourceArticles;
     late MockFeedSyncTrigger mockFeedSyncTrigger;
     late MockSyncUserData mockSyncUserData;
+    late MockObservabilityClient mockObservabilityClient;
 
     Widget buildScreen({required bool syncOnOpen}) {
       final router = GoRouter(
@@ -183,6 +185,7 @@ void main() {
               getSourceArticles: mockGetSourceArticles,
               feedSyncTrigger: mockFeedSyncTrigger,
               syncUserData: mockSyncUserData,
+              observabilityClient: mockObservabilityClient,
               syncOnOpen: syncOnOpen,
             ),
           ),
@@ -200,6 +203,7 @@ void main() {
       mockGetSourceArticles = MockGetSourceArticles();
       mockFeedSyncTrigger = MockFeedSyncTrigger();
       mockSyncUserData = MockSyncUserData();
+      mockObservabilityClient = MockObservabilityClient();
       when(
         () => mockGetSourceArticles.execute(any()),
       ).thenAnswer((_) async => tArticles);

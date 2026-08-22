@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
 
 /// client ID "web" de Google configurado en Supabase Auth. Se usa como
 /// serverClientId para que Google emita un ID token válido para el
@@ -15,11 +16,14 @@ const _googleServerClientId =
 class SupabaseAuthClient implements AuthClient {
   final sb.SupabaseClient _supabase;
   final GoogleSignIn _googleSignIn;
+  final ObservabilityClient _observabilityClient;
 
   SupabaseAuthClient({
+    required ObservabilityClient observabilityClient,
     sb.SupabaseClient? supabase,
     GoogleSignIn? googleSignIn,
-  })  : _supabase = supabase ?? sb.Supabase.instance.client,
+  })  : _observabilityClient = observabilityClient,
+        _supabase = supabase ?? sb.Supabase.instance.client,
         _googleSignIn = googleSignIn ??
             GoogleSignIn(
               serverClientId: _googleServerClientId,
@@ -59,7 +63,8 @@ class SupabaseAuthClient implements AuthClient {
       return AuthResult.success;
     } on AuthException {
       rethrow;
-    } catch (_) {
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
       throw const AuthException(AppErrorCode.unknown);
     }
   }
@@ -91,7 +96,8 @@ class SupabaseAuthClient implements AuthClient {
       throw const AuthException(AppErrorCode.authProviderError);
     } on AuthException {
       rethrow;
-    } catch (_) {
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
       throw const AuthException(AppErrorCode.unknown);
     }
   }

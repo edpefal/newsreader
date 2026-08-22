@@ -12,6 +12,8 @@ import 'package:newsreader/core/opml/opml_parser.dart';
 import 'package:newsreader/core/utils/id_generator.dart';
 import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 
+import '../../../../../support/fake_observability_client.dart';
+
 class MockOPMLParser extends Mock implements OPMLParser {}
 class MockHttpClient extends Mock implements HttpClient {}
 class MockFeedParser extends Mock implements FeedParser {}
@@ -37,6 +39,7 @@ void main() {
   late MockFeedParser mockFeedParser;
   late MockSourceRepository mockRepo;
   late MockIdGenerator mockId;
+  late MockObservabilityClient mockObservabilityClient;
   late ImportOpml sut;
 
   setUp(() {
@@ -45,7 +48,15 @@ void main() {
     mockFeedParser = MockFeedParser();
     mockRepo = MockSourceRepository();
     mockId = MockIdGenerator();
-    sut = ImportOpml(mockParser, mockHttp, mockFeedParser, mockRepo, mockId);
+    mockObservabilityClient = MockObservabilityClient();
+    sut = ImportOpml(
+      mockParser,
+      mockHttp,
+      mockFeedParser,
+      mockRepo,
+      mockId,
+      mockObservabilityClient,
+    );
   });
 
   group('parseUrls', () {

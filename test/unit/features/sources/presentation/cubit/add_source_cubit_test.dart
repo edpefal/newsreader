@@ -10,12 +10,15 @@ import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/generate_email_feed.dart';
 import 'package:newsreader/features/sources/presentation/cubit/add_source_cubit.dart';
 
+import '../../../../../support/fake_observability_client.dart';
+
 class MockAddSource extends Mock implements AddSource {}
 class MockGenerateEmailFeed extends Mock implements GenerateEmailFeed {}
 
 void main() {
   late MockAddSource mockAddSource;
   late MockGenerateEmailFeed mockGenerateEmailFeed;
+  late MockObservabilityClient mockObservabilityClient;
 
   final tSource = NewsSource(
     id: '1',
@@ -32,10 +35,14 @@ void main() {
   setUp(() {
     mockAddSource = MockAddSource();
     mockGenerateEmailFeed = MockGenerateEmailFeed();
+    mockObservabilityClient = MockObservabilityClient();
   });
 
-  AddSourceCubit buildCubit() =>
-      AddSourceCubit(mockAddSource, mockGenerateEmailFeed);
+  AddSourceCubit buildCubit() => AddSourceCubit(
+        mockAddSource,
+        mockGenerateEmailFeed,
+        mockObservabilityClient,
+      );
 
   group('AddSourceCubit', () {
     test('estado inicial es AddSourceInitial', () {

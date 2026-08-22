@@ -3,13 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
 
 part 'login_state.dart';
 
 class LoginCubit extends Cubit<LoginState> {
   final AuthClient _authClient;
+  final ObservabilityClient _observabilityClient;
 
-  LoginCubit(this._authClient) : super(const LoginIdle());
+  LoginCubit(this._authClient, this._observabilityClient)
+      : super(const LoginIdle());
 
   Future<void> signInWithGoogle() => _signIn(_authClient.signInWithGoogle);
 
@@ -26,7 +29,8 @@ class LoginCubit extends Cubit<LoginState> {
       emit(const LoginIdle());
     } on AuthException catch (e) {
       emit(LoginError(e.code));
-    } catch (_) {
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
       emit(const LoginError(AppErrorCode.unknown));
     }
   }

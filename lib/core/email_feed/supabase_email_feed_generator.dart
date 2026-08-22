@@ -5,6 +5,7 @@ import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/network/http_client.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
 
 /// Llama a la Supabase Edge Function que genera una dirección de email y su
 /// feed RSS correspondiente. Se autentica con el access token de la sesión
@@ -16,8 +17,13 @@ String get _createFeedFunctionUrl =>
 class SupabaseEmailFeedGenerator implements EmailFeedGenerator {
   final HttpClient _httpClient;
   final AuthClient _authClient;
+  final ObservabilityClient _observabilityClient;
 
-  const SupabaseEmailFeedGenerator(this._httpClient, this._authClient);
+  const SupabaseEmailFeedGenerator(
+    this._httpClient,
+    this._authClient,
+    this._observabilityClient,
+  );
 
   @override
   Future<GeneratedEmailFeed> generate({String? label}) async {
@@ -45,7 +51,8 @@ class SupabaseEmailFeedGenerator implements EmailFeedGenerator {
       return (email: email, feedUrl: feedUrl);
     } on EmailFeedGenerationException {
       rethrow;
-    } catch (_) {
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
       throw const EmailFeedGenerationException(AppErrorCode.unknown);
     }
   }

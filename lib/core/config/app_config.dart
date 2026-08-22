@@ -25,4 +25,11 @@ class AppConfig {
   static const String supabaseUrl = isProd ? _prodSupabaseUrl : _devSupabaseUrl;
   static const String supabaseAnonKey =
       isProd ? _prodSupabaseAnonKey : _devSupabaseAnonKey;
+
+  static const String _devSentryDsn =
+      'https://c2a2926296b11986795345a4b2c47cf6@o4511954552946688.ingest.us.sentry.io/4511954576474112';
+  static const String _prodSentryDsn =
+      'https://203966973282e74abe8b174b6ec6afe4@o4511954552946688.ingest.us.sentry.io/4511954576801792';
+
+  static const String sentryDsn = isProd ? _prodSentryDsn : _devSentryDsn;
 }

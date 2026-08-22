@@ -15,6 +15,7 @@ import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/navigation/route_extra_resolver.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
 import 'package:newsreader/features/account/presentation/widgets/delete_account_dialog.dart';
@@ -120,7 +121,10 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final xmlContent = state.extra as String;
         return BlocProvider(
-          create: (_) => ImportOpmlCubit(getIt<ImportOpml>()),
+          create: (_) => ImportOpmlCubit(
+            getIt<ImportOpml>(),
+            getIt<ObservabilityClient>(),
+          ),
           child: ImportOpmlScreen(xmlContent: xmlContent),
         );
       },
@@ -137,6 +141,7 @@ final appRouter = GoRouter(
           getSourceArticles: getIt<GetSourceArticles>(),
           feedSyncTrigger: getIt<FeedSyncTrigger>(),
           syncUserData: getIt<SyncUserData>(),
+          observabilityClient: getIt<ObservabilityClient>(),
           syncOnOpen: state.uri.queryParameters['justAdded'] == 'true',
         ),
       ),

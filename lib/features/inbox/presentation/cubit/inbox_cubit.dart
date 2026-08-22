@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
 import 'package:newsreader/core/utils/article_text_matcher.dart';
 import 'package:newsreader/features/inbox/domain/usecases/get_inbox_articles.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
@@ -19,6 +20,7 @@ class InboxCubit extends Cubit<InboxState> {
   final FeedSyncTrigger _feedSyncTrigger;
   final MarkArticleAsRead _markArticleAsRead;
   final SyncUserData _syncUserData;
+  final ObservabilityClient _observabilityClient;
 
   /// Invocación de `_feedSyncTrigger.execute()` en curso, si hay una. Se
   /// cachea para que `syncAndReload()` (pull-to-refresh manual) y la fase
@@ -33,6 +35,7 @@ class InboxCubit extends Cubit<InboxState> {
     this._feedSyncTrigger,
     this._markArticleAsRead,
     this._syncUserData,
+    this._observabilityClient,
   ) : super(const InboxLoading());
 
   Future<void> loadArticles() async {
@@ -73,8 +76,9 @@ class InboxCubit extends Cubit<InboxState> {
     }
     try {
       await _triggerFeedSync();
-    } catch (_) {
+    } catch (e, st) {
       // Silencioso a propósito: ver el comentario del método.
+      _observabilityClient.captureException(e, st);
     }
     await _syncUserData.execute();
     await _reload();

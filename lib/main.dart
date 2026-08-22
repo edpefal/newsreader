@@ -10,6 +10,8 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/di/injection.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/sentry_observability_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
@@ -23,6 +25,27 @@ import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dar
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 import 'package:newsreader/presentation/app/app.dart';
+
+/// Identifica/desvincula al usuario ante los proveedores de suscripción y
+/// observabilidad en respuesta a `authClient.authStateChanges`. Extraído de
+/// `main()` para poder testearlo sin levantar toda la app.
+void handleAuthStateChange(
+  bool isSignedIn,
+  String? userId,
+  SubscriptionStatusProvider subscriptionStatusProvider,
+  ObservabilityClient observabilityClient,
+) {
+  if (isSignedIn && userId != null) {
+    subscriptionStatusProvider.identify(userId);
+    observabilityClient.setUserId(userId);
+  } else {
+    // Desvincula al usuario de Superwall en logout/borrado de cuenta, para
+    // que la próxima cuenta que inicie sesión en este dispositivo no
+    // arrastre por un instante el estado de suscripción de la anterior.
+    subscriptionStatusProvider.reset();
+    observabilityClient.setUserId(null);
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,19 +97,18 @@ void main() async {
   // suscripción cubre ambos casos sin duplicar la llamada en cada flujo).
   final authClient = getIt<AuthClient>();
   final subscriptionStatusProvider = getIt<SubscriptionStatusProvider>();
+  final observabilityClient = getIt<ObservabilityClient>();
   if (authClient.isSignedIn && authClient.currentUserId != null) {
     await subscriptionStatusProvider.identify(authClient.currentUserId!);
+    observabilityClient.setUserId(authClient.currentUserId);
   }
   authClient.authStateChanges.listen((isSignedIn) {
-    final userId = authClient.currentUserId;
-    if (isSignedIn && userId != null) {
-      subscriptionStatusProvider.identify(userId);
-    } else {
-      // Desvincula al usuario de Superwall en logout/borrado de cuenta, para
-      // que la próxima cuenta que inicie sesión en este dispositivo no
-      // arrastre por un instante el estado de suscripción de la anterior.
-      subscriptionStatusProvider.reset();
-    }
+    handleAuthStateChange(
+      isSignedIn,
+      authClient.currentUserId,
+      subscriptionStatusProvider,
+      observabilityClient,
+    );
   });
 
   // 4. One-time migration: remove auto-archived articles from previous behavior
@@ -110,12 +132,16 @@ void main() async {
   getIt<SourcesCubit>().loadSources();
   getIt<SummariesCubit>().loadSummaries();
 
-  runApp(App(
-    themeCubit: getIt(),
-    inboxCubit: getIt(),
-    favoritesCubit: getIt(),
-    archiveCubit: getIt(),
-    sourcesCubit: getIt(),
-    summariesCubit: getIt(),
-  ));
+  await SentryObservabilityClient.init(
+    dsn: AppConfig.sentryDsn,
+    isProd: AppConfig.isProd,
+    appRunner: () => runApp(App(
+      themeCubit: getIt(),
+      inboxCubit: getIt(),
+      favoritesCubit: getIt(),
+      archiveCubit: getIt(),
+      sourcesCubit: getIt(),
+      summariesCubit: getIt(),
+    )),
+  );
 }

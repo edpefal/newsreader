@@ -9,6 +9,8 @@ import 'package:newsreader/features/summaries/domain/usecases/generate_daily_sum
 import 'package:newsreader/features/summaries/domain/usecases/get_daily_summaries.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 
+import '../../../../../support/fake_observability_client.dart';
+
 class MockGetDailySummaries extends Mock implements GetDailySummaries {}
 
 class MockGenerateDailySummary extends Mock implements GenerateDailySummary {}
@@ -20,6 +22,7 @@ void main() {
   late MockGetDailySummaries mockGetDailySummaries;
   late MockGenerateDailySummary mockGenerateDailySummary;
   late MockSubscriptionStatusProvider mockSubscriptionStatusProvider;
+  late MockObservabilityClient mockObservabilityClient;
 
   final tSummary = DailySummary(
     id: '2026-07-09',
@@ -33,12 +36,14 @@ void main() {
         mockGetDailySummaries,
         mockGenerateDailySummary,
         mockSubscriptionStatusProvider,
+        mockObservabilityClient,
       );
 
   setUp(() {
     mockGetDailySummaries = MockGetDailySummaries();
     mockGenerateDailySummary = MockGenerateDailySummary();
     mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
+    mockObservabilityClient = MockObservabilityClient();
     // Suscripción activa por defecto: la mayoría de los tests existentes
     // ejercitan la generación en sí, no el gate del paywall (que tiene su
     // propio grupo de tests más abajo).

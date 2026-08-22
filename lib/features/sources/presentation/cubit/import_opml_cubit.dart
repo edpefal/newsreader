@@ -3,14 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
 import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 
 part 'import_opml_state.dart';
 
 class ImportOpmlCubit extends Cubit<ImportOpmlState> {
   final ImportOpml _importOpml;
+  final ObservabilityClient _observabilityClient;
 
-  ImportOpmlCubit(this._importOpml) : super(const ImportOpmlInitial());
+  ImportOpmlCubit(this._importOpml, this._observabilityClient)
+      : super(const ImportOpmlInitial());
 
   Future<void> loadPreview(String xmlContent) async {
     emit(const ImportOpmlValidating());
@@ -40,7 +43,8 @@ class ImportOpmlCubit extends Cubit<ImportOpmlState> {
       });
     } on ParseException catch (e) {
       emit(ImportOpmlError(e.code));
-    } catch (_) {
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
       emit(const ImportOpmlError(AppErrorCode.invalidOpmlFile));
     }
   }

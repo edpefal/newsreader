@@ -7,6 +7,11 @@ import 'package:newsreader/core/feed/feed_parser.dart';
 
 class WebfeedFeedParser implements FeedParser {
   @override
+  // Los tres `catch (_)` de este método no se reportan a observabilidad a
+  // propósito: intentar RSS y después Atom es control de flujo normal, y
+  // fallar los dos solo significa "esta URL no es un feed", algo esperado
+  // cuando el usuario pega cualquier URL (ver design.md de
+  // add-observability-provider, sección 4).
   FeedData parse(String xmlContent) {
     try {
       return _tryRss(xmlContent);
@@ -68,6 +73,9 @@ class WebfeedFeedParser implements FeedParser {
     try {
       return DateTime.parse(dateStr);
     } catch (_) {
+      // No se reporta a observabilidad a propósito: una fecha con formato
+      // raro en un feed de terceros es rutina, ocurre todo el tiempo (ver
+      // design.md de add-observability-provider, sección 4).
       return null;
     }
   }

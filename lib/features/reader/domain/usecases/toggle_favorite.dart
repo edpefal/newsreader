@@ -4,6 +4,7 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
 import 'package:newsreader/core/sync/article_state_row.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
 
@@ -11,11 +12,13 @@ class ToggleFavorite {
   final ArticleRepository _repository;
   final CloudSyncClient _cloudSyncClient;
   final AuthClient _authClient;
+  final ObservabilityClient _observabilityClient;
 
   const ToggleFavorite(
     this._repository,
     this._cloudSyncClient,
     this._authClient,
+    this._observabilityClient,
   );
 
   Future<void> execute(String articleId) async {
@@ -46,8 +49,10 @@ class ToggleFavorite {
     try {
       final row = articleStateRow(ArticleModel.fromEntity(article));
       await _cloudSyncClient.updatePartial('articles', [row]);
-    } catch (_) {
-      // Best-effort: el próximo SyncUserData lo sube igual.
+    } catch (e, st) {
+      // Best-effort: el próximo SyncUserData lo sube igual, pero se reporta
+      // para poder detectar fallas sistemáticas de este push.
+      _observabilityClient.captureException(e, st);
     }
   }
 }

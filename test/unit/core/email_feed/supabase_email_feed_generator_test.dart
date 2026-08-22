@@ -7,6 +7,8 @@ import 'package:newsreader/core/email_feed/supabase_email_feed_generator.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
+import '../../../support/fake_observability_client.dart';
+
 class MockHttpClient extends Mock implements HttpClient {}
 
 class MockAuthClient extends Mock implements AuthClient {}
@@ -14,13 +16,19 @@ class MockAuthClient extends Mock implements AuthClient {}
 void main() {
   late MockHttpClient mockHttpClient;
   late MockAuthClient mockAuthClient;
+  late MockObservabilityClient mockObservabilityClient;
   late SupabaseEmailFeedGenerator sut;
 
   setUp(() {
     mockHttpClient = MockHttpClient();
     mockAuthClient = MockAuthClient();
+    mockObservabilityClient = MockObservabilityClient();
     when(() => mockAuthClient.currentAccessToken).thenReturn('token-de-sesion');
-    sut = SupabaseEmailFeedGenerator(mockHttpClient, mockAuthClient);
+    sut = SupabaseEmailFeedGenerator(
+      mockHttpClient,
+      mockAuthClient,
+      mockObservabilityClient,
+    );
   });
 
   test('devuelve email y feedUrl del backend en caso exitoso', () async {
