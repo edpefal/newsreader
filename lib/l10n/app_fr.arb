@@ -120,5 +120,11 @@
   "errorOpmlNoFeedsFound": "Aucun flux n'a été trouvé dans ce fichier",
   "errorNoArticlesToday": "Il n'y a pas de nouveaux articles aujourd'hui à résumer",
   "errorGenerationFailed": "Une erreur est survenue. Réessaie.",
-  "errorUnknown": "Une erreur inattendue s'est produite"
+  "errorAiUsageLimitReached": "Tu as atteint la limite quotidienne d'utilisation de l'IA. Réessaie demain.",
+  "errorUnknown": "Une erreur inattendue s'est produite",
+
+  "summariesUsageMeter": "{used} / {limit} mots utilisés aujourd'hui",
+  "summariesRegenerateConfirmTitle": "Régénérer quand même ?",
+  "summariesRegenerateConfirmBody": "Aucun nouvel article n'est arrivé depuis le dernier résumé. Veux-tu le régénérer quand même ?",
+  "summariesRegenerateConfirmButton": "Régénérer quand même"
 }

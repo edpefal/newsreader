@@ -28,7 +28,10 @@ class GeminiSummaryGenerator implements SummaryGenerator {
   );
 
   @override
-  Future<String> summarize(List<ArticleExcerpt> articles) async {
+  Future<String> summarize(
+    List<ArticleExcerpt> articles, {
+    required String language,
+  }) async {
     if (articles.isEmpty) {
       throw const SummaryGenerationException(AppErrorCode.noArticlesToday);
     }
@@ -57,12 +60,18 @@ class GeminiSummaryGenerator implements SummaryGenerator {
                     'sourceName': a.sourceName,
                   })
               .toList(),
+          'language': language,
         }),
       );
 
       final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
       final summary = decoded['summary'];
       if (summary is! String || summary.trim().isEmpty) {
+        if (decoded['error'] == 'ai_usage_limit_reached') {
+          throw const SummaryGenerationException(
+            AppErrorCode.aiUsageLimitReached,
+          );
+        }
         throw const SummaryGenerationException(AppErrorCode.generationFailed);
       }
       return summary.trim();

@@ -39,6 +39,20 @@ class GenerateDailySummary {
 
   Future<int> countTodayArticles() async => (await _todayInboxArticles()).length;
 
+  /// `true` cuando ya existe un `DailySummary` para hoy y la cantidad de
+  /// artículos de hoy en el inbox no cambió desde esa última generación (no
+  /// llegó nada nuevo) -- señal de que regenerar sería "gasto sin razón" y
+  /// la UI debería confirmar antes de proceder. `false` si no hay resumen
+  /// guardado todavía para hoy, o si el conteo cambió (llegaron artículos
+  /// nuevos).
+  Future<bool> wouldRegenerateWithSameArticles() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final existing = await _summaryRepository.getByDate(today);
+    if (existing == null) return false;
+    return await countTodayArticles() == existing.articleCount;
+  }
+
   /// Usa el texto completo de `contentHtml` cuando el artículo no está
   /// truncado (mismo criterio que decide el modo lector vs WebView); si
   /// está truncado o vacío, cae a `excerpt` como antes.
@@ -70,7 +84,7 @@ class GenerateDailySummary {
     return bySourceId.values.toList();
   }
 
-  Future<DailySummary> execute() async {
+  Future<DailySummary> execute({required String language}) async {
     final todayArticles = await _todayInboxArticles();
     if (todayArticles.isEmpty) {
       throw const NoArticlesTodayException();
@@ -88,6 +102,7 @@ class GenerateDailySummary {
                 sourceName: a.sourceName,
               ))
           .toList(),
+      language: language,
     );
 
     final now = DateTime.now();

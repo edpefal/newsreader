@@ -404,5 +404,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorGenerationFailed => 'Something went wrong. Please try again.';
 
   @override
+  String get errorAiUsageLimitReached =>
+      'You\'ve reached today\'s AI usage limit. Try again tomorrow.';
+
+  @override
   String get errorUnknown => 'Something unexpected happened';
+
+  @override
+  String summariesUsageMeter(int used, int limit) {
+    return '$used / $limit words used today';
+  }
+
+  @override
+  String get summariesRegenerateConfirmTitle => 'Regenerate anyway?';
+
+  @override
+  String get summariesRegenerateConfirmBody =>
+      'No new articles have arrived since the last summary. Do you want to regenerate it anyway?';
+
+  @override
+  String get summariesRegenerateConfirmButton => 'Regenerate anyway';
 }

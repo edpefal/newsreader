@@ -408,5 +408,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errorGenerationFailed => 'Une erreur est survenue. Réessaie.';
 
   @override
+  String get errorAiUsageLimitReached =>
+      'Tu as atteint la limite quotidienne d\'utilisation de l\'IA. Réessaie demain.';
+
+  @override
   String get errorUnknown => 'Une erreur inattendue s\'est produite';
+
+  @override
+  String summariesUsageMeter(int used, int limit) {
+    return '$used / $limit mots utilisés aujourd\'hui';
+  }
+
+  @override
+  String get summariesRegenerateConfirmTitle => 'Régénérer quand même ?';
+
+  @override
+  String get summariesRegenerateConfirmBody =>
+      'Aucun nouvel article n\'est arrivé depuis le dernier résumé. Veux-tu le régénérer quand même ?';
+
+  @override
+  String get summariesRegenerateConfirmButton => 'Régénérer quand même';
 }

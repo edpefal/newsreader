@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -42,7 +44,10 @@ void main() {
   ];
 
   test('lanza SummaryGenerationException si la lista está vacía', () {
-    expect(sut.summarize([]), throwsA(isA<SummaryGenerationException>()));
+    expect(
+      sut.summarize([], language: 'es'),
+      throwsA(isA<SummaryGenerationException>()),
+    );
     verifyNever(
       () => mockHttpClient.post(any(), body: any(named: 'body')),
     );
@@ -58,9 +63,33 @@ void main() {
       ),
     ).thenAnswer((_) async => '{"summary": "Resumen generado"}');
 
-    final result = await sut.summarize(tArticles);
+    final result = await sut.summarize(tArticles, language: 'es');
 
     expect(result, 'Resumen generado');
+  });
+
+  test('incluye el language en el body del POST', () async {
+    when(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
+      ),
+    ).thenAnswer((_) async => '{"summary": "Resumen generado"}');
+
+    await sut.summarize(tArticles, language: 'fr');
+
+    final body = verify(
+      () => mockHttpClient.post(
+        any(),
+        body: captureAny(named: 'body'),
+        headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
+      ),
+    ).captured.single as String;
+
+    expect(jsonDecode(body) as Map, containsPair('language', 'fr'));
   });
 
   test('lanza SummaryGenerationException si el backend responde con error', () async {
@@ -73,7 +102,10 @@ void main() {
       ),
     ).thenAnswer((_) async => '{"error": "Backend mal configurado"}');
 
-    expect(sut.summarize(tArticles), throwsA(isA<SummaryGenerationException>()));
+    expect(
+      sut.summarize(tArticles, language: 'es'),
+      throwsA(isA<SummaryGenerationException>()),
+    );
   });
 
   test('usa un timeout más largo que el default de fetch de feeds', () async {
@@ -86,7 +118,7 @@ void main() {
       ),
     ).thenAnswer((_) async => '{"summary": "Resumen generado"}');
 
-    await sut.summarize(tArticles);
+    await sut.summarize(tArticles, language: 'es');
 
     final captured = verify(
       () => mockHttpClient.post(
@@ -111,7 +143,7 @@ void main() {
       ),
     ).thenThrow(const NetworkException());
 
-    expect(sut.summarize(tArticles), throwsA(isA<SummaryGenerationException>()));
+    expect(sut.summarize(tArticles, language: 'es'), throwsA(isA<SummaryGenerationException>()));
   });
 
   test(
@@ -119,7 +151,7 @@ void main() {
       () async {
     when(() => mockAuthClient.currentAccessToken).thenReturn(null);
 
-    expect(sut.summarize(tArticles), throwsA(isA<SummaryGenerationException>()));
+    expect(sut.summarize(tArticles, language: 'es'), throwsA(isA<SummaryGenerationException>()));
     verifyNever(
       () => mockHttpClient.post(
         any(),
@@ -141,7 +173,7 @@ void main() {
       ),
     ).thenAnswer((_) async => '{"summary": "Resumen generado"}');
 
-    await sut.summarize(tArticles);
+    await sut.summarize(tArticles, language: 'es');
 
     final headers = verify(
       () => mockHttpClient.post(

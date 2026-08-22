@@ -203,5 +203,21 @@
   "errorOpmlNoFeedsFound": "No feeds were found in this file",
   "errorNoArticlesToday": "There are no new articles today to summarize",
   "errorGenerationFailed": "Something went wrong. Please try again.",
-  "errorUnknown": "Something unexpected happened"
+  "errorAiUsageLimitReached": "You've reached today's AI usage limit. Try again tomorrow.",
+  "errorUnknown": "Something unexpected happened",
+
+  "summariesUsageMeter": "{used} / {limit} words used today",
+  "@summariesUsageMeter": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "summariesRegenerateConfirmTitle": "Regenerate anyway?",
+  "summariesRegenerateConfirmBody": "No new articles have arrived since the last summary. Do you want to regenerate it anyway?",
+  "summariesRegenerateConfirmButton": "Regenerate anyway"
 }

@@ -44,6 +44,8 @@ extension AppErrorCodeL10n on AppErrorCode {
         return l10n.errorNoArticlesToday;
       case AppErrorCode.generationFailed:
         return l10n.errorGenerationFailed;
+      case AppErrorCode.aiUsageLimitReached:
+        return l10n.errorAiUsageLimitReached;
       case AppErrorCode.unknown:
         return l10n.errorUnknown;
     }

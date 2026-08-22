@@ -120,5 +120,11 @@
   "errorOpmlNoFeedsFound": "No se encontraron feeds en este archivo",
   "errorNoArticlesToday": "No hay artículos nuevos hoy para resumir",
   "errorGenerationFailed": "Algo salió mal. Intenta de nuevo.",
-  "errorUnknown": "Ocurrió un error inesperado"
+  "errorAiUsageLimitReached": "Alcanzaste el límite diario de uso de IA. Intenta de nuevo mañana.",
+  "errorUnknown": "Ocurrió un error inesperado",
+
+  "summariesUsageMeter": "{used} / {limit} palabras usadas hoy",
+  "summariesRegenerateConfirmTitle": "¿Regenerar igual?",
+  "summariesRegenerateConfirmBody": "No llegaron artículos nuevos desde el último resumen. ¿Quieres regenerarlo igual?",
+  "summariesRegenerateConfirmButton": "Regenerar igual"
 }

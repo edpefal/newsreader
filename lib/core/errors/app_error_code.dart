@@ -58,6 +58,10 @@ enum AppErrorCode {
   /// (generación de resumen, generación de dirección de email).
   generationFailed,
 
+  /// Se alcanzó el presupuesto diario de palabras de IA (ver capability
+  /// `ai-usage-budget`); distinto de un fallo genérico de generación.
+  aiUsageLimitReached,
+
   /// Cualquier error no anticipado por los demás códigos.
   unknown,
 }

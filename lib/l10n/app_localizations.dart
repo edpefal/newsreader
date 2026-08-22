@@ -718,11 +718,41 @@ abstract class AppLocalizations {
   /// **'Something went wrong. Please try again.'**
   String get errorGenerationFailed;
 
+  /// No description provided for @errorAiUsageLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve reached today\'s AI usage limit. Try again tomorrow.'**
+  String get errorAiUsageLimitReached;
+
   /// No description provided for @errorUnknown.
   ///
   /// In en, this message translates to:
   /// **'Something unexpected happened'**
   String get errorUnknown;
+
+  /// No description provided for @summariesUsageMeter.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} / {limit} words used today'**
+  String summariesUsageMeter(int used, int limit);
+
+  /// No description provided for @summariesRegenerateConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate anyway?'**
+  String get summariesRegenerateConfirmTitle;
+
+  /// No description provided for @summariesRegenerateConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No new articles have arrived since the last summary. Do you want to regenerate it anyway?'**
+  String get summariesRegenerateConfirmBody;
+
+  /// No description provided for @summariesRegenerateConfirmButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate anyway'**
+  String get summariesRegenerateConfirmButton;
 }
 
 class _AppLocalizationsDelegate
