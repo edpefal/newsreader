@@ -37,8 +37,8 @@ Crear un espacio de lectura dedicado que rescate los boletines informativos del 
 - **Login obligatorio:** toda pantalla de la app requiere sesión activa (Google Sign-In o Sign in with Apple vía Supabase Auth). Sin sesión, la app muestra la pantalla de login antes que cualquier otra cosa.
 - **Persistencia de sesión:** con sesión previamente válida, la app entra directo al Inbox.
 - **Cierre de sesión:** disponible desde el `NavigationDrawer`; limpia los datos locales del dispositivo para evitar colisiones si otra cuenta inicia sesión después.
-- **Borrado de cuenta y datos (nuevo — pendiente de implementar):** el usuario debe poder eliminar su cuenta y todos sus datos asociados (fuentes, artículos, resúmenes, estado) desde dentro de la app, sin necesidad de contactar soporte. Requisito de compliance de las tiendas de aplicaciones para cualquier app que permita crear cuenta in-app.
-- **Exportación de datos (nuevo — pendiente de implementar):** el usuario debe poder solicitar una copia de sus datos (fuentes suscritas, artículos favoritos como mínimo) en un formato legible (OPML para fuentes, JSON o similar para el resto).
+- **Borrado de cuenta y datos:** el usuario puede eliminar su cuenta y todos sus datos asociados (fuentes, artículos, resúmenes, estado) desde dentro de la app, sin necesidad de contactar soporte. Requisito de compliance de las tiendas de aplicaciones para cualquier app que permita crear cuenta in-app.
+- **Exportación de datos:** el usuario puede solicitar una copia de sus datos (fuentes suscritas, artículos favoritos como mínimo) en un formato legible (OPML para fuentes, JSON o similar para el resto).
 
 ### B. Gestión de Suscripciones
 
@@ -56,7 +56,7 @@ Crear un espacio de lectura dedicado que rescate los boletines informativos del 
 - **Estado de lectura:** al abrir un artículo se marca como leído y desaparece del inbox hacia "Leídos", de forma indefinida (no expira).
 - **Sincronización on-demand:** pull-to-refresh dispara un fetch de feeds del lado del servidor (Edge Function) más una sincronización de estado. No hay fetch periódico en background ni notificaciones push — el contenido nuevo solo aparece cuando algún dispositivo de la cuenta hace pull-to-refresh o inicia sesión.
 - **Onboarding (primer uso):** inbox vacío muestra CTA "+ Agregar tu primera fuente".
-- **Búsqueda por pantalla (nuevo — pendiente de implementar):** Inbox, Leídos y Favoritos cada una ofrece su propia búsqueda (ícono de lupa) que filtra la lista ya cargada en esa pantalla por título, nombre de fuente o autor. No es full-text sobre el contenido del artículo, y no es una pantalla global separada.
+- **Búsqueda por pantalla:** Inbox, Leídos y Favoritos cada una ofrece su propia búsqueda (ícono de lupa) que filtra la lista ya cargada en esa pantalla por título, nombre de fuente o autor. No es full-text sobre el contenido del artículo, y no es una pantalla global separada.
 
 ### D. Experiencia de Lectura
 
