@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/ai_usage/ai_usage_policy.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
@@ -42,6 +43,10 @@ void main() {
         mockObservabilityClient,
         mockAiUsagePolicy,
       );
+
+  setUpAll(() {
+    registerFallbackValue(StackTrace.empty);
+  });
 
   setUp(() {
     mockGetDailySummaries = MockGetDailySummaries();
@@ -222,6 +227,45 @@ void main() {
           usage: tAiUsageStatusNotReached,
         ),
       ],
+      verify: (_) {
+        verify(
+          () => mockObservabilityClient.captureException(any(), any()),
+        ).called(1);
+      },
+    );
+
+    blocTest<SummariesCubit, SummariesState>(
+      'generateTodaySummary() con presupuesto de IA agotado emite '
+      'SummaryGenerationError sin reportarlo a observability',
+      build: () {
+        when(() => mockGenerateDailySummary.execute(language: any(named: 'language')))
+            .thenThrow(
+          const SummaryGenerationException(AppErrorCode.aiUsageLimitReached),
+        );
+        when(() => mockGenerateDailySummary.countTodayArticles())
+            .thenAnswer((_) async => 2);
+        return buildCubit();
+      },
+      seed: () => SummariesLoaded(
+        summaries: const [],
+        canGenerateToday: true,
+        usage: tAiUsageStatusNotReached,
+      ),
+      act: (cubit) => cubit.generateTodaySummary('es'),
+      expect: () => [
+        SummaryGenerating(const [], tAiUsageStatusNotReached),
+        SummaryGenerationError(
+          summaries: const [],
+          canGenerateToday: true,
+          code: AppErrorCode.aiUsageLimitReached,
+          usage: tAiUsageStatusNotReached,
+        ),
+      ],
+      verify: (_) {
+        verifyNever(
+          () => mockObservabilityClient.captureException(any(), any()),
+        );
+      },
     );
 
     blocTest<SummariesCubit, SummariesState>(

@@ -96,7 +96,15 @@ class SummariesCubit extends Cubit<SummariesState> {
         usage: usage,
       ));
     } catch (e, st) {
-      _observabilityClient.captureException(e, st);
+      final code = e is SummaryGenerationException
+          ? e.code
+          : AppErrorCode.generationFailed;
+      // aiUsageLimitReached es un estado esperado y alcanzable por diseño
+      // (el usuario llegó a su presupuesto diario de IA), no un bug -- no
+      // se reporta a Sentry, igual que NoArticlesTodayException más arriba.
+      if (code != AppErrorCode.aiUsageLimitReached) {
+        _observabilityClient.captureException(e, st);
+      }
       final canGenerateToday = await _generateDailySummary.countTodayArticles() > 0;
       // El chequeo de presupuesto ocurre antes de invocar a Gemini: si la
       // falla pasó después de ese chequeo (ej. Gemini caído), las palabras
@@ -105,9 +113,7 @@ class SummariesCubit extends Cubit<SummariesState> {
       emit(SummaryGenerationError(
         summaries: summaries,
         canGenerateToday: canGenerateToday,
-        code: e is SummaryGenerationException
-            ? e.code
-            : AppErrorCode.generationFailed,
+        code: code,
         usage: refreshedUsage,
       ));
     }
