@@ -17,6 +17,10 @@ abstract class AuthClient {
   /// El `id` del usuario autenticado actual, o `null` si no hay sesión.
   String? get currentUserId;
 
+  /// El email del usuario autenticado actual, o `null` si no hay sesión o
+  /// el proveedor de auth no lo devolvió.
+  String? get currentUserEmail;
+
   /// El access token (JWT) de la sesión activa, o `null` si no hay sesión.
   /// Se usa para autenticar llamadas a Edge Functions como el usuario
   /// actual (por ejemplo, disparar el fetch de feeds on-demand).

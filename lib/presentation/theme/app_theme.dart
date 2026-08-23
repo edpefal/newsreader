@@ -50,6 +50,11 @@ class AppTheme {
     ).copyWith(
       surfaceContainerHighest: _hairline,
       outline: _hairline,
+      // Sin esto, el indicador de selección del NavigationDrawer M3 (que
+      // usa secondaryContainer por default) hereda el negro de `secondary`
+      // de arriba, resultando en una pill oscura que domina la pantalla.
+      secondaryContainer: _hairline,
+      onSecondaryContainer: _ink,
     );
 
     return ThemeData(

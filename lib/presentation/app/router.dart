@@ -321,10 +321,26 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
         selectedIndex: currentIndex,
         onDestinationSelected: (index) => _onDestinationSelected(context, index),
         children: [
-          DrawerHeader(
-            child: Text(
-              l10n.appTitle,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.appTitle,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                if (getIt<AuthClient>().currentUserEmail case final email?) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    email,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ],
             ),
           ),
           NavigationDrawerDestination(
@@ -332,8 +348,8 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
               builder: (context, state) {
                 final count = state is InboxLoaded ? state.articles.length : 0;
                 if (count == 0) return const Icon(Icons.inbox_outlined);
-                return Badge(
-                  label: Text('$count'),
+                return Badge.count(
+                  count: count,
                   child: const Icon(Icons.inbox_outlined),
                 );
               },
@@ -342,8 +358,8 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
               builder: (context, state) {
                 final count = state is InboxLoaded ? state.articles.length : 0;
                 if (count == 0) return const Icon(Icons.inbox);
-                return Badge(
-                  label: Text('$count'),
+                return Badge.count(
+                  count: count,
                   child: const Icon(Icons.inbox),
                 );
               },
@@ -356,8 +372,8 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
             label: Text(l10n.navFavorites),
           ),
           NavigationDrawerDestination(
-            icon: const Icon(Icons.archive_outlined),
-            selectedIcon: const Icon(Icons.archive),
+            icon: const Icon(Icons.mark_email_read_outlined),
+            selectedIcon: const Icon(Icons.mark_email_read),
             label: Text(l10n.navArchive),
           ),
           NavigationDrawerDestination(
@@ -370,7 +386,7 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
             selectedIcon: const Icon(Icons.auto_awesome),
             label: Text(l10n.navSummaries),
           ),
-          const Divider(),
+          const Divider(indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.ios_share),
             title: Text(l10n.navExportData),

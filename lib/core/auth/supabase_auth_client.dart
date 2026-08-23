@@ -41,6 +41,9 @@ class SupabaseAuthClient implements AuthClient {
   String? get currentUserId => _supabase.auth.currentUser?.id;
 
   @override
+  String? get currentUserEmail => _supabase.auth.currentUser?.email;
+
+  @override
   String? get currentAccessToken => _supabase.auth.currentSession?.accessToken;
 
   @override
