@@ -1,12 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:newsreader/core/errors/app_error_code_localizations.dart';
+import 'package:newsreader/core/errors/app_exception.dart';
+import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
+import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
+import 'package:newsreader/features/account/presentation/widgets/delete_account_dialog.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
 
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+class SettingsScreen extends StatefulWidget {
+  final ExportUserData exportUserData;
+  final DeleteAccount deleteAccount;
 
+  const SettingsScreen({
+    super.key,
+    required this.exportUserData,
+    required this.deleteAccount,
+  });
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -46,9 +63,65 @@ class SettingsScreen extends StatelessWidget {
                 );
               },
             ),
+            const SizedBox(height: 24),
+            Text(
+              l10n.settingsAccountSectionTitle,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.ios_share),
+              title: Text(l10n.navExportData),
+              onTap: () => _exportUserData(context),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(
+                Icons.delete_forever,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              title: Text(
+                l10n.accountDeleteDialogTitle,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+              onTap: () => _confirmDeleteAccount(context),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _exportUserData(BuildContext context) async {
+    try {
+      await widget.exportUserData.execute();
+    } on AppException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.code.localize(AppLocalizations.of(context)))),
+        );
+      }
+    }
+  }
+
+  void _confirmDeleteAccount(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => DeleteAccountDialog(
+        onConfirm: () => _deleteAccount(context),
+      ),
+    );
+  }
+
+  Future<void> _deleteAccount(BuildContext context) async {
+    try {
+      await widget.deleteAccount.execute();
+    } on AppException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.code.localize(AppLocalizations.of(context)))),
+        );
+      }
+    }
   }
 }

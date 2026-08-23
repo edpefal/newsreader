@@ -640,6 +640,12 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get settingsThemeDark;
 
+  /// No description provided for @settingsAccountSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsAccountSectionTitle;
+
   /// No description provided for @commonDaysAgoShort.
   ///
   /// In en, this message translates to:

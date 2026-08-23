@@ -105,6 +105,7 @@
   "settingsThemeSystem": "Système",
   "settingsThemeLight": "Clair",
   "settingsThemeDark": "Sombre",
+  "settingsAccountSectionTitle": "Compte",
 
   "commonDaysAgoShort": "{count} j",
   "commonNoSearchResults": "Aucun résultat",

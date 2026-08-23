@@ -7,10 +7,10 @@ Permite al usuario obtener una copia local de sus fuentes suscritas y de sus art
 ## Requirements
 
 ### Requirement: Punto de entrada para exportar datos
-El sistema SHALL mostrar, en el `NavigationDrawer`, una opción "Exportar mis datos" accesible con sesión activa.
+El sistema SHALL mostrar, en la pantalla de Configuración (Settings), una opción "Exportar mis datos" accesible con sesión activa.
 
-#### Scenario: Acceso a la opción desde el drawer
-- **WHEN** el usuario abre el `NavigationDrawer` con sesión activa
+#### Scenario: Acceso a la opción desde Configuración
+- **WHEN** el usuario abre la pantalla de Configuración con sesión activa
 - **THEN** visualiza una opción "Exportar mis datos"
 
 ---

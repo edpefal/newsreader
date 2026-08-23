@@ -357,6 +357,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsThemeDark => 'Sombre';
 
   @override
+  String get settingsAccountSectionTitle => 'Compte';
+
+  @override
   String commonDaysAgoShort(int count) {
     return '$count j';
   }

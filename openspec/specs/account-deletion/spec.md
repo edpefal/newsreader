@@ -7,11 +7,11 @@ Permite al usuario eliminar irreversiblemente su cuenta y todos sus datos asocia
 ## Requirements
 
 ### Requirement: Punto de entrada para eliminar la cuenta
-El sistema SHALL mostrar, en el `NavigationDrawer`, una opción "Eliminar cuenta" separada de "Cerrar sesión", accesible con sesión activa.
+El sistema SHALL mostrar, en la pantalla de Configuración (Settings), una opción "Eliminar cuenta" separada de "Cerrar sesión", accesible con sesión activa.
 
-#### Scenario: Acceso a la opción desde el drawer
-- **WHEN** el usuario abre el `NavigationDrawer` con sesión activa
-- **THEN** visualiza una opción "Eliminar cuenta" además de "Cerrar sesión"
+#### Scenario: Acceso a la opción desde Configuración
+- **WHEN** el usuario abre la pantalla de Configuración con sesión activa
+- **THEN** visualiza una opción "Eliminar cuenta"
 
 ---
 

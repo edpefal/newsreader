@@ -11,14 +11,11 @@ import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
-import 'package:newsreader/core/errors/app_error_code_localizations.dart';
-import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/navigation/route_extra_resolver.dart';
 import 'package:newsreader/core/observability/observability_client.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
-import 'package:newsreader/features/account/presentation/widgets/delete_account_dialog.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/auth/presentation/screens/login_screen.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
@@ -115,7 +112,10 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/settings',
-      builder: (context, state) => const SettingsScreen(),
+      builder: (context, state) => SettingsScreen(
+        exportUserData: getIt<ExportUserData>(),
+        deleteAccount: getIt<DeleteAccount>(),
+      ),
     ),
     GoRoute(
       path: '/sources/add',
@@ -398,11 +398,6 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
             onTap: () => context.push('/settings'),
           ),
           ListTile(
-            leading: const Icon(Icons.ios_share),
-            title: Text(l10n.navExportData),
-            onTap: () => _exportUserData(context),
-          ),
-          ListTile(
             leading: const Icon(Icons.logout),
             title: Text(l10n.navSignOut),
             onTap: () async {
@@ -414,52 +409,8 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
               await getIt<AuthClient>().signOut();
             },
           ),
-          ListTile(
-            leading: Icon(
-              Icons.delete_forever,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            title: Text(
-              l10n.accountDeleteDialogTitle,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            onTap: () => _confirmDeleteAccount(context),
-          ),
         ],
       ),
     );
-  }
-
-  Future<void> _exportUserData(BuildContext context) async {
-    try {
-      await getIt<ExportUserData>().execute();
-    } on AppException catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.code.localize(AppLocalizations.of(context)))),
-        );
-      }
-    }
-  }
-
-  void _confirmDeleteAccount(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => DeleteAccountDialog(
-        onConfirm: () => _deleteAccount(context),
-      ),
-    );
-  }
-
-  Future<void> _deleteAccount(BuildContext context) async {
-    try {
-      await getIt<DeleteAccount>().execute();
-    } on AppException catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.code.localize(AppLocalizations.of(context)))),
-        );
-      }
-    }
   }
 }

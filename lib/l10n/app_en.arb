@@ -181,6 +181,7 @@
   "settingsThemeSystem": "System",
   "settingsThemeLight": "Light",
   "settingsThemeDark": "Dark",
+  "settingsAccountSectionTitle": "Account",
 
   "commonDaysAgoShort": "{count}d",
   "@commonDaysAgoShort": {
