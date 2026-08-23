@@ -13,6 +13,12 @@ class AppConstants {
   // autoridad real es el backend.
   static const int aiUsageDailyWordLimit = 30000;
   static const String settingsThemeModeKey = 'theme_mode';
+  // Gatea la migración de una sola vez desde el formato binario previo
+  // (solo 'light'/'dark') al de tres opciones (se agrega 'system'). Es una
+  // key aparte del valor en sí para no confundir una preferencia legada
+  // con una elección explícita de 'light'/'dark' hecha ya usando la UI
+  // nueva -- ver ThemeCubit.
+  static const String settingsThemeModeMigratedKey = 'theme_mode_migrated_v2';
   static const String settingsLastSyncedAtKey = 'last_synced_at';
   // v3 (no v2): la v2 limpiaba los artículos locales pero no reseteaba el
   // cursor de sincronización, dejando invisibles para siempre los

@@ -7,23 +7,40 @@ import 'package:newsreader/core/constants/app_constants.dart';
 class ThemeCubit extends Cubit<ThemeMode> {
   final Box<dynamic> _settingsBox;
 
-  ThemeCubit(this._settingsBox)
-      : super(
-          _settingsBox.get(
-                AppConstants.settingsThemeModeKey,
-                defaultValue: 'light',
-              ) ==
-              'dark'
-              ? ThemeMode.dark
-              : ThemeMode.light,
-        );
+  ThemeCubit(this._settingsBox) : super(_initialMode(_settingsBox));
 
-  void toggleTheme() {
-    final isDark = state == ThemeMode.light;
-    _settingsBox.put(
-      AppConstants.settingsThemeModeKey,
-      isDark ? 'dark' : 'light',
+  static ThemeMode _initialMode(Box<dynamic> settingsBox) {
+    final alreadyMigrated = settingsBox.get(
+      AppConstants.settingsThemeModeMigratedKey,
+      defaultValue: false,
+    ) as bool;
+
+    if (!alreadyMigrated) {
+      settingsBox.put(AppConstants.settingsThemeModeMigratedKey, true);
+      final legacyValue =
+          settingsBox.get(AppConstants.settingsThemeModeKey) as String?;
+      // Solo el formato binario previo (sin 'system') se migra; un
+      // usuario nuevo sin valor guardado ya cae en el default 'system' de
+      // la lectura de abajo, sin necesitar sobreescribir nada acá.
+      if (legacyValue == 'light' || legacyValue == 'dark') {
+        settingsBox.put(
+          AppConstants.settingsThemeModeKey,
+          ThemeMode.system.name,
+        );
+        return ThemeMode.system;
+      }
+    }
+
+    final stored =
+        settingsBox.get(AppConstants.settingsThemeModeKey) as String?;
+    return ThemeMode.values.firstWhere(
+      (mode) => mode.name == stored,
+      orElse: () => ThemeMode.system,
     );
-    emit(isDark ? ThemeMode.dark : ThemeMode.light);
+  }
+
+  void setThemeMode(ThemeMode mode) {
+    _settingsBox.put(AppConstants.settingsThemeModeKey, mode.name);
+    emit(mode);
   }
 }

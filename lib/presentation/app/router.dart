@@ -41,6 +41,7 @@ import 'package:newsreader/features/sources/presentation/screens/add_source_scre
 import 'package:newsreader/features/sources/presentation/screens/import_opml_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/source_detail_screen.dart';
 import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
+import 'package:newsreader/features/settings/presentation/screens/settings_screen.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
@@ -111,6 +112,10 @@ final appRouter = GoRouter(
           ),
         ),
       ],
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsScreen(),
     ),
     GoRoute(
       path: '/sources/add',
@@ -387,6 +392,11 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
             label: Text(l10n.navSummaries),
           ),
           const Divider(indent: 16, endIndent: 16),
+          ListTile(
+            leading: const Icon(Icons.settings_outlined),
+            title: Text(l10n.navSettings),
+            onTap: () => context.push('/settings'),
+          ),
           ListTile(
             leading: const Icon(Icons.ios_share),
             title: Text(l10n.navExportData),

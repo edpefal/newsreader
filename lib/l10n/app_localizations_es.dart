@@ -338,6 +338,24 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navSignOut => 'Cerrar sesión';
 
   @override
+  String get navSettings => 'Ajustes';
+
+  @override
+  String get settingsScreenTitle => 'Ajustes';
+
+  @override
+  String get settingsThemeSectionTitle => 'Apariencia';
+
+  @override
+  String get settingsThemeSystem => 'Sistema';
+
+  @override
+  String get settingsThemeLight => 'Claro';
+
+  @override
+  String get settingsThemeDark => 'Oscuro';
+
+  @override
   String commonDaysAgoShort(int count) {
     return '${count}d';
   }

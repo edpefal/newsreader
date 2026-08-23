@@ -29,5 +29,39 @@ void main() {
       final size = tester.getSize(sizedBoxFinder);
       expect(size, const Size(200, 100));
     });
+
+    Color dotColorFor(WidgetTester tester) {
+      final customPaint = tester.widget<CustomPaint>(
+        find.byKey(const Key('paperTextureCustomPaint')),
+      );
+      return (customPaint.painter as dynamic).dotColor as Color;
+    }
+
+    // Dos `testWidgets` separados en vez de dos `pumpWidget` en el mismo
+    // test: reusar el mismo `tester` con dos MaterialApp de brightness
+    // distinto dentro de un único test no siempre re-resuelve el Theme
+    // heredado (comportamiento del binding de test, no del widget bajo
+    // prueba), así que cada brightness se verifica en aislamiento.
+    testWidgets('usa puntos negros de bajo alpha en light', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: Brightness.light),
+          home: const PaperBackground(child: SizedBox.shrink()),
+        ),
+      );
+
+      expect(dotColorFor(tester), const Color(0x08000000));
+    });
+
+    testWidgets('usa puntos claros de bajo alpha en dark', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: Brightness.dark),
+          home: const PaperBackground(child: SizedBox.shrink()),
+        ),
+      );
+
+      expect(dotColorFor(tester), const Color(0x14FFFFFF));
+    });
   });
 }

@@ -4,6 +4,56 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import 'package:newsreader/core/widgets/html_content_renderer.dart';
 
+final _styleAttrPattern = RegExp(
+  r'''style\s*=\s*(["'])(.*?)\1''',
+  caseSensitive: false,
+  dotAll: true,
+);
+final _colorAttrPattern = RegExp(
+  r'''\scolor\s*=\s*(["']).*?\1''',
+  caseSensitive: false,
+);
+
+/// Quita el color de texto inline (`style="color:..."` y el atributo
+/// deprecado `color`) de todos los elementos del HTML del artículo, para
+/// que el contenido siempre use los colores del theme activo en vez del
+/// branding propio del autor del newsletter -- algunos (ej. Android Weekly)
+/// traen su propio azul de link o su propio gris de descripción, calibrados
+/// contra un fondo blanco, con muy bajo contraste sobre el fondo oscuro de
+/// dark mode. No toca `background-color` ni otras propiedades.
+///
+/// Trabaja con regex sobre el string crudo en vez de parsear y
+/// re-serializar el HTML: un roundtrip de parseo puede reestructurar el
+/// árbol de un documento mal formado (común en newsletters), lo que
+/// rompió el layout de embeds de YouTube en la primera versión de este
+/// fix. Regex quirúrgico sobre atributos puntuales no toca la estructura.
+///
+/// Público (sin `_`) y anotado `@visibleForTesting` por el mismo motivo que
+/// [normalizeYoutubeUrl]: no está pensado para usarse fuera de este archivo.
+@visibleForTesting
+String stripInlineTextColors(String htmlContent) {
+  final withoutStyleColors = htmlContent.replaceAllMapped(
+    _styleAttrPattern,
+    (match) {
+      final quote = match.group(1)!;
+      final declarations = match
+          .group(2)!
+          .split(';')
+          .map((declaration) => declaration.trim())
+          .where(
+            (declaration) =>
+                declaration.isNotEmpty &&
+                !declaration.toLowerCase().startsWith('color'),
+          )
+          .toList();
+      return declarations.isEmpty
+          ? ''
+          : 'style=$quote${declarations.join('; ')}$quote';
+    },
+  );
+  return withoutStyleColors.replaceAll(_colorAttrPattern, '');
+}
+
 const _youtubeHosts = {
   'youtube.com',
   'www.youtube.com',
@@ -170,7 +220,7 @@ class FwhHtmlContentRenderer extends HtmlContentRenderer {
         : theme.textTheme.bodyMedium;
 
     return HtmlWidget(
-      htmlContent,
+      stripInlineTextColors(htmlContent),
       textStyle: textStyle,
       renderMode: RenderMode.column,
       factoryBuilder: () => _ArticleWidgetFactory(articleUrl: articleUrl),

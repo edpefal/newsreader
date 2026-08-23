@@ -48,4 +48,71 @@ void main() {
       expect(result, isNull);
     });
   });
+
+  group('stripInlineTextColors', () {
+    test('quita la declaración color de un style inline en un link', () {
+      final result = stripInlineTextColors(
+        '<a href="https://x.com" style="color:#1a73e8; font-weight:bold">x</a>',
+      );
+
+      expect(result, contains('font-weight:bold'));
+      expect(result, isNot(contains('color:#1a73e8')));
+      expect(result, isNot(contains('color: #1a73e8')));
+    });
+
+    test('quita el atributo color deprecado', () {
+      final result = stripInlineTextColors(
+        '<a href="https://x.com" color="blue">x</a>',
+      );
+
+      expect(result, isNot(contains('color="blue"')));
+    });
+
+    test('remueve el atributo style por completo si solo tenía color', () {
+      final result = stripInlineTextColors(
+        '<a href="https://x.com" style="color:blue">x</a>',
+      );
+
+      expect(result, isNot(contains('style=')));
+    });
+
+    test('no toca links sin estilo inline', () {
+      final result = stripInlineTextColors('<a href="https://x.com">x</a>');
+
+      expect(result, contains('href="https://x.com"'));
+    });
+
+    test('quita el color inline de elementos que no son links', () {
+      final result = stripInlineTextColors(
+        '<p style="color:#666666">descripción</p>',
+      );
+
+      expect(result, isNot(contains('color:#666666')));
+    });
+
+    test('conserva background-color al quitar color', () {
+      final result = stripInlineTextColors(
+        '<span style="color:red; background-color:yellow">x</span>',
+      );
+
+      expect(result, contains('background-color:yellow'));
+      expect(result, isNot(contains('color:red')));
+    });
+
+    test('no altera la estructura ni los atributos de dimensión de un iframe', () {
+      const html =
+          '<p>texto</p><iframe width="560" height="315" src="https://www.youtube.com/embed/x"></iframe><p style="color:blue">otro</p>';
+
+      final result = stripInlineTextColors(html);
+
+      // El espacio sobrante donde estaba `style=` es válido en HTML
+      // (`<p >`) y no afecta el parseo -- lo que importa es que el
+      // <iframe> y sus atributos de dimensión queden intactos, byte a
+      // byte, sin pasar por un roundtrip de parseo/re-serializado.
+      expect(
+        result,
+        '<p>texto</p><iframe width="560" height="315" src="https://www.youtube.com/embed/x"></iframe><p >otro</p>',
+      );
+    });
+  });
 }
