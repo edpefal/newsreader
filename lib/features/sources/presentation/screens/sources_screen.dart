@@ -120,50 +120,57 @@ class _EmptySourcesState extends StatelessWidget {
 enum _SourceAction { edit, delete }
 
 class _SourceTile extends StatelessWidget {
+  static const double _verticalSpacing = 8;
+
   final NewsSource source;
 
   const _SourceTile({required this.source});
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: SourceIcon(iconUrl: source.iconUrl, name: source.name),
-      title: Text(source.name),
-      subtitle: source.author != null ? Text(source.author!) : null,
-      onTap: () => context.push('/sources/${source.id}', extra: source),
-      trailing: PopupMenuButton<_SourceAction>(
-        onSelected: (action) {
-          if (action == _SourceAction.edit) {
-            showDialog(
-              context: context,
-              builder: (_) => EditSourceNameDialog(
-                initialName: source.name,
-                onSave: (name) => context
-                    .read<SourcesCubit>()
-                    .updateSourceName(source.id, name),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: _verticalSpacing),
+      child: ListTile(
+        leading: SourceIcon(iconUrl: source.iconUrl, name: source.name),
+        title: Text(source.name),
+        subtitle: source.author != null ? Text(source.author!) : null,
+        onTap: () => context.push('/sources/${source.id}', extra: source),
+        trailing: PopupMenuButton<_SourceAction>(
+          onSelected: (action) {
+            if (action == _SourceAction.edit) {
+              showDialog(
+                context: context,
+                builder: (_) => EditSourceNameDialog(
+                  initialName: source.name,
+                  onSave: (name) => context
+                      .read<SourcesCubit>()
+                      .updateSourceName(source.id, name),
+                ),
+              );
+            } else {
+              showDialog(
+                context: context,
+                builder: (_) => DeleteSourceDialog(
+                  sourceName: source.name,
+                  onConfirm: () =>
+                      context.read<SourcesCubit>().deleteSource(source.id),
+                ),
+              );
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: _SourceAction.edit,
+              child: Text(
+                AppLocalizations.of(context).sourcesEditNameMenuItem,
               ),
-            );
-          } else {
-            showDialog(
-              context: context,
-              builder: (_) => DeleteSourceDialog(
-                sourceName: source.name,
-                onConfirm: () =>
-                    context.read<SourcesCubit>().deleteSource(source.id),
-              ),
-            );
-          }
-        },
-        itemBuilder: (context) => [
-          PopupMenuItem(
-            value: _SourceAction.edit,
-            child: Text(AppLocalizations.of(context).sourcesEditNameMenuItem),
-          ),
-          PopupMenuItem(
-            value: _SourceAction.delete,
-            child: Text(AppLocalizations.of(context).commonDelete),
-          ),
-        ],
+            ),
+            PopupMenuItem(
+              value: _SourceAction.delete,
+              child: Text(AppLocalizations.of(context).commonDelete),
+            ),
+          ],
+        ),
       ),
     );
   }

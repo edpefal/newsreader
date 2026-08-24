@@ -9,6 +9,7 @@ import 'package:newsreader/presentation/theme/app_theme.dart';
 
 class ArticleInboxTile extends StatelessWidget {
   static const double _thumbnailSize = 56;
+  static const double _verticalSpacing = 8;
 
   final Article article;
   final VoidCallback? onTap;
@@ -20,40 +21,43 @@ class ArticleInboxTile extends StatelessWidget {
     final theme = Theme.of(context);
     final accent = theme.extension<ReevoAccent>();
 
-    return ListTile(
-      leading: SourceIcon(
-        iconUrl: article.sourceIconUrl,
-        name: article.sourceName,
-      ),
-      title: Text(
-        article.title,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: theme.textTheme.titleMedium?.copyWith(
-          fontWeight: article.isRead ? FontWeight.w500 : FontWeight.w600,
-          color: article.isRead
-              ? theme.colorScheme.onSurface.withValues(alpha: 0.6)
-              : theme.colorScheme.onSurface,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: _verticalSpacing),
+      child: ListTile(
+        leading: SourceIcon(
+          iconUrl: article.sourceIconUrl,
+          name: article.sourceName,
         ),
-      ),
-      subtitle: Row(
-        children: [
-          if (!article.isRead && accent != null) ...[
-            _UnreadChamfer(color: accent.unreadFavoriteAmber),
-            const SizedBox(width: 6),
-          ],
-          Flexible(
-            child: Text(
-              '${article.sourceName} · '
-              '${LocalizedDateFormatter.articleTileDate(context, article.publishedAt)}',
-              style: theme.textTheme.labelMedium,
-              overflow: TextOverflow.ellipsis,
-            ),
+        title: Text(
+          article.title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: article.isRead ? FontWeight.w500 : FontWeight.w600,
+            color: article.isRead
+                ? theme.colorScheme.onSurface.withValues(alpha: 0.6)
+                : theme.colorScheme.onSurface,
           ),
-        ],
+        ),
+        subtitle: Row(
+          children: [
+            if (!article.isRead && accent != null) ...[
+              _UnreadChamfer(color: accent.unreadFavoriteAmber),
+              const SizedBox(width: 6),
+            ],
+            Flexible(
+              child: Text(
+                '${article.sourceName} · '
+                '${LocalizedDateFormatter.articleTileDate(context, article.publishedAt)}',
+                style: theme.textTheme.labelMedium,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        trailing: _buildTrailing(accent),
+        onTap: onTap,
       ),
-      trailing: _buildTrailing(accent),
-      onTap: onTap,
     );
   }
 
