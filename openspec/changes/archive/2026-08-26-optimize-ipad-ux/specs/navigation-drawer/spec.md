@@ -1,12 +1,4 @@
-# Capability: Navigation Drawer
-
-## Purpose
-
-Define el comportamiento visual y estructural del `NavigationDrawer` de la app: cómo se distingue el destino seleccionado, cómo se presenta el contador de no leídos, el layout de su header, y la consistencia entre íconos y labels de cada destino.
-
----
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Indicador visual del destino seleccionado
 El sistema SHALL distinguir el destino de navegación actualmente seleccionado con un estilo visualmente sutil (fondo claro, texto/ícono en un tono oscuro de contraste), sin que el indicador domine visualmente el resto de la lista de destinos. Este requisito aplica únicamente cuando el `NavigationDrawer` está visible, es decir, cuando el ancho de la ventana es menor a 840dp (ver capability `adaptive-navigation-rail`).
@@ -30,23 +22,9 @@ El sistema SHALL mostrar el contador de artículos no leídos del Inbox en el `N
 - **WHEN** el conteo de artículos no leídos del Inbox es mayor a 0, en cualquier estado de selección del destino (seleccionado o no seleccionado), y el `NavigationDrawer` está visible
 - **THEN** el badge se muestra a la derecha del texto de la etiqueta "Inbox", separado tanto del ícono como del texto, sin cubrir ni superponerse visualmente a ninguno de los dos
 
-### Requirement: Layout compacto del header del drawer
-El sistema SHALL ajustar la altura del header del `NavigationDrawer` al contenido que muestra, sin reservar espacio en blanco forzado adicional al necesario para ese contenido.
-
-#### Scenario: Header del drawer con el contenido actual
-- **WHEN** el usuario abre el `NavigationDrawer`
-- **THEN** el header ocupa solo el espacio necesario para mostrar su contenido, sin un área vacía adicional debajo
-
 ### Requirement: Separadores de sección con margen respecto a los bordes
 Los separadores visuales entre secciones del `NavigationDrawer` (ej. entre los destinos de navegación y las acciones de cuenta) SHALL tener un margen horizontal respecto a los bordes de la pantalla, alineado con el padding del resto del contenido del drawer, en vez de extenderse de borde a borde. El `NavigationDrawer` ya no incluye la acción "Cerrar sesión" (movida a la pantalla de Ajustes, ver capability `adaptive-navigation-rail`), por lo que este requisito aplica a los separadores restantes entre las secciones vigentes del drawer.
 
 #### Scenario: Separador entre secciones del drawer
 - **WHEN** se muestra un separador entre dos secciones del `NavigationDrawer`
 - **THEN** el separador no toca los bordes izquierdo y derecho de la pantalla
-
-### Requirement: Consistencia entre ícono y label de cada destino
-Cada destino de navegación en el `NavigationDrawer` SHALL usar un ícono cuyo significado sea coherente con el texto de su label.
-
-#### Scenario: Destino de artículos leídos
-- **WHEN** se muestra el destino correspondiente a los artículos ya leídos (label "Leídos")
-- **THEN** el ícono usado SHALL representar el concepto de "leído", no el de "archivado"
