@@ -349,27 +349,22 @@ class _ScaffoldWithNavBarState extends State<_ScaffoldWithNavBar> {
             ),
           ),
           NavigationDrawerDestination(
-            icon: BlocBuilder<InboxCubit, InboxState>(
+            icon: const Icon(Icons.inbox_outlined),
+            selectedIcon: const Icon(Icons.inbox),
+            label: BlocBuilder<InboxCubit, InboxState>(
               builder: (context, state) {
                 final count = state is InboxLoaded ? state.articles.length : 0;
-                if (count == 0) return const Icon(Icons.inbox_outlined);
-                return Badge.count(
-                  count: count,
-                  child: const Icon(Icons.inbox_outlined),
+                if (count == 0) return Text(l10n.navInbox);
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(l10n.navInbox),
+                    const SizedBox(width: 8),
+                    Badge.count(count: count),
+                  ],
                 );
               },
             ),
-            selectedIcon: BlocBuilder<InboxCubit, InboxState>(
-              builder: (context, state) {
-                final count = state is InboxLoaded ? state.articles.length : 0;
-                if (count == 0) return const Icon(Icons.inbox);
-                return Badge.count(
-                  count: count,
-                  child: const Icon(Icons.inbox),
-                );
-              },
-            ),
-            label: Text(l10n.navInbox),
           ),
           NavigationDrawerDestination(
             icon: const Icon(Icons.star_outline),
