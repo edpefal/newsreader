@@ -151,6 +151,7 @@ La app soporta inglés, español (neutro) y francés, vía el mecanismo oficial 
 - Tests de Bloc/Cubit con `bloc_test`.
 - Los widget tests envuelven el widget bajo prueba en `MultiBlocProvider` con mocks.
 - Un test no debe depender del estado de otro test (sin estado compartido entre tests).
+- Las pruebas manuales en simulador/dispositivo (correr la app, navegar, tomar screenshots) las hace el usuario. No lancees `flutter run` en un simulador ni automatices taps para verificar cambios de UI, salvo que el usuario lo pida explícitamente.
 
 ## Rutas de navegación
 
