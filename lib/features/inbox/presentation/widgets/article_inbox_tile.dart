@@ -14,49 +14,66 @@ class ArticleInboxTile extends StatelessWidget {
   final Article article;
   final VoidCallback? onTap;
 
-  const ArticleInboxTile({super.key, required this.article, this.onTap});
+  /// Si es `true`, el artículo es la selección actualmente abierta en el
+  /// panel de detalle (layout de dos paneles del Inbox): la fila se resalta
+  /// con un color de fondo distintivo en vez de comportarse como una fila
+  /// más de la lista.
+  final bool isOpen;
+
+  const ArticleInboxTile({
+    super.key,
+    required this.article,
+    this.onTap,
+    this.isOpen = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = theme.extension<ReevoAccent>();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: _verticalSpacing),
-      child: ListTile(
-        leading: SourceIcon(
-          iconUrl: article.sourceIconUrl,
-          name: article.sourceName,
-        ),
-        title: Text(
-          article.title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: article.isRead ? FontWeight.w500 : FontWeight.w600,
-            color: article.isRead
-                ? theme.colorScheme.onSurface.withValues(alpha: 0.6)
-                : theme.colorScheme.onSurface,
+    // `Material` (no `Container`/`ColoredBox`) porque `ListTile` pinta su
+    // propio fondo e ink splashes sobre el `Material` ancestro más cercano;
+    // un `ColoredBox` de por medio los taparía (ver aviso del framework).
+    return Material(
+      color: isOpen ? theme.colorScheme.secondaryContainer : Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: _verticalSpacing),
+        child: ListTile(
+          leading: SourceIcon(
+            iconUrl: article.sourceIconUrl,
+            name: article.sourceName,
           ),
-        ),
-        subtitle: Row(
-          children: [
-            if (!article.isRead && accent != null) ...[
-              _UnreadChamfer(color: accent.unreadFavoriteAmber),
-              const SizedBox(width: 6),
-            ],
-            Flexible(
-              child: Text(
-                '${article.sourceName} · '
-                '${LocalizedDateFormatter.articleTileDate(context, article.publishedAt)}',
-                style: theme.textTheme.labelMedium,
-                overflow: TextOverflow.ellipsis,
-              ),
+          title: Text(
+            article.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: article.isRead ? FontWeight.w500 : FontWeight.w600,
+              color: article.isRead
+                  ? theme.colorScheme.onSurface.withValues(alpha: 0.6)
+                  : theme.colorScheme.onSurface,
             ),
-          ],
+          ),
+          subtitle: Row(
+            children: [
+              if (!article.isRead && accent != null) ...[
+                _UnreadChamfer(color: accent.unreadFavoriteAmber),
+                const SizedBox(width: 6),
+              ],
+              Flexible(
+                child: Text(
+                  '${article.sourceName} · '
+                  '${LocalizedDateFormatter.articleTileDate(context, article.publishedAt)}',
+                  style: theme.textTheme.labelMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          trailing: _buildTrailing(accent),
+          onTap: onTap,
         ),
-        trailing: _buildTrailing(accent),
-        onTap: onTap,
       ),
     );
   }

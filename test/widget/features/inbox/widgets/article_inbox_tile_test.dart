@@ -96,4 +96,34 @@ void main() {
 
     expect(find.byIcon(Icons.star), findsNothing);
   });
+
+  testWidgets('isOpen=true resalta la fila con secondaryContainer', (tester) async {
+    await tester.pumpWidget(
+      _wrap(ArticleInboxTile(article: _article(), isOpen: true)),
+    );
+
+    final material = tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(ArticleInboxTile),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(material.color, AppTheme.light.colorScheme.secondaryContainer);
+  });
+
+  testWidgets('isOpen=false (default) no resalta la fila', (tester) async {
+    await tester.pumpWidget(_wrap(ArticleInboxTile(article: _article())));
+
+    final material = tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(ArticleInboxTile),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(material.color, Colors.transparent);
+  });
 }

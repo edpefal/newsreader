@@ -71,6 +71,7 @@ class InboxCubit extends Cubit<InboxState> {
           hasSources: current.hasSources,
           readArticleId: current.readArticleId,
           isSyncingInBackground: true,
+          openArticleId: current.openArticleId,
         ),
       );
     }
@@ -103,6 +104,7 @@ class InboxCubit extends Cubit<InboxState> {
           hasSources: current.hasSources,
           readArticleId: current.readArticleId,
           isSyncingInBackground: true,
+          openArticleId: current.openArticleId,
         ),
       );
     }
@@ -113,6 +115,40 @@ class InboxCubit extends Cubit<InboxState> {
   Future<void> markAsRead(String articleId) async {
     await _markArticleAsRead.execute(articleId);
     await _reload(readArticleId: articleId);
+  }
+
+  /// Selecciona [articleId] como el artículo abierto en el panel de detalle
+  /// (layout de dos paneles): se resalta en la columna central en vez de
+  /// desaparecer, aunque `ReaderScreen` ya lo haya marcado como leído. Si
+  /// había otro artículo abierto, este se cierra (se anima su salida de la
+  /// lista, igual que hoy) y el nuevo pasa a resaltarse.
+  Future<void> selectArticle(String articleId) async {
+    final current = state;
+    if (current is! InboxLoaded) return;
+    final previous = current.openArticleId;
+    if (previous == articleId) return;
+    if (previous == null) {
+      emit(
+        InboxLoaded(
+          current.articles,
+          hasSources: current.hasSources,
+          isSyncingInBackground: current.isSyncingInBackground,
+          searchQuery: current.searchQuery,
+          openArticleId: articleId,
+        ),
+      );
+      return;
+    }
+    await _reload(readArticleId: previous, openArticleId: articleId);
+  }
+
+  /// Cierra el artículo actualmente abierto en el panel de detalle (el
+  /// usuario volvió con el botón del lector): se anima su salida de la
+  /// columna central, igual que al marcarlo como leído.
+  Future<void> closeOpenArticle() async {
+    final current = state;
+    if (current is! InboxLoaded || current.openArticleId == null) return;
+    await _reload(readArticleId: current.openArticleId, clearOpenArticleId: true);
   }
 
   /// Filtra, en memoria, la lista de artículos ya cargada por [query] (ver
@@ -127,6 +163,7 @@ class InboxCubit extends Cubit<InboxState> {
           hasSources: current.hasSources,
           isSyncingInBackground: current.isSyncingInBackground,
           searchQuery: query,
+          openArticleId: current.openArticleId,
         ),
       );
     }
@@ -161,9 +198,22 @@ class InboxCubit extends Cubit<InboxState> {
     return future;
   }
 
-  Future<void> _reload({String? readArticleId}) async {
+  /// Recarga los artículos desde el repositorio. `openArticleId` sostiene la
+  /// selección resaltada de la columna central (ver `InboxLoaded`): si no se
+  /// pasa explícitamente, se conserva la que ya tenía el estado anterior
+  /// (por ejemplo, un pull-to-refresh o una sincronización en segundo plano
+  /// no deben perder la selección abierta). Pasar `clearOpenArticleId: true`
+  /// (usado por `closeOpenArticle`) es la única forma de limpiarla.
+  Future<void> _reload({
+    String? readArticleId,
+    String? openArticleId,
+    bool clearOpenArticleId = false,
+  }) async {
     final previous = state;
     final searchQuery = previous is InboxLoaded ? previous.searchQuery : '';
+    final effectiveOpenArticleId = clearOpenArticleId
+        ? null
+        : openArticleId ?? (previous is InboxLoaded ? previous.openArticleId : null);
     final results = await Future.wait([
       _getInboxArticles.execute(),
       _getSources.execute(),
@@ -176,6 +226,7 @@ class InboxCubit extends Cubit<InboxState> {
         hasSources: hasSources,
         readArticleId: readArticleId,
         searchQuery: searchQuery,
+        openArticleId: effectiveOpenArticleId,
       ),
     );
   }

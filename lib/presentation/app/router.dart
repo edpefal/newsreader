@@ -25,6 +25,7 @@ import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/auth/presentation/screens/login_screen.dart';
 import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
+import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 import 'package:newsreader/features/reader/presentation/screens/reader_screen.dart';
@@ -67,14 +68,55 @@ class _AuthChangeNotifier extends ChangeNotifier {
 /// Archivo): en modo compact reproduce la lista a pantalla completa, en
 /// modo expanded es el estado vacío del panel derecho del
 /// `AdaptiveListDetailScaffold` (ver core `ShellRoute` de la branch).
-Widget _articleListRoot(BuildContext context, Widget listScreen) {
+///
+/// [onEmptyDetailShown], si se pasa, se invoca cada vez que se muestra el
+/// estado vacío en modo expandido -- ocurre exactamente cuando el usuario
+/// vuelve con el chevron del lector hasta la raíz de la branch (o al entrar
+/// sin ninguna selección). Lo usa el Inbox para cerrar la selección resaltada
+/// de la columna central (ver `InboxCubit.closeOpenArticle`); Favoritos y
+/// Archivo no lo necesitan porque no tienen ese concepto de selección
+/// resaltada.
+Widget _articleListRoot(
+  BuildContext context,
+  Widget listScreen, {
+  void Function(BuildContext)? onEmptyDetailShown,
+}) {
   if (context.windowSizeClass == WindowSizeClass.compact) return listScreen;
   final l10n = AppLocalizations.of(context);
-  return EmptyDetailPlaceholder(
-    icon: Icons.article_outlined,
-    title: l10n.commonSelectArticleTitle,
-    subtitle: l10n.commonSelectArticleSubtitle,
+  return _EmptyArticleDetail(
+    onShown: onEmptyDetailShown,
+    child: EmptyDetailPlaceholder(
+      icon: Icons.article_outlined,
+      title: l10n.commonSelectArticleTitle,
+      subtitle: l10n.commonSelectArticleSubtitle,
+    ),
   );
+}
+
+/// Envuelve el estado vacío del panel derecho y dispara [onShown] una vez,
+/// en `initState` -- go_router construye una instancia nueva cada vez que la
+/// ruta raíz de la branch vuelve a ser la actual (por ejemplo, al volver con
+/// el chevron desde `/article/:id`), así que `initState` es exactamente el
+/// punto donde "ya no hay ningún artículo abierto en el panel derecho".
+class _EmptyArticleDetail extends StatefulWidget {
+  final Widget child;
+  final void Function(BuildContext)? onShown;
+
+  const _EmptyArticleDetail({required this.child, this.onShown});
+
+  @override
+  State<_EmptyArticleDetail> createState() => _EmptyArticleDetailState();
+}
+
+class _EmptyArticleDetailState extends State<_EmptyArticleDetail> {
+  @override
+  void initState() {
+    super.initState();
+    widget.onShown?.call(context);
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Builder del `ShellRoute` de una branch: en modo compact devuelve `child`
@@ -133,6 +175,7 @@ GoRoute _articleRoute({required String paramName}) {
 StatefulShellBranch articleListBranch({
   required String rootPath,
   required Widget Function() listScreenBuilder,
+  void Function(BuildContext)? onEmptyDetailShown,
 }) {
   return StatefulShellBranch(
     routes: [
@@ -142,8 +185,11 @@ StatefulShellBranch articleListBranch({
         routes: [
           GoRoute(
             path: rootPath,
-            builder: (context, state) =>
-                _articleListRoot(context, listScreenBuilder()),
+            builder: (context, state) => _articleListRoot(
+              context,
+              listScreenBuilder(),
+              onEmptyDetailShown: onEmptyDetailShown,
+            ),
             routes: [_articleRoute(paramName: 'id')],
           ),
         ],
@@ -204,6 +250,11 @@ final appRouter = GoRouter(
         articleListBranch(
           rootPath: '/',
           listScreenBuilder: () => const InboxScreen(),
+          // Favoritos y Archivo no tienen `openArticleId` (no difieren su
+          // archivado al volver); solo el Inbox necesita este cierre
+          // explícito -- ver `InboxCubit.closeOpenArticle`.
+          onEmptyDetailShown: (context) =>
+              context.read<InboxCubit>().closeOpenArticle(),
         ),
         articleListBranch(
           rootPath: '/favorites',

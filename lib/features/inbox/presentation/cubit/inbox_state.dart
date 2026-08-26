@@ -20,12 +20,21 @@ final class InboxLoaded extends InboxState {
   final bool isSyncingInBackground;
   final String searchQuery;
 
+  /// Artículo actualmente resaltado en la columna central porque es la
+  /// selección abierta en el panel de detalle (layout de dos paneles). A
+  /// diferencia de `readArticleId` (señal transitoria para animar una
+  /// salida puntual), este campo persiste mientras el artículo sigue
+  /// siendo la selección abierta -- ver `InboxCubit.selectArticle` /
+  /// `closeOpenArticle`.
+  final String? openArticleId;
+
   const InboxLoaded(
     this.articles, {
     required this.hasSources,
     this.readArticleId,
     this.isSyncingInBackground = false,
     this.searchQuery = '',
+    this.openArticleId,
   });
 
   List<Article> get visibleArticles => searchQuery.isEmpty
@@ -39,5 +48,6 @@ final class InboxLoaded extends InboxState {
     readArticleId,
     isSyncingInBackground,
     searchQuery,
+    openArticleId,
   ];
 }

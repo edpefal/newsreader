@@ -1,0 +1,20 @@
+## MODIFIED Requirements
+
+### Requirement: Un artículo se mueve a "Leídos" al ser abierto
+El sistema SHALL marcar un artículo como leído (`isRead=true`, `readAt=now`) cuando el usuario lo abre en ReaderScreen. El artículo SHALL desaparecer del inbox y aparecer en "Leídos" inmediatamente, excepto cuando el Inbox lo muestra en el layout de dos paneles como la selección actualmente resaltada en la columna central (ver capability `adaptive-master-detail`): en ese caso el artículo permanece visible (resaltado) en el inbox hasta que el usuario lo cierra explícitamente, aunque ya esté marcado como leído.
+
+#### Scenario: Usuario abre un artículo desde el inbox (modo compacto o sin panel de dos columnas)
+- **WHEN** el usuario toca un artículo en el inbox fuera del layout de dos paneles
+- **THEN** el artículo desaparece del inbox y aparece en "Leídos"
+
+#### Scenario: Artículo ya leído no se vuelve a marcar
+- **WHEN** el usuario abre un artículo que ya tiene `isRead=true`
+- **THEN** el sistema no modifica el artículo
+
+#### Scenario: Usuario abre un artículo desde el inbox en el layout de dos paneles
+- **WHEN** el usuario toca un artículo en la columna central del inbox en modo de dos paneles
+- **THEN** el artículo se marca como leído pero permanece visible (resaltado) en el inbox hasta que el usuario lo cierra explícitamente (volviendo con el lector o seleccionando otro artículo)
+
+#### Scenario: Artículo se archiva del inbox al cerrarse explícitamente
+- **WHEN** el usuario cierra explícitamente un artículo resaltado del layout de dos paneles del inbox (volviendo con el lector o seleccionando otro artículo)
+- **THEN** el artículo desaparece del inbox y aparece en "Leídos"

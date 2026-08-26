@@ -318,7 +318,8 @@ void main() {
     });
 
     testWidgets(
-        'en modo split (ancho expanded), tap en artículo marca como leído de inmediato sin esperar a "volver"',
+        'en modo split (ancho expanded), tap en artículo lo selecciona en vez '
+        'de marcarlo como leído de inmediato (queda resaltado, no se archiva)',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -327,16 +328,102 @@ void main() {
 
       when(() => cubit.state)
           .thenReturn(InboxLoaded(tArticles, hasSources: true));
-      when(() => cubit.markAsRead(any())).thenAnswer((_) async {});
+      when(() => cubit.selectArticle(any())).thenAnswer((_) async {});
 
       await tester.pumpWidget(_buildSubject(cubit));
       await tester.tap(find.text('Artículo de prueba'));
       await tester.pumpAndSettle();
 
-      // Se llama de inmediato al seleccionar, sin necesitar volver a la
-      // lista (que en modo split sigue visible junto al lector) -- ver
-      // bugfix de "no se archiva hasta tocar el chevron" en optimize-ipad-ux.
-      verify(() => cubit.markAsRead('1')).called(1);
+      // Se selecciona (para resaltarlo en la columna central) en vez de
+      // marcarse leído de inmediato -- el archivado se difiere hasta que el
+      // usuario cierre explícitamente esa selección (chevron o elegir otro
+      // artículo). Ver proposal.md de `highlight-selected-inbox-article`.
+      verify(() => cubit.selectArticle('1')).called(1);
+      verifyNever(() => cubit.markAsRead(any()));
+    });
+
+    testWidgets(
+        'en modo split, el artículo con openArticleId se resalta con secondaryContainer',
+        (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      when(() => cubit.state).thenReturn(
+        InboxLoaded(tArticles, hasSources: true, openArticleId: '1'),
+      );
+
+      final widget = _buildSubject(cubit);
+      await tester.pumpWidget(widget);
+
+      final theme = Theme.of(tester.element(find.text('Artículo de prueba')));
+      final openTileMaterial = tester.widget<Material>(
+        find
+            .ancestor(
+              of: find.text('Artículo de prueba'),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      final closedTileMaterial = tester.widget<Material>(
+        find
+            .ancestor(
+              of: find.text('Otro artículo'),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+
+      expect(openTileMaterial.color, theme.colorScheme.secondaryContainer);
+      expect(closedTileMaterial.color, Colors.transparent);
+    });
+
+    testWidgets(
+        'al cambiar la selección abierta (openArticleId), el artículo previo '
+        'se anima hacia afuera y el nuevo queda resaltado',
+        (tester) async {
+      final openFirstState = InboxLoaded(
+        tArticles,
+        hasSources: true,
+        openArticleId: '1',
+      );
+      final switchedState = InboxLoaded(
+        [tArticles[1]],
+        hasSources: true,
+        readArticleId: '1',
+        openArticleId: '2',
+      );
+
+      whenListen(
+        cubit,
+        Stream.fromIterable([switchedState]),
+        initialState: openFirstState,
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      expect(find.text('Artículo de prueba'), findsOneWidget);
+      expect(find.text('Otro artículo'), findsOneWidget);
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Artículo de prueba'), findsNothing);
+      expect(find.text('Otro artículo'), findsOneWidget);
+
+      final theme = Theme.of(tester.element(find.text('Otro artículo')));
+      final remainingTileMaterial = tester.widget<Material>(
+        find
+            .ancestor(
+              of: find.text('Otro artículo'),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      expect(
+        remainingTileMaterial.color,
+        theme.colorScheme.secondaryContainer,
+      );
     });
 
     testWidgets(

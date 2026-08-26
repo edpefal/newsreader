@@ -463,5 +463,97 @@ void main() {
       act: (cubit) => cubit.search('algo'),
       expect: () => [],
     );
+
+    blocTest<InboxCubit, InboxState>(
+      'selectArticle() sin selección previa solo resalta, sin recargar del repositorio',
+      build: buildCubit,
+      seed: () => InboxLoaded(tArticles, hasSources: true),
+      act: (cubit) => cubit.selectArticle('1'),
+      expect: () => [
+        InboxLoaded(tArticles, hasSources: true, openArticleId: '1'),
+      ],
+      verify: (_) => verifyNever(() => mockGetInboxArticles.execute()),
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'selectArticle() con el mismo artículo ya abierto es un no-op',
+      build: buildCubit,
+      seed: () =>
+          InboxLoaded(tArticles, hasSources: true, openArticleId: '1'),
+      act: (cubit) => cubit.selectArticle('1'),
+      expect: () => [],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'selectArticle() con otra selección abierta anima la salida de la '
+      'anterior (readArticleId) y resalta la nueva (openArticleId)',
+      build: () {
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => [tArticles[0]]);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () =>
+          InboxLoaded(tArticles, hasSources: true, openArticleId: '1'),
+      act: (cubit) => cubit.selectArticle('2'),
+      expect: () => [
+        InboxLoaded(
+          [tArticles[0]],
+          hasSources: true,
+          readArticleId: '1',
+          openArticleId: '2',
+        ),
+      ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'closeOpenArticle() anima la salida del artículo abierto y limpia openArticleId',
+      build: () {
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => []);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () =>
+          InboxLoaded(tArticles, hasSources: true, openArticleId: '1'),
+      act: (cubit) => cubit.closeOpenArticle(),
+      expect: () => [
+        const InboxLoaded([], hasSources: true, readArticleId: '1'),
+      ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'closeOpenArticle() no tiene efecto si no hay ningún artículo abierto',
+      build: buildCubit,
+      seed: () => InboxLoaded(tArticles, hasSources: true),
+      act: (cubit) => cubit.closeOpenArticle(),
+      expect: () => [],
+      verify: (_) => verifyNever(() => mockGetInboxArticles.execute()),
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'syncInBackground() conserva la selección abierta (openArticleId)',
+      build: () {
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () =>
+          InboxLoaded(tArticles, hasSources: true, openArticleId: '1'),
+      act: (cubit) => cubit.syncInBackground(),
+      expect: () => [
+        InboxLoaded(
+          tArticles,
+          hasSources: true,
+          isSyncingInBackground: true,
+          openArticleId: '1',
+        ),
+        InboxLoaded(tArticles, hasSources: true, openArticleId: '1'),
+      ],
+    );
   });
 }

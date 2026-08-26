@@ -93,6 +93,24 @@ class _InboxViewState extends State<InboxView> {
     return result;
   }
 
+  /// Compara los IDs de artículo actualmente en `_flatItems` contra
+  /// [newArticles], en el mismo orden. Usado por el listener para distinguir
+  /// una recarga que sí cambió el contenido de la lista (requiere
+  /// reconstruir `_flatItems`/`_listKey`) de una que solo actualizó
+  /// `openArticleId` (resaltado).
+  bool _articleIdsChanged(List<Article> newArticles) {
+    final currentIds = _flatItems
+        .whereType<_ArticleListItem>()
+        .map((item) => item.article.id)
+        .toList();
+    final newIds = newArticles.map((a) => a.id).toList();
+    if (currentIds.length != newIds.length) return true;
+    for (var i = 0; i < currentIds.length; i++) {
+      if (currentIds[i] != newIds[i]) return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,16 +132,31 @@ class _InboxViewState extends State<InboxView> {
         final loaded = state as InboxLoaded;
         if (loaded.readArticleId != null) {
           _animateDismiss(loaded.readArticleId!);
-        } else {
+        } else if (_articleIdsChanged(loaded.visibleArticles)) {
+          // Solo se reconstruye `_flatItems`/`_listKey` cuando cambió el
+          // contenido real de la lista. Si lo único que cambió fue
+          // `openArticleId` (resaltar la selección abierta), no hace falta
+          // -- el `builder` de abajo ya se vuelve a ejecutar con el estado
+          // nuevo (ver `buildWhen`) y refleja el resaltado sin perder la
+          // posición de scroll con un `_listKey` nuevo.
           setState(() {
             _flatItems = _buildFlatItems(loaded.visibleArticles);
             _listKey = GlobalKey<AnimatedListState>();
           });
         }
       },
-      buildWhen: (_, curr) =>
-          curr is InboxLoading ||
-          (curr is InboxLoaded && curr.readArticleId == null),
+      buildWhen: (prev, curr) {
+        if (curr is InboxLoading) return true;
+        if (curr is! InboxLoaded) return false;
+        if (curr.readArticleId == null) return true;
+        // Al cerrar/reemplazar la selección abierta (`readArticleId` seteado
+        // por `selectArticle`/`closeOpenArticle`), igual hace falta
+        // reconstruir si `openArticleId` cambió: si no, la fila del
+        // artículo recién seleccionado no se resalta hasta el próximo
+        // rebuild ajeno a este cambio.
+        final prevOpenArticleId = prev is InboxLoaded ? prev.openArticleId : null;
+        return prevOpenArticleId != curr.openArticleId;
+      },
       builder: (context, state) {
         if (state is InboxLoading) {
           final l10n = AppLocalizations.of(context);
@@ -180,14 +213,17 @@ class _InboxViewState extends State<InboxView> {
                 onDismissed: (_) => _onSwipeDismiss(context, article),
                 child: ArticleInboxTile(
                   article: article,
+                  isOpen: article.id == loaded.openArticleId,
                   onTap: () {
                     final cubit = context.read<InboxCubit>();
                     if (context.windowSizeClass == WindowSizeClass.expanded) {
-                      // En modo split la lista sigue visible: no hay un
-                      // "volver" que dispare la animación de salida, así
-                      // que se marca leído y se recarga en el mismo tap.
+                      // En modo split la lista sigue visible: el artículo
+                      // se resalta como selección abierta en vez de
+                      // desaparecer; solo se archiva cuando el usuario lo
+                      // cierra explícitamente (chevron de volver o al
+                      // seleccionar otro artículo, ver `selectArticle`).
                       context.go('/article/${article.id}', extra: article);
-                      cubit.markAsRead(article.id);
+                      cubit.selectArticle(article.id);
                       return;
                     }
                     context.push('/article/${article.id}', extra: article).then((_) {
