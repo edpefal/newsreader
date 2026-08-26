@@ -64,6 +64,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get inboxUpToDateSubtitle => 'Tire pour actualiser.';
 
   @override
+  String get commonSelectArticleTitle => 'Sélectionne un article';
+
+  @override
+  String get commonSelectArticleSubtitle =>
+      'Choisis un article dans la liste pour le lire ici.';
+
+  @override
   String get readerRemoveFavoriteTooltip => 'Retirer des favoris';
 
   @override
@@ -174,6 +181,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get sourceDetailEmptySubtitle =>
       'Il n\'y a pas encore d\'articles de cette source.';
+
+  @override
+  String get sourcesSelectSourceTitle => 'Sélectionne une source';
+
+  @override
+  String get sourcesSelectSourceSubtitle =>
+      'Choisis une source dans la liste pour voir ses articles.';
 
   @override
   String sourcesOpmlImportedOnly(int count) {
@@ -293,6 +307,13 @@ class AppLocalizationsFr extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get summariesSelectSummaryTitle => 'Sélectionne un résumé';
+
+  @override
+  String get summariesSelectSummarySubtitle =>
+      'Choisis un résumé quotidien dans la liste pour le lire ici.';
 
   @override
   String get loginSubtitle => 'Connecte-toi pour continuer';

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/navigation/route_path.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/core/widgets/no_search_results_state.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
@@ -63,15 +63,12 @@ class ArchiveView extends StatelessWidget {
               final article = item as Article;
               return ArticleInboxTile(
                 article: article,
-                onTap: () async {
-                  await context.push(
-                    '/article/${article.id}',
-                    extra: article,
-                  );
-                  if (context.mounted) {
-                    context.read<ArchiveCubit>().loadArchive();
-                  }
-                },
+                onTap: () => openDetailRoute(
+                  context: context,
+                  path: '/archive/article/${article.id}',
+                  extra: article,
+                  onOpened: () => context.read<ArchiveCubit>().loadArchive(),
+                ),
               );
             },
           );

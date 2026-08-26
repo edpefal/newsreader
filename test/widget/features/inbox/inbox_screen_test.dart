@@ -134,6 +134,21 @@ void main() {
       expect(find.text('Otro artículo'), findsOneWidget);
     });
 
+    testWidgets(
+        'muestra la lista aunque el último estado conocido traiga readArticleId '
+        '(ej. InboxView remontada tras rotar con un artículo ya leído en modo split)',
+        (tester) async {
+      when(() => cubit.state).thenReturn(
+        InboxLoaded(tArticles, hasSources: true, readArticleId: 'old-id'),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Artículo de prueba'), findsOneWidget);
+      expect(find.text('Otro artículo'), findsOneWidget);
+      expect(find.text('Estás al día'), findsNothing);
+    });
+
     testWidgets('cada artículo muestra el nombre de la fuente', (tester) async {
       when(() => cubit.state)
           .thenReturn(InboxLoaded(tArticles, hasSources: true));
@@ -300,6 +315,28 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Reader'), findsOneWidget);
+    });
+
+    testWidgets(
+        'en modo split (ancho expanded), tap en artículo marca como leído de inmediato sin esperar a "volver"',
+        (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      when(() => cubit.state)
+          .thenReturn(InboxLoaded(tArticles, hasSources: true));
+      when(() => cubit.markAsRead(any())).thenAnswer((_) async {});
+
+      await tester.pumpWidget(_buildSubject(cubit));
+      await tester.tap(find.text('Artículo de prueba'));
+      await tester.pumpAndSettle();
+
+      // Se llama de inmediato al seleccionar, sin necesitar volver a la
+      // lista (que en modo split sigue visible junto al lector) -- ver
+      // bugfix de "no se archiva hasta tocar el chevron" en optimize-ipad-ux.
+      verify(() => cubit.markAsRead('1')).called(1);
     });
 
     testWidgets(

@@ -16,16 +16,17 @@ class MockArchiveCubit extends MockCubit<ArchiveState>
 
 Widget _buildSubject(ArchiveCubit cubit) {
   final router = GoRouter(
+    initialLocation: '/archive',
     routes: [
       GoRoute(
-        path: '/',
+        path: '/archive',
         builder: (_, __) => BlocProvider<ArchiveCubit>.value(
           value: cubit,
           child: const ArchiveView(),
         ),
       ),
       GoRoute(
-        path: '/article/:id',
+        path: '/archive/article/:id',
         builder: (_, __) => const Scaffold(body: Text('Reader')),
       ),
     ],

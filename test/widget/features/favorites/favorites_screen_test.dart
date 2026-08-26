@@ -16,16 +16,17 @@ class MockFavoritesCubit extends MockCubit<FavoritesState>
 
 Widget _buildSubject(FavoritesCubit cubit) {
   final router = GoRouter(
+    initialLocation: '/favorites',
     routes: [
       GoRoute(
-        path: '/',
+        path: '/favorites',
         builder: (_, __) => BlocProvider<FavoritesCubit>.value(
           value: cubit,
           child: const FavoritesView(),
         ),
       ),
       GoRoute(
-        path: '/article/:id',
+        path: '/favorites/article/:id',
         builder: (_, __) => const Scaffold(body: Text('Reader')),
       ),
     ],

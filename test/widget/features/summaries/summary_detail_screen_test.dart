@@ -33,11 +33,13 @@ Widget _buildSubject(DailySummary summary, ResolveSummaryArticles resolver) {
           summary: summary,
           resolveSummaryArticles: resolver,
         ),
-      ),
-      GoRoute(
-        path: '/article/:id',
-        builder: (_, state) =>
-            Scaffold(body: Text('Article ${state.pathParameters['id']}')),
+        routes: [
+          GoRoute(
+            path: 'article/:id',
+            builder: (_, state) =>
+                Scaffold(body: Text('Article ${state.pathParameters['id']}')),
+          ),
+        ],
       ),
     ],
   );

@@ -113,9 +113,9 @@ const _deeplyNestedTableThreshold = 4;
 /// delega a [_RawEmailWebView], que usa un motor de browser real y no tiene
 /// ese bug.
 ///
-/// Público (sin `_`) y anotado `@visibleForTesting` por el mismo motivo que
-/// [normalizeYoutubeUrl]: no está pensado para usarse fuera de este archivo.
-@visibleForTesting
+/// Público (sin `_`): además de los tests, lo consume `ReaderScreen` para
+/// decidir si el contenido debe quedar exento del ancho máximo de lectura
+/// (ver capability `reader-typography`).
 bool looksLikeRawEmailHtml(String htmlContent) =>
     htmlContent.contains('xmlns:v="urn:schemas-microsoft-com:vml"') ||
     htmlContent.contains('xmlns:o="urn:schemas-microsoft-com:office:office"') ||

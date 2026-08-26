@@ -28,6 +28,9 @@
   "inboxUpToDateTitle": "You're all caught up",
   "inboxUpToDateSubtitle": "Pull to refresh.",
 
+  "commonSelectArticleTitle": "Select an article",
+  "commonSelectArticleSubtitle": "Choose an article from the list to read it here.",
+
   "readerRemoveFavoriteTooltip": "Remove from favorites",
   "readerAddFavoriteTooltip": "Add to favorites",
   "readerOpenInBrowserTooltip": "View in browser",
@@ -73,6 +76,9 @@
 
   "sourceDetailEmptyTitle": "No posts",
   "sourceDetailEmptySubtitle": "There are no articles from this source yet.",
+
+  "sourcesSelectSourceTitle": "Select a source",
+  "sourcesSelectSourceSubtitle": "Choose a source from the list to see its articles.",
 
   "sourcesOpmlImportedOnly": "{count, plural, =1{1 source imported.} other{{count} sources imported.}}",
   "@sourcesOpmlImportedOnly": {
@@ -157,6 +163,9 @@
       }
     }
   },
+
+  "summariesSelectSummaryTitle": "Select a summary",
+  "summariesSelectSummarySubtitle": "Choose a daily summary from the list to read it here.",
 
   "loginSubtitle": "Sign in to continue",
   "loginContinueWithGoogle": "Continue with Google",

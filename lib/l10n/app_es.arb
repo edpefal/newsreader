@@ -18,6 +18,9 @@
   "inboxUpToDateTitle": "Estás al día",
   "inboxUpToDateSubtitle": "Desliza para actualizar.",
 
+  "commonSelectArticleTitle": "Selecciona un artículo",
+  "commonSelectArticleSubtitle": "Elige un artículo de la lista para leerlo aquí.",
+
   "readerRemoveFavoriteTooltip": "Quitar de favoritos",
   "readerAddFavoriteTooltip": "Agregar a favoritos",
   "readerOpenInBrowserTooltip": "Ver en el navegador",
@@ -57,6 +60,9 @@
   "sourceDetailEmptyTitle": "Sin publicaciones",
   "sourceDetailEmptySubtitle": "Aún no hay artículos de esta fuente.",
 
+  "sourcesSelectSourceTitle": "Selecciona una fuente",
+  "sourcesSelectSourceSubtitle": "Elige una fuente de la lista para ver sus artículos.",
+
   "sourcesOpmlImportedOnly": "{count, plural, =1{1 fuente importada.} other{{count} fuentes importadas.}}",
   "sourcesOpmlImportedWithFailures": "{imported, plural, =1{1 importada} other{{imported} importadas}}, {failed, plural, =1{1 fallida} other{{failed} fallidas}}.",
   "sourcesImportOpmlScreenTitle": "Importar OPML",
@@ -81,6 +87,8 @@
   "summaryDetailTitle": "Resumen del {date}",
   "summaryDetailArticleCount": "{count, plural, =1{1 artículo resumido} other{{count} artículos resumidos}}",
   "summaryListArticleCount": "{count, plural, =1{1 artículo} other{{count} artículos}}",
+  "summariesSelectSummaryTitle": "Selecciona un resumen",
+  "summariesSelectSummarySubtitle": "Elige un resumen diario de la lista para leerlo aquí.",
 
   "loginSubtitle": "Inicia sesión para continuar",
   "loginContinueWithGoogle": "Continuar con Google",

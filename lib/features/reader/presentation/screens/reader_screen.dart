@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/navigation/route_path.dart';
 import 'package:newsreader/core/utils/feed_content_checker.dart';
 import 'package:newsreader/core/utils/localized_date_formatter.dart';
 import 'package:newsreader/core/widgets/chamfered_box.dart';
@@ -13,6 +14,29 @@ import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart'
 import 'package:newsreader/features/reader/presentation/widgets/reading_progress_bar.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 import 'package:newsreader/presentation/theme/app_theme.dart';
+
+/// Ancho máximo del cuerpo del artículo (título, metadata y HTML) para una
+/// línea de lectura cómoda en pantallas anchas (ver capability
+/// `reader-typography`).
+const double kReaderMaxContentWidth = 680;
+
+/// Centra [child] con un ancho máximo de [kReaderMaxContentWidth], sin
+/// afectar el ancho de las pantallas más angostas que ese máximo.
+class _MaxWidthCentered extends StatelessWidget {
+  final Widget child;
+
+  const _MaxWidthCentered({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: kReaderMaxContentWidth),
+        child: child,
+      ),
+    );
+  }
+}
 
 class ReaderScreen extends StatefulWidget {
   final Article article;
@@ -76,6 +100,15 @@ class _ReaderScreenState extends State<ReaderScreen>
         : 0;
   }
 
+  /// Navega al WebView del artículo con una ruta relativa a la ubicación
+  /// actual (`.../web`), para funcionar sin importar bajo qué branch
+  /// (Inbox, Favoritos, Archivo, Fuentes, Resúmenes) esté anidada la ruta
+  /// de este lector.
+  void _openWebView(BuildContext context, Article article) {
+    final currentPath = GoRouterState.of(context).uri.path;
+    context.push(joinRoutePath(currentPath, 'web'), extra: article);
+  }
+
   Future<void> _onToggleFavorite() async {
     _popController.forward(from: 0);
     setState(() => _isFavorite = !_isFavorite);
@@ -134,10 +167,7 @@ class _ReaderScreenState extends State<ReaderScreen>
           IconButton(
             icon: const Icon(Icons.public),
             tooltip: l10n.readerOpenInBrowserTooltip,
-            onPressed: () => context.push(
-              '/article/${article.id}/web',
-              extra: article,
-            ),
+            onPressed: () => _openWebView(context, article),
           ),
         ],
       ),
@@ -150,23 +180,37 @@ class _ReaderScreenState extends State<ReaderScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    article.title,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  _MaxWidthCentered(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          article.title,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _buildMeta(context, article),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Divider(),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _buildMeta(context, article),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Divider(),
                   const SizedBox(height: 16),
-                  _buildContent(context, article, theme),
+                  // El contenido raw de email queda exento del ancho máximo
+                  // de lectura: se renderiza en un WebView aislado que ya
+                  // resuelve su propio layout (ver `looksLikeRawEmailHtml`).
+                  _isRawEmailArticle(article)
+                      ? _buildContent(context, article, theme)
+                      : _MaxWidthCentered(
+                          child: _buildContent(context, article, theme),
+                        ),
                 ],
               ),
             ),
@@ -208,7 +252,7 @@ class _ReaderScreenState extends State<ReaderScreen>
   ) {
     final color = theme.colorScheme.onSurfaceVariant;
     return InkWell(
-      onTap: () => context.push('/article/${article.id}/web', extra: article),
+      onTap: () => _openWebView(context, article),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -226,6 +270,11 @@ class _ReaderScreenState extends State<ReaderScreen>
         ],
       ),
     );
+  }
+
+  bool _isRawEmailArticle(Article article) {
+    final html = article.contentHtml;
+    return html != null && looksLikeRawEmailHtml(html);
   }
 
   String _buildMeta(BuildContext context, Article article) {

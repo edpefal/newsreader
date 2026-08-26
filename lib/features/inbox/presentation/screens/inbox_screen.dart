@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/utils/window_size_class.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/core/widgets/no_search_results_state.dart';
 import 'package:newsreader/core/widgets/paper_texture.dart';
@@ -58,7 +59,15 @@ class _InboxViewState extends State<InboxView> {
     if (!_initialized) {
       _initialized = true;
       final state = context.read<InboxCubit>().state;
-      if (state is InboxLoaded && state.readArticleId == null) {
+      // `readArticleId` es una señal transitoria para animar la salida de
+      // un artículo recién leído en una instancia de `InboxView` que ya
+      // estaba montada -- no significa que `visibleArticles` esté
+      // desactualizada (`_reload` ya vuelve a consultar el repositorio, que
+      // excluye el artículo leído). Si se ignora acá, una instancia nueva
+      // (por ejemplo, tras remontarse tras un cambio de ancho/rotación
+      // mientras ese flag seguía seteado del último artículo leído en modo
+      // split) arranca con la lista vacía en vez de la lista real.
+      if (state is InboxLoaded) {
         _flatItems = _buildFlatItems(state.visibleArticles);
       }
     }
@@ -171,16 +180,21 @@ class _InboxViewState extends State<InboxView> {
                 onDismissed: (_) => _onSwipeDismiss(context, article),
                 child: ArticleInboxTile(
                   article: article,
-                  onTap: () async {
-                    await context.push(
-                      '/article/${article.id}',
-                      extra: article,
-                    );
-                    if (context.mounted) {
-                      context.read<InboxCubit>().loadArticlesAfterReading(
-                        article.id,
-                      );
+                  onTap: () {
+                    final cubit = context.read<InboxCubit>();
+                    if (context.windowSizeClass == WindowSizeClass.expanded) {
+                      // En modo split la lista sigue visible: no hay un
+                      // "volver" que dispare la animación de salida, así
+                      // que se marca leído y se recarga en el mismo tap.
+                      context.go('/article/${article.id}', extra: article);
+                      cubit.markAsRead(article.id);
+                      return;
                     }
+                    context.push('/article/${article.id}', extra: article).then((_) {
+                      if (context.mounted) {
+                        cubit.loadArticlesAfterReading(article.id);
+                      }
+                    });
                   },
                 ),
               );

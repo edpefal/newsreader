@@ -23,18 +23,21 @@ Widget _buildSubject(
   final router = GoRouter(
     routes: [
       GoRoute(
-        path: '/',
+        path: '/article/:id',
         builder: (_, __) => ReaderScreen(
           article: article,
           markAsRead: markAsRead,
           toggleFavorite: toggleFavorite,
         ),
-      ),
-      GoRoute(
-        path: '/article/:id/web',
-        builder: (_, __) => const Scaffold(body: Text('WebView')),
+        routes: [
+          GoRoute(
+            path: 'web',
+            builder: (_, __) => const Scaffold(body: Text('WebView')),
+          ),
+        ],
       ),
     ],
+    initialLocation: '/article/${article.id}',
   );
   return MaterialApp.router(
     locale: testLocale,
@@ -86,6 +89,57 @@ void main() {
           _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
 
       expect(find.text('Newsletter A'), findsOneWidget);
+    });
+
+    testWidgets(
+        'limita el ancho del cuerpo del artículo a ~680pt cuando hay más espacio disponible',
+        (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+
+      final headerBox = tester.widget<ConstrainedBox>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is ConstrainedBox &&
+              widget.constraints.maxWidth == kReaderMaxContentWidth,
+        ).first,
+      );
+      expect(headerBox.constraints.maxWidth, kReaderMaxContentWidth);
+      final renderedSize = tester.getSize(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is ConstrainedBox &&
+              widget.constraints.maxWidth == kReaderMaxContentWidth,
+        ).first,
+      );
+      expect(renderedSize.width, lessThanOrEqualTo(kReaderMaxContentWidth));
+    });
+
+    testWidgets(
+        'ocupa todo el ancho disponible cuando la pantalla es más angosta que el máximo',
+        (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+
+      final renderedSize = tester.getSize(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is ConstrainedBox &&
+              widget.constraints.maxWidth == kReaderMaxContentWidth,
+        ).first,
+      );
+      // 400 de ancho de pantalla - 20*2 de padding del scroll view.
+      expect(renderedSize.width, 360);
     });
 
     testWidgets('muestra el título del artículo', (tester) async {

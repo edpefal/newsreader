@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
+import 'package:newsreader/core/navigation/route_path.dart';
 import 'package:newsreader/core/observability/observability_client.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
@@ -105,10 +106,15 @@ class SourceDetailView extends StatelessWidget {
               final article = item as Article;
               return ArticleInboxTile(
                 article: article,
-                onTap: () => context.push(
-                  '/article/${article.id}',
-                  extra: article,
-                ),
+                onTap: () {
+                  final basePath = GoRouterState.of(context).uri.path;
+                  openDetailRoute(
+                    context: context,
+                    path: joinRoutePath(basePath, 'article/${article.id}'),
+                    extra: article,
+                    onOpened: () {},
+                  );
+                },
               );
             },
           );

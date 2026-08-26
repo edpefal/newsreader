@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/navigation/route_path.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/core/widgets/no_search_results_state.dart';
 import 'package:newsreader/core/widgets/paper_texture.dart';
@@ -65,15 +65,12 @@ class FavoritesView extends StatelessWidget {
                 final article = item as Article;
                 return ArticleInboxTile(
                   article: article,
-                  onTap: () async {
-                    await context.push(
-                      '/article/${article.id}',
-                      extra: article,
-                    );
-                    if (context.mounted) {
-                      context.read<FavoritesCubit>().loadFavorites();
-                    }
-                  },
+                  onTap: () => openDetailRoute(
+                    context: context,
+                    path: '/favorites/article/${article.id}',
+                    extra: article,
+                    onOpened: () => context.read<FavoritesCubit>().loadFavorites(),
+                  ),
                 );
               },
             );

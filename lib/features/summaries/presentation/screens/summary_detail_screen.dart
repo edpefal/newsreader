@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/domain/entities/summary_source_block.dart';
+import 'package:newsreader/core/navigation/route_path.dart';
 import 'package:newsreader/core/utils/localized_date_formatter.dart';
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
@@ -182,7 +183,7 @@ class _ArticleLink extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.primary;
     return InkWell(
-      onTap: () => context.push('/article/${article.id}', extra: article),
+      onTap: () => _openArticle(context, article),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -217,7 +218,17 @@ class _ArticleChip extends StatelessWidget {
           maxLines: 1,
         ),
       ),
-      onPressed: () => context.push('/article/${article.id}', extra: article),
+      onPressed: () => _openArticle(context, article),
     );
   }
+}
+
+void _openArticle(BuildContext context, Article article) {
+  final basePath = GoRouterState.of(context).uri.path;
+  openDetailRoute(
+    context: context,
+    path: joinRoutePath(basePath, 'article/${article.id}'),
+    extra: article,
+    onOpened: () {},
+  );
 }

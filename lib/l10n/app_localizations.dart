@@ -190,6 +190,18 @@ abstract class AppLocalizations {
   /// **'Pull to refresh.'**
   String get inboxUpToDateSubtitle;
 
+  /// No description provided for @commonSelectArticleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an article'**
+  String get commonSelectArticleTitle;
+
+  /// No description provided for @commonSelectArticleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an article from the list to read it here.'**
+  String get commonSelectArticleSubtitle;
+
   /// No description provided for @readerRemoveFavoriteTooltip.
   ///
   /// In en, this message translates to:
@@ -388,6 +400,18 @@ abstract class AppLocalizations {
   /// **'There are no articles from this source yet.'**
   String get sourceDetailEmptySubtitle;
 
+  /// No description provided for @sourcesSelectSourceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a source'**
+  String get sourcesSelectSourceTitle;
+
+  /// No description provided for @sourcesSelectSourceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a source from the list to see its articles.'**
+  String get sourcesSelectSourceSubtitle;
+
   /// No description provided for @sourcesOpmlImportedOnly.
   ///
   /// In en, this message translates to:
@@ -519,6 +543,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 article} other{{count} articles}}'**
   String summaryListArticleCount(int count);
+
+  /// No description provided for @summariesSelectSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a summary'**
+  String get summariesSelectSummaryTitle;
+
+  /// No description provided for @summariesSelectSummarySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a daily summary from the list to read it here.'**
+  String get summariesSelectSummarySubtitle;
 
   /// No description provided for @loginSubtitle.
   ///
