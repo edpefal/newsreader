@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:newsreader/core/widgets/fwh_html_content_renderer.dart';
@@ -113,6 +115,124 @@ void main() {
         result,
         '<p>texto</p><iframe width="560" height="315" src="https://www.youtube.com/embed/x"></iframe><p >otro</p>',
       );
+    });
+  });
+
+  group('looksLikeRawEmailHtml', () {
+    test('detecta el fixture real de email crudo (Morning Brew)', () {
+      final html = File(
+        'test/fixtures/newsletter_nested_tables.html',
+      ).readAsStringSync();
+
+      expect(looksLikeRawEmailHtml(html), isTrue);
+    });
+
+    test('detecta el namespace VML de Outlook por sí solo', () {
+      const html =
+          '<html xmlns:v="urn:schemas-microsoft-com:vml"><body>x</body></html>';
+
+      expect(looksLikeRawEmailHtml(html), isTrue);
+    });
+
+    test('detecta el namespace de Office por sí solo', () {
+      const html =
+          '<html xmlns:o="urn:schemas-microsoft-com:office:office"><body>x</body></html>';
+
+      expect(looksLikeRawEmailHtml(html), isTrue);
+    });
+
+    test('no detecta HTML de blog/web típico', () {
+      const html =
+          '<div><h2>Título</h2><p>Un párrafo con <a href="https://x.com">un link</a>.</p></div>';
+
+      expect(looksLikeRawEmailHtml(html), isFalse);
+    });
+
+    test('no detecta HTML vacío', () {
+      expect(looksLikeRawEmailHtml(''), isFalse);
+    });
+
+    test(
+      'detecta anidamiento profundo de tablas sin marcas VML/Office '
+      '(caso Daily Stoic: mismo crash, otro ESP)',
+      () {
+        final nested = '${'<table>' * 5}x${'</table>' * 5}';
+
+        expect(looksLikeRawEmailHtml(nested), isTrue);
+      },
+    );
+
+    test('no marca tablas de datos con poco anidamiento como email crudo', () {
+      const html = '<table><tr><td>'
+          '<table><tr><td>celda anidada</td></tr></table>'
+          '</td></tr></table>';
+
+      expect(looksLikeRawEmailHtml(html), isFalse);
+    });
+  });
+
+  group('maxTableNestingDepth', () {
+    test('retorna 0 sin tablas', () {
+      expect(maxTableNestingDepth('<p>sin tablas</p>'), 0);
+    });
+
+    test('cuenta la profundidad máxima de tablas anidadas', () {
+      final nested = '${'<table>' * 3}x${'</table>' * 3}';
+
+      expect(maxTableNestingDepth(nested), 3);
+    });
+
+    test('no se confunde con tablas hermanas (no anidadas)', () {
+      const html = '<table></table><table></table>';
+
+      expect(maxTableNestingDepth(html), 1);
+    });
+
+    test('ignora cierres de más sin romper (HTML mal formado)', () {
+      const html = '</table><table>x</table>';
+
+      expect(maxTableNestingDepth(html), 1);
+    });
+  });
+
+  group('ensureViewportMeta', () {
+    test('inserta la etiqueta viewport justo después de <head>', () {
+      const html = '<html><head><title>x</title></head><body>x</body></html>';
+
+      final result = ensureViewportMeta(html);
+
+      expect(
+        result,
+        '<html><head>'
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+        '<title>x</title></head><body>x</body></html>',
+      );
+    });
+
+    test('antepone la etiqueta viewport si no hay <head>', () {
+      const html = '<body>x</body>';
+
+      final result = ensureViewportMeta(html);
+
+      expect(
+        result,
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+        '<body>x</body>',
+      );
+    });
+
+    test('no toca el HTML si ya trae su propia etiqueta viewport', () {
+      const html = '<html><head>'
+          '<meta name="viewport" content="width=600">'
+          '</head><body>x</body></html>';
+
+      expect(ensureViewportMeta(html), html);
+    });
+
+    test('detecta la etiqueta viewport con comillas simples', () {
+      const html = "<head><meta name='viewport' content='width=600'></head>";
+
+      expect(ensureViewportMeta(html), html);
     });
   });
 }
