@@ -187,6 +187,7 @@ class _ReaderScreenState extends State<ReaderScreen>
       children.add(FwhHtmlContentRenderer(
         htmlContent: article.contentHtml!,
         articleUrl: article.articleUrl,
+        readerMode: true,
       ));
     } else if (article.excerpt != null) {
       children.add(Text(article.excerpt!, style: theme.textTheme.bodyMedium));

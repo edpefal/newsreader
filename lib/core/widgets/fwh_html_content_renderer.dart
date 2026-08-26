@@ -436,7 +436,7 @@ class FwhHtmlContentRenderer extends HtmlContentRenderer {
     final theme = Theme.of(context);
     final textStyle = readerMode
         ? theme.textTheme.bodyLarge?.copyWith(
-            fontSize: 18,
+            fontSize: 20,
             height: 1.7,
             letterSpacing: 0.2,
           )
