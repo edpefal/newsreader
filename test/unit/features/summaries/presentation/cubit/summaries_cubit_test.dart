@@ -302,13 +302,17 @@ void main() {
       'generateTodaySummary() sin suscripción activa dispara la generación '
       'automáticamente si el usuario completa la compra desde el paywall',
       build: () {
+        var isSubscribed = false;
         when(() => mockSubscriptionStatusProvider.isSubscribed)
-            .thenReturn(false);
+            .thenAnswer((_) => isSubscribed);
         when(
           () => mockSubscriptionStatusProvider.showPaywall(
             onSubscribed: any(named: 'onSubscribed'),
           ),
         ).thenAnswer((invocation) async {
+          // Simula que Superwall actualiza `subscriptionStatus` (compra
+          // completada) antes de invocar el callback `feature`/`onSubscribed`.
+          isSubscribed = true;
           final onSubscribed = invocation.namedArguments[#onSubscribed]
               as Future<void> Function();
           await onSubscribed();
@@ -331,6 +335,44 @@ void main() {
           usage: tAiUsageStatusNotReached,
         ),
       ],
+    );
+
+    blocTest<SummariesCubit, SummariesState>(
+      'generateTodaySummary() NO genera si el paywall invoca onSubscribed '
+      'sin que la suscripción esté realmente activa (ej. feature_gating '
+      'mal configurado en Superwall, o el usuario cerró el paywall sin '
+      'comprar)',
+      build: () {
+        when(() => mockSubscriptionStatusProvider.isSubscribed)
+            .thenReturn(false);
+        when(
+          () => mockSubscriptionStatusProvider.showPaywall(
+            onSubscribed: any(named: 'onSubscribed'),
+          ),
+        ).thenAnswer((invocation) async {
+          final onSubscribed = invocation.namedArguments[#onSubscribed]
+              as Future<void> Function();
+          // `isSubscribed` nunca pasa a `true` -- simula un paywall que
+          // invoca `feature` igual (non_gated) o que el usuario lo cerró
+          // sin completar la compra.
+          await onSubscribed();
+        });
+        return buildCubit();
+      },
+      seed: () => SummariesLoaded(
+        summaries: const [],
+        canGenerateToday: true,
+        usage: tAiUsageStatusNotReached,
+      ),
+      act: (cubit) => cubit.generateTodaySummary('es'),
+      expect: () => <SummariesState>[],
+      verify: (_) {
+        verifyNever(
+          () => mockGenerateDailySummary.execute(
+            language: any(named: 'language'),
+          ),
+        );
+      },
     );
 
     blocTest<SummariesCubit, SummariesState>(

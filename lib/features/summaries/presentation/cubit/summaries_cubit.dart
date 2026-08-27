@@ -47,12 +47,19 @@ class SummariesCubit extends Cubit<SummariesState> {
 
   /// Antes de disparar la generación, chequea el estado local de
   /// suscripción: si no hay suscripción activa, muestra el paywall de
-  /// Superwall en vez de generar. Si el usuario completa la compra desde
-  /// el paywall, la generación se dispara automáticamente a continuación.
+  /// Superwall en vez de generar. `onSubscribed` vuelve a chequear
+  /// `isSubscribed` antes de generar -- Superwall solo debería invocarlo
+  /// tras una compra completada, pero una config remota incorrecta del
+  /// paywall (`feature_gating: non_gated`) puede dispararlo igual al cerrar
+  /// el paywall sin comprar, así que no alcanza con confiar en que el
+  /// callback se haya ejecutado.
   Future<void> generateTodaySummary(String language) async {
     if (!_subscriptionStatusProvider.isSubscribed) {
       await _subscriptionStatusProvider.showPaywall(
-        onSubscribed: () => _generate(language),
+        onSubscribed: () async {
+          if (!_subscriptionStatusProvider.isSubscribed) return;
+          await _generate(language);
+        },
       );
       return;
     }
