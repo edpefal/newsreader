@@ -11,6 +11,7 @@ import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
+import 'package:newsreader/presentation/app/branch_root_paths.dart';
 
 /// Índices de tabs cuyo contenido soporta búsqueda: Inbox, Favoritos y
 /// Leídos (capability `article-search`), y Fuentes (capability
@@ -135,14 +136,25 @@ class _AdaptiveShellState extends State<AdaptiveShell> {
       );
     }
 
+    // En compact, una pantalla de detalle (artículo, fuente o resumen) se
+    // empuja a pantalla completa reemplazando la lista de la tab (ver
+    // `_adaptiveBranchShell` en router.dart). En ese caso el chrome del
+    // shell principal (AppBar con logo/búsqueda + drawer) debe ocultarse
+    // para que solo se vea el AppBar propio de esa pantalla de detalle.
+    final isAtBranchRoot = branchRootPaths.contains(
+      GoRouterState.of(context).uri.path,
+    );
+
     return Scaffold(
-      appBar: appBar,
+      appBar: isAtBranchRoot ? appBar : null,
       body: widget.navigationShell,
-      drawer: _AppNavigationDrawer(
-        currentIndex: currentIndex,
-        onDestinationSelected: (index) =>
-            _onDestinationSelected(context, index),
-      ),
+      drawer: isAtBranchRoot
+          ? _AppNavigationDrawer(
+              currentIndex: currentIndex,
+              onDestinationSelected: (index) =>
+                  _onDestinationSelected(context, index),
+            )
+          : null,
     );
   }
 }
