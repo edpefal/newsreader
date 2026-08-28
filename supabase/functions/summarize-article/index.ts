@@ -59,8 +59,14 @@ const INSTRUCTIONS: Record<SupportedLanguage, string> = {
     "momento de tu vida, sea autonomía, estabilidad o reconocimiento).\n\n" +
     "Ahora haz lo mismo con el artículo de abajo.\n\n" +
     "Además, identifica cualquier libro, podcast o álbum/canción que el " +
-    "artículo mencione explícitamente. Si no menciona ninguno, devuelve una " +
-    "lista vacía -- no inventes menciones que no estén en el texto.\n\n" +
+    "artículo mencione explícitamente. El artículo de abajo puede contener " +
+    "links en formato [texto del link](url) -- identifica cuáles de esos " +
+    "links corresponden a otro artículo que el autor menciona o cita " +
+    "explícitamente (no links de navegación, redes sociales, \"suscribite\" " +
+    "u otras llamadas a la acción) y devuélvelos como una mención de tipo " +
+    "\"article\", con la URL exacta del link. Si no hay ninguna mención de " +
+    "ningún tipo, devuelve una lista vacía -- no inventes menciones que no " +
+    "estén en el texto.\n\n" +
     "Artículo:\n",
   en: "You're the editorial voice of Newsletter Hub: someone in the know " +
     "who sums up, in one paragraph, what this article is about for a " +
@@ -90,8 +96,13 @@ const INSTRUCTIONS: Record<SupportedLanguage, string> = {
     "stability, or recognition).\n\n" +
     "Now do the same with the article below.\n\n" +
     "Also identify any book, podcast, or album/song the article explicitly " +
-    "mentions. If it doesn't mention any, return an empty list -- don't " +
-    "invent mentions that aren't in the text.\n\n" +
+    "mentions. The article below may contain links formatted as " +
+    "[link text](url) -- identify which of those links point to another " +
+    "article the author explicitly mentions or cites (not navigation, " +
+    "social media, \"subscribe\" or other calls to action) and return them " +
+    "as an \"article\" mention, with the exact URL of the link. If there " +
+    "are no mentions of any kind, return an empty list -- don't invent " +
+    "mentions that aren't in the text.\n\n" +
     "Article:\n",
   fr: "Tu es la voix éditoriale de Newsletter Hub : quelqu'un qui s'y " +
     "connaît et qui résume, en un paragraphe, de quoi parle cet article " +
@@ -124,8 +135,14 @@ const INSTRUCTIONS: Record<SupportedLanguage, string> = {
     "stabilité ou la reconnaissance).\n\n" +
     "Fais maintenant la même chose avec l'article ci-dessous.\n\n" +
     "Identifie aussi tout livre, podcast ou album/chanson que l'article " +
-    "mentionne explicitement. S'il n'en mentionne aucun, renvoie une liste " +
-    "vide -- n'invente pas de mentions absentes du texte.\n\n" +
+    "mentionne explicitement. L'article ci-dessous peut contenir des liens " +
+    "au format [texte du lien](url) -- identifie lesquels de ces liens " +
+    "correspondent à un autre article que l'auteur mentionne ou cite " +
+    "explicitement (pas de liens de navigation, réseaux sociaux, " +
+    "\"abonne-toi\" ou autres appels à l'action) et renvoie-les comme une " +
+    "mention de type \"article\", avec l'URL exacte du lien. S'il n'y a " +
+    "aucune mention d'aucun type, renvoie une liste vide -- n'invente pas " +
+    "de mentions absentes du texte.\n\n" +
     "Article :\n",
 };
 
@@ -148,6 +165,9 @@ const RESPONSE_SCHEMA = {
         properties: {
           type: { type: "STRING", enum: MENTION_TYPES },
           name: { type: "STRING" },
+          // Solo se espera con contenido cuando type es "article"; para
+          // book/podcast/music el modelo puede omitirlo o devolver "".
+          url: { type: "STRING" },
         },
         required: ["type", "name"],
       },

@@ -74,6 +74,7 @@ class GeminiArticleSummaryGenerator implements ArticleSummaryGenerator {
       final mentions = rawMentions.cast<Map<String, dynamic>>().map((m) => (
             type: MentionTypeWireFormat.fromWireValue(m['type'] as String),
             name: m['name'] as String,
+            url: m['url'] as String?,
           ));
 
       return (summary: summary.trim(), mentions: mentions.toList());

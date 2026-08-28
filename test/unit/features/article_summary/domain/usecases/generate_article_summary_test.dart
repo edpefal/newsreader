@@ -90,7 +90,7 @@ void main() {
             language: any(named: 'language'),
           )).thenAnswer((_) async => (
             summary: 'Resumen generado',
-            mentions: [(type: MentionType.book, name: 'Un libro')],
+            mentions: [(type: MentionType.book, name: 'Un libro', url: null)],
           ));
       when(() => mockEnricher.enrich(any())).thenAnswer((_) async => [
             (
@@ -181,7 +181,7 @@ void main() {
             language: any(named: 'language'),
           )).thenAnswer((_) async => (
             summary: 'Resumen generado',
-            mentions: [(type: MentionType.podcast, name: 'Un podcast')],
+            mentions: [(type: MentionType.podcast, name: 'Un podcast', url: null)],
           ));
       when(() => mockEnricher.enrich(any()))
           .thenThrow(const MentionEnrichmentException(
@@ -195,6 +195,37 @@ void main() {
       expect(result.mentions.single.imageUrl, isNull);
       expect(result.mentions.single.link, isNull);
       verify(() => mockRepository.save(result)).called(1);
+    });
+
+    test(
+        'si el enriquecimiento falla, una mención de tipo artículo igual '
+        'queda con su link (la URL ya la extrajo la API de IA)', () async {
+      when(() => mockRepository.getByArticleId('a1'))
+          .thenAnswer((_) async => null);
+      when(() => mockGenerator.summarizeArticle(
+            any(),
+            any(),
+            language: any(named: 'language'),
+          )).thenAnswer((_) async => (
+            summary: 'Resumen generado',
+            mentions: [
+              (
+                type: MentionType.article,
+                name: 'Otro artículo',
+                url: 'https://other.example.com/post',
+              ),
+            ],
+          ));
+      when(() => mockEnricher.enrich(any()))
+          .thenThrow(const MentionEnrichmentException(
+        AppErrorCode.unknown,
+      ));
+      when(() => mockRepository.save(any())).thenAnswer((_) async {});
+
+      final result = await sut.execute(tArticle, language: 'es');
+
+      expect(result.mentions.single.imageUrl, isNull);
+      expect(result.mentions.single.link, 'https://other.example.com/post');
     });
   });
 }

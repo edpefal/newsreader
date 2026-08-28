@@ -1,10 +1,4 @@
-# Spec: Article Mentions
-
-## Purpose
-
-Define cómo el sistema detecta menciones a libros, podcasts, música y artículos citados dentro de un artículo, cómo las enriquece con datos de proveedores externos (portada e link), y cómo se presentan y comportan en la UI, incluyendo el caso en que no se encuentra un match.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Detección de menciones al generar el resumen de un artículo
 

@@ -62,5 +62,46 @@ void main() {
 
       expect(tapped, isTrue);
     });
+
+    testWidgets(
+        'mención de artículo sin imagen (fetch de Open Graph fallido) '
+        'igual es tappable porque tiene link', (tester) async {
+      var tapped = false;
+      await tester.pumpWidget(_buildSubject(
+        (
+          type: MentionType.article,
+          name: 'Otro artículo',
+          imageUrl: null,
+          link: 'https://other.example.com/post',
+        ),
+        onTap: () => tapped = true,
+      ));
+
+      expect(find.byIcon(Icons.link), findsOneWidget);
+
+      final inkWell = tester.widget<InkWell>(find.byType(InkWell));
+      expect(inkWell.onTap, isNotNull);
+
+      await tester.tap(find.byType(InkWell));
+      await tester.pump();
+
+      expect(tapped, isTrue);
+    });
+
+    testWidgets(
+        'mención de artículo con og:title/og:image se ve igual que las '
+        'demás enriquecidas', (tester) async {
+      await tester.pumpWidget(_buildSubject(
+        (
+          type: MentionType.article,
+          name: 'Título real del artículo citado',
+          imageUrl: 'https://cdn.example/cover.jpg',
+          link: 'https://other.example.com/post',
+        ),
+      ));
+
+      expect(find.text('Título real del artículo citado'), findsOneWidget);
+      expect(find.byIcon(Icons.link), findsNothing);
+    });
   });
 }

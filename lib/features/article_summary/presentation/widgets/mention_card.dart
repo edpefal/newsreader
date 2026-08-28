@@ -5,9 +5,11 @@ import 'package:newsreader/core/widgets/cached_network_image_widget.dart';
 import 'package:newsreader/core/widgets/chamfered_box.dart';
 
 /// Card de una mención dentro del bottom sheet de resumen. Una mención sin
-/// `imageUrl` (sin match del proveedor, o proveedor caído) se muestra igual
-/// como texto plano sin imagen y sin acción de tap -- ver capability
-/// `article-mentions`.
+/// `link` (libro/podcast/música sin match del proveedor, o proveedor
+/// caído) se muestra como texto plano sin imagen y sin acción de tap. Una
+/// mención de tipo artículo SIEMPRE tiene `link` (la URL se extrajo
+/// directo del contenido, no de una búsqueda por nombre) aunque le falte
+/// `imageUrl` -- ver capability `article-mentions`.
 class MentionCard extends StatelessWidget {
   final EnrichedMention mention;
   final VoidCallback? onTap;
@@ -18,6 +20,7 @@ class MentionCard extends StatelessWidget {
         MentionType.book => Icons.menu_book_outlined,
         MentionType.podcast => Icons.podcasts_outlined,
         MentionType.music => Icons.music_note_outlined,
+        MentionType.article => Icons.link,
       };
 
   @override
@@ -26,7 +29,7 @@ class MentionCard extends StatelessWidget {
     final hasImage = mention.imageUrl != null;
 
     return InkWell(
-      onTap: hasImage ? onTap : null,
+      onTap: mention.link != null ? onTap : null,
       child: SizedBox(
         width: 96,
         child: Column(

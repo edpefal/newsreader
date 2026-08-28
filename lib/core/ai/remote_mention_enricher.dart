@@ -45,7 +45,11 @@ class RemoteMentionEnricher implements MentionEnricher {
         },
         body: jsonEncode({
           'mentions': mentions
-              .map((m) => {'type': m.type.wireValue, 'name': m.name})
+              .map((m) => {
+                    'type': m.type.wireValue,
+                    'name': m.name,
+                    if (m.url != null) 'url': m.url,
+                  })
               .toList(),
         }),
       );

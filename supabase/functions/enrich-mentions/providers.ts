@@ -1,17 +1,26 @@
 // Resolución de una mención cruda contra el proveedor externo que le
 // corresponde por tipo: Google Books para libros, iTunes Search para
-// podcasts/música. Ninguno de los dos requiere una API key secreta -- ver
-// design.md de add-article-summary-mentions sobre por qué igual se
-// proxea desde el backend en vez de llamarse directo desde la app.
+// podcasts/música, y un fetch de Open Graph a la URL detectada para
+// artículos citados (ver add-article-mentioned-links/design.md). Ninguno
+// requiere una API key secreta -- ver design.md de
+// add-article-summary-mentions sobre por qué igual se proxea desde el
+// backend en vez de llamarse directo desde la app.
 //
 // `fetchImpl` se inyecta para poder testear sin red real (mismo patrón que
 // el resto de las funciones testeables de esta carpeta).
 import type { EnrichedMention, RawMention } from "./mention_types.ts";
+import { isSafePublicUrl } from "./url_safety.ts";
 
 export type FetchLike = typeof fetch;
 
 const GOOGLE_BOOKS_URL = "https://www.googleapis.com/books/v1/volumes";
 const ITUNES_SEARCH_URL = "https://itunes.apple.com/search";
+
+// Timeout corto para el fetch de Open Graph -- una página citada que no
+// responde no debería demorar la generación del resumen. Un timeout se
+// trata igual que cualquier otra falla de fetch (mención sin enriquecer,
+// con el link original igual).
+const OG_FETCH_TIMEOUT_MS = 8000;
 
 async function resolveBook(
   name: string,
@@ -49,14 +58,87 @@ async function resolveAudio(
   };
 }
 
+function extractMetaContent(html: string, property: string): string | undefined {
+  const escaped = property.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const patterns = [
+    new RegExp(
+      `<meta[^>]+property=["']${escaped}["'][^>]*content=["']([^"']*)["']`,
+      "i",
+    ),
+    new RegExp(
+      `<meta[^>]+content=["']([^"']*)["'][^>]*property=["']${escaped}["']`,
+      "i",
+    ),
+  ];
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match) return match[1];
+  }
+  return undefined;
+}
+
+function extractTitleTag(html: string): string | undefined {
+  const match = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+  return match?.[1]?.trim() || undefined;
+}
+
+/// Fetchea [url] (ya validada como pública/segura por el caller) y extrae
+/// su título e imagen de Open Graph, con fallback a `<title>` si falta
+/// `og:title`. Devuelve `null` si la request falla, tarda más que
+/// [OG_FETCH_TIMEOUT_MS], o no encuentra ni título ni imagen.
+async function resolveArticle(
+  url: string,
+  fetchImpl: FetchLike,
+): Promise<{ imageUrl?: string; title?: string } | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), OG_FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetchImpl(url, { signal: controller.signal });
+    if (!response.ok) return null;
+    const html = await response.text();
+    const title = extractMetaContent(html, "og:title") ?? extractTitleTag(html);
+    const imageUrl = extractMetaContent(html, "og:image");
+    if (!title && !imageUrl) return null;
+    return { imageUrl, title };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 /// Resuelve una mención contra su proveedor. Si el proveedor no encuentra
 /// match, o la request falla, devuelve la mención sin `imageUrl`/`link`
 /// (nunca `null` ni la descarta) -- ver capability article-mentions,
 /// requirement "Mención sin match del proveedor se muestra igual".
+///
+/// Para `type: "article"`, `link` SHALL setearse siempre a la URL original
+/// detectada (haya o no éxito el fetch de Open Graph, e incluso si la URL
+/// fue rechazada por `isSafePublicUrl`) -- a diferencia de libro/podcast/
+/// música, esta URL no viene de una búsqueda por nombre sino que ya se
+/// extrajo directamente del artículo, así que siempre hay un link real
+/// para mostrar.
 export async function enrichMention(
   mention: RawMention,
   fetchImpl: FetchLike = fetch,
 ): Promise<EnrichedMention> {
+  if (mention.type === "article") {
+    const url = mention.url!;
+    if (!isSafePublicUrl(url)) {
+      return { ...mention, link: url };
+    }
+    try {
+      const result = await resolveArticle(url, fetchImpl);
+      return {
+        ...mention,
+        name: result?.title ?? mention.name,
+        imageUrl: result?.imageUrl,
+        link: url,
+      };
+    } catch (e) {
+      console.error(`enrichMention (article) failed for "${url}": ${e}`);
+      return { ...mention, link: url };
+    }
+  }
+
   try {
     const result = mention.type === "book"
       ? await resolveBook(mention.name, fetchImpl)

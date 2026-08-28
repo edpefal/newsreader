@@ -3,12 +3,15 @@ import 'package:newsreader/core/errors/app_error_code.dart';
 /// Tipo de mención detectada en un artículo (ver capability
 /// `article-mentions`). "Productos" queda fuera de scope -- no se encontró
 /// un proveedor gratuito viable para resolver nombre de producto en texto
-/// libre a imagen/link (ver proposal.md).
-enum MentionType { book, podcast, music }
+/// libre a imagen/link (ver proposal.md). `article` (URL de otro artículo
+/// mencionado/citado) se agregó en `add-article-mentioned-links`.
+enum MentionType { book, podcast, music, article }
 
 /// Nombre y tipo de una mención, tal como los extrae `summarize-article`,
-/// antes de enriquecer.
-typedef RawMention = ({MentionType type, String name});
+/// antes de enriquecer. [url] solo está presente (y no vacía) cuando [type]
+/// es [MentionType.article] -- la URL detectada directamente en el
+/// artículo, no una búsqueda por nombre.
+typedef RawMention = ({MentionType type, String name, String? url});
 
 /// Una mención ya enriquecida: `imageUrl`/`link` ausentes indican que el
 /// proveedor correspondiente no encontró match (o falló), no que se haya
