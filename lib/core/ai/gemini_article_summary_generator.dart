@@ -6,6 +6,7 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
+import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
 import 'package:newsreader/core/observability/observability_client.dart';
 
@@ -80,6 +81,9 @@ class GeminiArticleSummaryGenerator implements ArticleSummaryGenerator {
       return (summary: summary.trim(), mentions: mentions.toList());
     } on ArticleSummaryGenerationException {
       rethrow;
+    } on AppException catch (e, st) {
+      _observabilityClient.captureException(e, st);
+      throw ArticleSummaryGenerationException(e.code);
     } catch (e, st) {
       _observabilityClient.captureException(e, st);
       throw const ArticleSummaryGenerationException(AppErrorCode.unknown);

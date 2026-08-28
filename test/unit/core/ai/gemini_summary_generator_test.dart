@@ -7,6 +7,7 @@ import 'package:newsreader/core/ai/gemini_summary_generator.dart';
 import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
@@ -144,6 +145,48 @@ void main() {
     ).thenThrow(const NetworkException());
 
     expect(sut.summarize(tArticles, language: 'es'), throwsA(isA<SummaryGenerationException>()));
+  });
+
+  test(
+      'relanza SummaryGenerationException con AppErrorCode.timeout si el HttpClient da timeout',
+      () async {
+    when(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
+      ),
+    ).thenThrow(const TimeoutException());
+
+    await expectLater(
+      sut.summarize(tArticles, language: 'es'),
+      throwsA(
+        isA<SummaryGenerationException>()
+            .having((e) => e.code, 'code', AppErrorCode.timeout),
+      ),
+    );
+  });
+
+  test(
+      'relanza SummaryGenerationException con AppErrorCode.network si el HttpClient falla por red',
+      () async {
+    when(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
+      ),
+    ).thenThrow(const NetworkException());
+
+    await expectLater(
+      sut.summarize(tArticles, language: 'es'),
+      throwsA(
+        isA<SummaryGenerationException>()
+            .having((e) => e.code, 'code', AppErrorCode.network),
+      ),
+    );
   });
 
   test(
