@@ -14,6 +14,7 @@ import 'package:newsreader/core/observability/observability_client.dart';
 import 'package:newsreader/core/observability/sentry_observability_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
+import 'package:newsreader/core/data/models/article_summary_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
@@ -55,10 +56,14 @@ void main() async {
   Hive.registerAdapter(NewsSourceModelAdapter());
   Hive.registerAdapter(ArticleModelAdapter());
   Hive.registerAdapter(DailySummaryModelAdapter());
+  Hive.registerAdapter(ArticleSummaryModelAdapter());
   await Hive.openBox<NewsSourceModel>(AppConstants.hiveSourcesBox);
   await Hive.openBox<ArticleModel>(AppConstants.hiveArticlesBox);
   await Hive.openBox<dynamic>(AppConstants.hiveSettingsBox);
   await Hive.openBox<DailySummaryModel>(AppConstants.hiveSummariesBox);
+  await Hive.openBox<ArticleSummaryModel>(
+    AppConstants.hiveArticleSummariesBox,
+  );
 
   // 2. Initialize Supabase (usado por AuthClient; el resto de la app sigue
   // llamando a las edge functions vía HttpClient, sin el SDK de Supabase).

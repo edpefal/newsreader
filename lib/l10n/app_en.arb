@@ -36,6 +36,10 @@
   "readerOpenInBrowserTooltip": "View in browser",
   "readerTruncatedContentHint": "This feed doesn't include the full article. Tap here to read it on the original site.",
 
+  "articleSummaryButtonTooltip": "Summarize article",
+  "articleSummarySheetTitle": "Summary",
+  "articleSummaryMentionsTitle": "Mentioned in this article",
+
   "favoritesEmptyTitle": "No favorites yet",
   "favoritesEmptySubtitle": "Open an article and tap the star to save it here.",
 

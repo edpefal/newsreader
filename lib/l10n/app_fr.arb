@@ -26,6 +26,10 @@
   "readerOpenInBrowserTooltip": "Voir dans le navigateur",
   "readerTruncatedContentHint": "Ce flux n'inclut pas l'article complet. Touche ici pour le lire sur le site d'origine.",
 
+  "articleSummaryButtonTooltip": "Résumer l'article",
+  "articleSummarySheetTitle": "Résumé",
+  "articleSummaryMentionsTitle": "Mentionné dans cet article",
+
   "favoritesEmptyTitle": "Aucun favori pour l'instant",
   "favoritesEmptySubtitle": "Ouvre un article et touche l'étoile pour l'enregistrer ici.",
 

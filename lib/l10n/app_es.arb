@@ -26,6 +26,10 @@
   "readerOpenInBrowserTooltip": "Ver en el navegador",
   "readerTruncatedContentHint": "Este feed no incluye el artículo completo. Toca aquí para leerlo en el sitio original.",
 
+  "articleSummaryButtonTooltip": "Resumir artículo",
+  "articleSummarySheetTitle": "Resumen",
+  "articleSummaryMentionsTitle": "Menciones en este artículo",
+
   "favoritesEmptyTitle": "Sin favoritos aún",
   "favoritesEmptySubtitle": "Abre un artículo y toca la estrella para guardarlo aquí.",
 

@@ -34,6 +34,7 @@ dependencies:
   flutter_widget_from_html: ^0.15.0
   webview_flutter: ^4.7.0
   google_fonts: ^6.2.1
+  url_launcher: ^6.3.0
 
   # Dependency injection
   get_it: ^8.0.0

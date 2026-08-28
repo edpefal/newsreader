@@ -5,6 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/navigation/external_link_launcher.dart';
+import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
+import 'package:newsreader/features/article_summary/domain/usecases/generate_article_summary.dart';
+import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 import 'package:newsreader/features/reader/presentation/screens/reader_screen.dart';
@@ -15,11 +20,22 @@ class MockMarkArticleAsRead extends Mock implements MarkArticleAsRead {}
 
 class MockToggleFavorite extends Mock implements ToggleFavorite {}
 
+class MockSubscriptionStatusProvider extends Mock
+    implements SubscriptionStatusProvider {}
+
+class MockExternalLinkLauncher extends Mock implements ExternalLinkLauncher {}
+
+class MockGenerateArticleSummary extends Mock
+    implements GenerateArticleSummary {}
+
+class MockObservabilityClient extends Mock implements ObservabilityClient {}
+
 Widget _buildSubject(
   Article article,
   MarkArticleAsRead markAsRead,
-  ToggleFavorite toggleFavorite,
-) {
+  ToggleFavorite toggleFavorite, {
+  SubscriptionStatusProvider? subscriptionStatusProvider,
+}) {
   final router = GoRouter(
     routes: [
       GoRoute(
@@ -28,6 +44,13 @@ Widget _buildSubject(
           article: article,
           markAsRead: markAsRead,
           toggleFavorite: toggleFavorite,
+          subscriptionStatusProvider:
+              subscriptionStatusProvider ?? MockSubscriptionStatusProvider(),
+          createArticleSummaryCubit: () => ArticleSummaryCubit(
+            MockGenerateArticleSummary(),
+            MockObservabilityClient(),
+          ),
+          externalLinkLauncher: MockExternalLinkLauncher(),
         ),
         routes: [
           GoRoute(
@@ -297,6 +320,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('WebView'), findsOneWidget);
+    });
+
+    testWidgets('muestra botón de resumen en el AppBar', (tester) async {
+      await tester.pumpWidget(
+          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+
+      expect(
+        find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
+        findsOneWidget,
+      );
     });
 
     // --- US-13/14: Favoritos ---

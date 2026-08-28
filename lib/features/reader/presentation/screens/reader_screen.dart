@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/navigation/external_link_launcher.dart';
 import 'package:newsreader/core/navigation/route_path.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/utils/feed_content_checker.dart';
 import 'package:newsreader/core/utils/localized_date_formatter.dart';
 import 'package:newsreader/core/widgets/chamfered_box.dart';
 import 'package:newsreader/core/widgets/fwh_html_content_renderer.dart';
 import 'package:newsreader/core/widgets/paper_texture.dart';
 import 'package:newsreader/core/widgets/source_icon.dart';
+import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
+import 'package:newsreader/features/article_summary/presentation/widgets/article_summary_bottom_sheet.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 import 'package:newsreader/features/reader/presentation/widgets/reading_progress_bar.dart';
@@ -42,12 +46,18 @@ class ReaderScreen extends StatefulWidget {
   final Article article;
   final MarkArticleAsRead markAsRead;
   final ToggleFavorite toggleFavorite;
+  final SubscriptionStatusProvider subscriptionStatusProvider;
+  final ArticleSummaryCubit Function() createArticleSummaryCubit;
+  final ExternalLinkLauncher externalLinkLauncher;
 
   const ReaderScreen({
     super.key,
     required this.article,
     required this.markAsRead,
     required this.toggleFavorite,
+    required this.subscriptionStatusProvider,
+    required this.createArticleSummaryCubit,
+    required this.externalLinkLauncher,
   });
 
   @override
@@ -115,6 +125,33 @@ class _ReaderScreenState extends State<ReaderScreen>
     await widget.toggleFavorite.execute(widget.article.id);
   }
 
+  /// Mismo patrón que `SummariesView`: si no hay suscripción activa,
+  /// muestra el paywall antes de abrir el bottom sheet, y vuelve a chequear
+  /// `isSubscribed` tras su cierre en vez de confiar únicamente en que
+  /// Superwall haya invocado el callback de compra completada.
+  Future<void> _onSummaryPressed(BuildContext context) async {
+    if (!widget.subscriptionStatusProvider.isSubscribed) {
+      await widget.subscriptionStatusProvider.showPaywall(
+        onSubscribed: () async {
+          if (!widget.subscriptionStatusProvider.isSubscribed) return;
+          if (!mounted) return;
+          _openSummarySheet(context);
+        },
+      );
+      return;
+    }
+    _openSummarySheet(context);
+  }
+
+  void _openSummarySheet(BuildContext context) {
+    showArticleSummarySheet(
+      context,
+      article: widget.article,
+      createCubit: widget.createArticleSummaryCubit,
+      externalLinkLauncher: widget.externalLinkLauncher,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final article = widget.article;
@@ -168,6 +205,11 @@ class _ReaderScreenState extends State<ReaderScreen>
             icon: const Icon(Icons.public),
             tooltip: l10n.readerOpenInBrowserTooltip,
             onPressed: () => _openWebView(context, article),
+          ),
+          IconButton(
+            icon: const Icon(Icons.auto_awesome_outlined),
+            tooltip: l10n.articleSummaryButtonTooltip,
+            onPressed: () => _onSummaryPressed(context),
           ),
         ],
       ),

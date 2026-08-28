@@ -226,6 +226,24 @@ abstract class AppLocalizations {
   /// **'This feed doesn\'t include the full article. Tap here to read it on the original site.'**
   String get readerTruncatedContentHint;
 
+  /// No description provided for @articleSummaryButtonTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Summarize article'**
+  String get articleSummaryButtonTooltip;
+
+  /// No description provided for @articleSummarySheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get articleSummarySheetTitle;
+
+  /// No description provided for @articleSummaryMentionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Mentioned in this article'**
+  String get articleSummaryMentionsTitle;
+
   /// No description provided for @favoritesEmptyTitle.
   ///
   /// In en, this message translates to:

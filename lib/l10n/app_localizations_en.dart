@@ -84,6 +84,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'This feed doesn\'t include the full article. Tap here to read it on the original site.';
 
   @override
+  String get articleSummaryButtonTooltip => 'Summarize article';
+
+  @override
+  String get articleSummarySheetTitle => 'Summary';
+
+  @override
+  String get articleSummaryMentionsTitle => 'Mentioned in this article';
+
+  @override
   String get favoritesEmptyTitle => 'No favorites yet';
 
   @override

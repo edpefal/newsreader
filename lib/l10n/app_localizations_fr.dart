@@ -84,6 +84,15 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ce flux n\'inclut pas l\'article complet. Touche ici pour le lire sur le site d\'origine.';
 
   @override
+  String get articleSummaryButtonTooltip => 'Résumer l\'article';
+
+  @override
+  String get articleSummarySheetTitle => 'Résumé';
+
+  @override
+  String get articleSummaryMentionsTitle => 'Mentionné dans cet article';
+
+  @override
   String get favoritesEmptyTitle => 'Aucun favori pour l\'instant';
 
   @override

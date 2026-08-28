@@ -12,8 +12,10 @@ import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
+import 'package:newsreader/core/navigation/external_link_launcher.dart';
 import 'package:newsreader/core/navigation/route_extra_resolver.dart';
 import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/utils/window_size_class.dart';
 import 'package:newsreader/core/widgets/adaptive_list_detail_scaffold.dart';
 import 'package:newsreader/core/widgets/empty_detail_placeholder.dart';
@@ -21,6 +23,7 @@ import 'package:newsreader/core/widgets/webview_flutter_article_web_view.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
 import 'package:newsreader/features/archive/presentation/screens/archive_screen.dart';
+import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/auth/presentation/screens/login_screen.dart';
 import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
@@ -149,6 +152,9 @@ GoRoute _articleRoute({required String paramName}) {
         article: article,
         markAsRead: getIt<MarkArticleAsRead>(),
         toggleFavorite: getIt<ToggleFavorite>(),
+        subscriptionStatusProvider: getIt<SubscriptionStatusProvider>(),
+        createArticleSummaryCubit: () => getIt<ArticleSummaryCubit>(),
+        externalLinkLauncher: getIt<ExternalLinkLauncher>(),
       ),
     ),
     routes: [
