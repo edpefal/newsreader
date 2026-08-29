@@ -20,6 +20,17 @@ flutter gen-l10n                         # regenerar AppLocalizations tras tocar
 
 Correr `flutter analyze` después de cualquier cambio de código. No dejar warnings sin resolver.
 
+## Proyectos de Supabase
+
+Existen dos proyectos de Supabase, ambos bajo la misma organización:
+
+| Proyecto | Reference ID | Uso |
+|----------|--------------|-----|
+| `reevo` | `avyaxzhdilhufyimrzzb` | Producción — es el que queda linkeado por defecto en el repo (`supabase/.temp/project-ref`) |
+| `reevo-dev` | `xgwnxhpdcrghrtdbrmpn` | Desarrollo |
+
+Al desplegar una Edge Function (`supabase functions deploy <nombre>`), por defecto solo se despliega al proyecto linkeado (`reevo`, prod). Para desplegar también a `reevo-dev`, agregar `--project-ref xgwnxhpdcrghrtdbrmpn` sin cambiar el link del repo. Antes de dar por terminado un cambio de Edge Function, confirmar con el usuario a cuál(es) de los dos proyectos hay que desplegarlo — no asumir que solo uno basta.
+
 ## Arquitectura: Feature-Based Clean Architecture
 
 El proyecto usa Clean Architecture organizada por features, no por capas globales.
