@@ -6,7 +6,7 @@ import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/network/http_client.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 
 /// Enriquece menciones vía la Edge Function `enrich-mentions`, que proxea a
 /// Google Books/iTunes Search del lado del servidor (ver design.md). A
@@ -18,7 +18,7 @@ String get _enrichMentionsFunctionUrl =>
 class RemoteMentionEnricher implements MentionEnricher {
   final HttpClient _httpClient;
   final AuthClient _authClient;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
 
   const RemoteMentionEnricher(
     this._httpClient,

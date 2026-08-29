@@ -6,7 +6,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/article_summary/domain/usecases/generate_article_summary.dart';
 import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
@@ -28,7 +28,7 @@ class MockExternalLinkLauncher extends Mock implements ExternalLinkLauncher {}
 class MockGenerateArticleSummary extends Mock
     implements GenerateArticleSummary {}
 
-class MockObservabilityClient extends Mock implements ObservabilityClient {}
+class MockTelemetryClient extends Mock implements TelemetryClient {}
 
 Widget _buildSubject(
   Article article,
@@ -48,7 +48,7 @@ Widget _buildSubject(
               subscriptionStatusProvider ?? MockSubscriptionStatusProvider(),
           createArticleSummaryCubit: () => ArticleSummaryCubit(
             MockGenerateArticleSummary(),
-            MockObservabilityClient(),
+            MockTelemetryClient(),
           ),
           externalLinkLauncher: MockExternalLinkLauncher(),
         ),

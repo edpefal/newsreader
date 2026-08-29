@@ -4,7 +4,7 @@ import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
 import 'package:newsreader/core/network/http_client.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/opml/opml_parser.dart';
 import 'package:newsreader/core/utils/id_generator.dart';
 
@@ -44,7 +44,7 @@ class ImportOpml {
   final FeedParser _feedParser;
   final SourceRepository _sourceRepository;
   final IdGenerator _idGenerator;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
 
   const ImportOpml(
     this._opmlParser,

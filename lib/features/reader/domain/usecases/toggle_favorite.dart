@@ -4,7 +4,7 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/sync/article_state_row.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
 
@@ -12,7 +12,7 @@ class ToggleFavorite {
   final ArticleRepository _repository;
   final CloudSyncClient _cloudSyncClient;
   final AuthClient _authClient;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
 
   const ToggleFavorite(
     this._repository,
@@ -32,6 +32,9 @@ class ToggleFavorite {
     );
     await _repository.updateArticle(updated);
 
+    _observabilityClient.trackEvent('favorite_toggled', properties: {
+      'favorited': nowFavorite,
+    });
     _pushFavoriteState(updated);
   }
 

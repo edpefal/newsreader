@@ -10,8 +10,8 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/di/injection.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
-import 'package:newsreader/core/observability/sentry_observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
+import 'package:newsreader/core/observability/default_telemetry_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/article_summary_model.dart';
@@ -34,7 +34,7 @@ void handleAuthStateChange(
   bool isSignedIn,
   String? userId,
   SubscriptionStatusProvider subscriptionStatusProvider,
-  ObservabilityClient observabilityClient,
+  TelemetryClient observabilityClient,
 ) {
   if (isSignedIn && userId != null) {
     subscriptionStatusProvider.identify(userId);
@@ -96,13 +96,22 @@ void main() async {
   // 3. Setup dependency injection
   await setupDependencies();
 
+  // 3.4. Inicializar PostHog antes de cualquier `setUserId` (ver 3.5): a
+  // diferencia de Sentry, que recién arranca al final envolviendo `runApp`,
+  // PostHog necesita haber terminado su `setup` antes de que se lo pueda
+  // identificar.
+  await DefaultTelemetryClient.initPostHog(
+    AppConfig.postHogApiKey,
+    isProd: AppConfig.isProd,
+  );
+
   // 3.5. Identificar al usuario ante Superwall con el mismo user_id de
   // Supabase Auth, tanto en la sesión ya activa al abrir la app como en
   // cada login posterior (LoginCubit usa el mismo AuthClient, así que esta
   // suscripción cubre ambos casos sin duplicar la llamada en cada flujo).
   final authClient = getIt<AuthClient>();
   final subscriptionStatusProvider = getIt<SubscriptionStatusProvider>();
-  final observabilityClient = getIt<ObservabilityClient>();
+  final observabilityClient = getIt<TelemetryClient>();
   if (authClient.isSignedIn && authClient.currentUserId != null) {
     await subscriptionStatusProvider.identify(authClient.currentUserId!);
     observabilityClient.setUserId(authClient.currentUserId);
@@ -137,7 +146,7 @@ void main() async {
   getIt<SourcesCubit>().loadSources();
   getIt<SummariesCubit>().loadSummaries();
 
-  await SentryObservabilityClient.init(
+  await DefaultTelemetryClient.init(
     dsn: AppConfig.sentryDsn,
     isProd: AppConfig.isProd,
     appRunner: () => runApp(App(

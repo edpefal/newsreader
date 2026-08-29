@@ -60,6 +60,7 @@ dependencies:
 
   # Observabilidad
   sentry_flutter: ^8.14.2
+  posthog_flutter: ^5.38.1
 
 dev_dependencies:
   flutter_test:

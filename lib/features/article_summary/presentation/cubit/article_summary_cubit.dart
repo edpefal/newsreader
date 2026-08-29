@@ -5,7 +5,7 @@ import 'package:newsreader/core/ai/article_summary_generator.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/article_summary.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/features/article_summary/domain/usecases/generate_article_summary.dart';
 
 part 'article_summary_state.dart';
@@ -20,7 +20,7 @@ part 'article_summary_state.dart';
 /// se invoca, la suscripción activa ya está garantizada.
 class ArticleSummaryCubit extends Cubit<ArticleSummaryState> {
   final GenerateArticleSummary _generateArticleSummary;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
 
   ArticleSummaryCubit(
     this._generateArticleSummary,
@@ -29,6 +29,7 @@ class ArticleSummaryCubit extends Cubit<ArticleSummaryState> {
 
   Future<void> generate(Article article, String language) async {
     emit(const ArticleSummaryLoading());
+    _observabilityClient.trackEvent('summary_requested');
     try {
       final summary = await _generateArticleSummary.execute(
         article,

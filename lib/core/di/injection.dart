@@ -25,8 +25,8 @@ import 'package:newsreader/core/navigation/go_router_navigator.dart';
 import 'package:newsreader/core/navigation/url_launcher_external_link_launcher.dart';
 import 'package:newsreader/core/network/http_client.dart';
 import 'package:newsreader/core/network/http_package_client.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
-import 'package:newsreader/core/observability/sentry_observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
+import 'package:newsreader/core/observability/default_telemetry_client.dart';
 import 'package:newsreader/core/utils/id_generator.dart';
 import 'package:newsreader/core/utils/uuid_id_generator.dart';
 import 'package:newsreader/core/data/datasources/local/article_local_datasource.dart';
@@ -126,8 +126,8 @@ Future<void> setupDependencies() async {
   getIt.registerLazySingleton<SubscriptionStatusProvider>(
     () => SuperwallSubscriptionStatusProvider(),
   );
-  getIt.registerLazySingleton<ObservabilityClient>(
-    () => SentryObservabilityClient(),
+  getIt.registerLazySingleton<TelemetryClient>(
+    () => DefaultTelemetryClient(),
   );
   getIt.registerLazySingleton<AiUsagePolicy>(
     () => SupabaseAiUsagePolicy(getIt()),
@@ -251,7 +251,7 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<FavoritesCubit>(FavoritesCubit(getIt()));
   getIt.registerSingleton<ArchiveCubit>(ArchiveCubit(getIt()));
   getIt.registerSingleton<SourcesCubit>(
-    SourcesCubit(getIt(), getIt(), getIt()),
+    SourcesCubit(getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerSingleton<SummariesCubit>(
     SummariesCubit(getIt(), getIt(), getIt(), getIt(), getIt()),

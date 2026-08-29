@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_source_articles.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 
@@ -13,7 +13,7 @@ class SourceDetailCubit extends Cubit<SourceDetailState> {
   final GetSourceArticles _getSourceArticles;
   final FeedSyncTrigger _feedSyncTrigger;
   final SyncUserData _syncUserData;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
 
   SourceDetailCubit(
     this._getSourceArticles,

@@ -7,7 +7,7 @@ import 'package:newsreader/core/email_feed/supabase_email_feed_generator.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
-import '../../../support/fake_observability_client.dart';
+import '../../../support/fake_telemetry_client.dart';
 
 class MockHttpClient extends Mock implements HttpClient {}
 
@@ -16,18 +16,18 @@ class MockAuthClient extends Mock implements AuthClient {}
 void main() {
   late MockHttpClient mockHttpClient;
   late MockAuthClient mockAuthClient;
-  late MockObservabilityClient mockObservabilityClient;
+  late MockTelemetryClient mockTelemetryClient;
   late SupabaseEmailFeedGenerator sut;
 
   setUp(() {
     mockHttpClient = MockHttpClient();
     mockAuthClient = MockAuthClient();
-    mockObservabilityClient = MockObservabilityClient();
+    mockTelemetryClient = MockTelemetryClient();
     when(() => mockAuthClient.currentAccessToken).thenReturn('token-de-sesion');
     sut = SupabaseEmailFeedGenerator(
       mockHttpClient,
       mockAuthClient,
-      mockObservabilityClient,
+      mockTelemetryClient,
     );
   });
 

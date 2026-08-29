@@ -12,7 +12,7 @@ import 'package:newsreader/features/summaries/domain/usecases/get_daily_summarie
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 
 import '../../../../../support/fake_ai_usage_policy.dart';
-import '../../../../../support/fake_observability_client.dart';
+import '../../../../../support/fake_telemetry_client.dart';
 
 class MockGetDailySummaries extends Mock implements GetDailySummaries {}
 
@@ -25,7 +25,7 @@ void main() {
   late MockGetDailySummaries mockGetDailySummaries;
   late MockGenerateDailySummary mockGenerateDailySummary;
   late MockSubscriptionStatusProvider mockSubscriptionStatusProvider;
-  late MockObservabilityClient mockObservabilityClient;
+  late MockTelemetryClient mockTelemetryClient;
   late MockAiUsagePolicy mockAiUsagePolicy;
 
   final tSummary = DailySummary(
@@ -40,7 +40,7 @@ void main() {
         mockGetDailySummaries,
         mockGenerateDailySummary,
         mockSubscriptionStatusProvider,
-        mockObservabilityClient,
+        mockTelemetryClient,
         mockAiUsagePolicy,
       );
 
@@ -52,7 +52,7 @@ void main() {
     mockGetDailySummaries = MockGetDailySummaries();
     mockGenerateDailySummary = MockGenerateDailySummary();
     mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
-    mockObservabilityClient = MockObservabilityClient();
+    mockTelemetryClient = MockTelemetryClient();
     mockAiUsagePolicy = MockAiUsagePolicy();
     when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(true);
     // Consumo dentro del presupuesto por defecto: la mayoría de los tests
@@ -229,7 +229,7 @@ void main() {
       ],
       verify: (_) {
         verify(
-          () => mockObservabilityClient.captureException(any(), any()),
+          () => mockTelemetryClient.captureException(any(), any()),
         ).called(1);
       },
     );
@@ -263,7 +263,7 @@ void main() {
       ],
       verify: (_) {
         verifyNever(
-          () => mockObservabilityClient.captureException(any(), any()),
+          () => mockTelemetryClient.captureException(any(), any()),
         );
       },
     );

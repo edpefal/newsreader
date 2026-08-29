@@ -13,7 +13,7 @@ import 'package:newsreader/features/sources/presentation/cubit/source_detail_cub
 import 'package:newsreader/features/sources/presentation/screens/source_detail_screen.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 
-import '../../../support/fake_observability_client.dart';
+import '../../../support/fake_telemetry_client.dart';
 import '../../../support/pump_localized_app.dart';
 
 class MockSourceDetailCubit extends MockCubit<SourceDetailState>
@@ -173,7 +173,7 @@ void main() {
     late MockGetSourceArticles mockGetSourceArticles;
     late MockFeedSyncTrigger mockFeedSyncTrigger;
     late MockSyncUserData mockSyncUserData;
-    late MockObservabilityClient mockObservabilityClient;
+    late MockTelemetryClient mockTelemetryClient;
 
     Widget buildScreen({required bool syncOnOpen}) {
       final router = GoRouter(
@@ -185,7 +185,7 @@ void main() {
               getSourceArticles: mockGetSourceArticles,
               feedSyncTrigger: mockFeedSyncTrigger,
               syncUserData: mockSyncUserData,
-              observabilityClient: mockObservabilityClient,
+              observabilityClient: mockTelemetryClient,
               syncOnOpen: syncOnOpen,
             ),
           ),
@@ -203,7 +203,7 @@ void main() {
       mockGetSourceArticles = MockGetSourceArticles();
       mockFeedSyncTrigger = MockFeedSyncTrigger();
       mockSyncUserData = MockSyncUserData();
-      mockObservabilityClient = MockObservabilityClient();
+      mockTelemetryClient = MockTelemetryClient();
       when(
         () => mockGetSourceArticles.execute(any()),
       ).thenAnswer((_) async => tArticles);

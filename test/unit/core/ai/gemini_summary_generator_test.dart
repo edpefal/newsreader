@@ -11,7 +11,7 @@ import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
-import '../../../support/fake_observability_client.dart';
+import '../../../support/fake_telemetry_client.dart';
 
 class MockHttpClient extends Mock implements HttpClient {}
 
@@ -20,7 +20,7 @@ class MockAuthClient extends Mock implements AuthClient {}
 void main() {
   late MockHttpClient mockHttpClient;
   late MockAuthClient mockAuthClient;
-  late MockObservabilityClient mockObservabilityClient;
+  late MockTelemetryClient mockTelemetryClient;
   late GeminiSummaryGenerator sut;
 
   setUpAll(() {
@@ -30,12 +30,12 @@ void main() {
   setUp(() {
     mockHttpClient = MockHttpClient();
     mockAuthClient = MockAuthClient();
-    mockObservabilityClient = MockObservabilityClient();
+    mockTelemetryClient = MockTelemetryClient();
     when(() => mockAuthClient.currentAccessToken).thenReturn('token-de-sesion');
     sut = GeminiSummaryGenerator(
       mockHttpClient,
       mockAuthClient,
-      mockObservabilityClient,
+      mockTelemetryClient,
     );
   });
 

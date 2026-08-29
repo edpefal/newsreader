@@ -7,7 +7,7 @@ import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 
 /// Genera resúmenes vía una Supabase Edge Function que hace de proxy a la
 /// API de Gemini. La key real de Gemini vive como secret del lado del
@@ -20,7 +20,7 @@ String get _summarizeFunctionUrl =>
 class GeminiSummaryGenerator implements SummaryGenerator {
   final HttpClient _httpClient;
   final AuthClient _authClient;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
 
   const GeminiSummaryGenerator(
     this._httpClient,

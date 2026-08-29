@@ -5,7 +5,7 @@ import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/ai_usage/ai_usage_policy.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/summaries/domain/usecases/generate_daily_summary.dart';
 import 'package:newsreader/features/summaries/domain/usecases/get_daily_summaries.dart';
@@ -16,7 +16,7 @@ class SummariesCubit extends Cubit<SummariesState> {
   final GetDailySummaries _getDailySummaries;
   final GenerateDailySummary _generateDailySummary;
   final SubscriptionStatusProvider _subscriptionStatusProvider;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
   final AiUsagePolicy _aiUsagePolicy;
 
   SummariesCubit(

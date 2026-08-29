@@ -8,7 +8,7 @@ import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 
 /// Genera el resumen de un artículo individual + sus menciones crudas vía
 /// la Edge Function `summarize-article` (mismo patrón de auth/cuota que
@@ -20,7 +20,7 @@ String get _summarizeArticleFunctionUrl =>
 class GeminiArticleSummaryGenerator implements ArticleSummaryGenerator {
   final HttpClient _httpClient;
   final AuthClient _authClient;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
 
   const GeminiArticleSummaryGenerator(
     this._httpClient,

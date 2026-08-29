@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/utils/source_text_matcher.dart';
 import 'package:newsreader/features/sources/domain/usecases/delete_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
@@ -13,9 +14,14 @@ class SourcesCubit extends Cubit<SourcesState> {
   final GetSources _getSources;
   final UpdateSourceName _updateSourceName;
   final DeleteSource _deleteSource;
+  final TelemetryClient _telemetryClient;
 
-  SourcesCubit(this._getSources, this._updateSourceName, this._deleteSource)
-      : super(const SourcesLoading());
+  SourcesCubit(
+    this._getSources,
+    this._updateSourceName,
+    this._deleteSource,
+    this._telemetryClient,
+  ) : super(const SourcesLoading());
 
   Future<void> loadSources() async {
     emit(const SourcesLoading());
@@ -29,6 +35,7 @@ class SourcesCubit extends Cubit<SourcesState> {
 
   Future<void> deleteSource(String id) async {
     await _deleteSource.execute(id);
+    _telemetryClient.trackEvent('source_deleted');
     await _reload();
   }
 

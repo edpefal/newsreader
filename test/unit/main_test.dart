@@ -1,22 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/main.dart';
 
 class MockSubscriptionStatusProvider extends Mock
     implements SubscriptionStatusProvider {}
 
-class MockObservabilityClient extends Mock implements ObservabilityClient {}
+class MockTelemetryClient extends Mock implements TelemetryClient {}
 
 void main() {
   late MockSubscriptionStatusProvider mockSubscriptionStatusProvider;
-  late MockObservabilityClient mockObservabilityClient;
+  late MockTelemetryClient mockTelemetryClient;
 
   setUp(() {
     mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
-    mockObservabilityClient = MockObservabilityClient();
+    mockTelemetryClient = MockTelemetryClient();
 
     when(() => mockSubscriptionStatusProvider.identify(any()))
         .thenAnswer((_) async {});
@@ -28,11 +28,11 @@ void main() {
       true,
       'user-1',
       mockSubscriptionStatusProvider,
-      mockObservabilityClient,
+      mockTelemetryClient,
     );
 
-    verify(() => mockObservabilityClient.setUserId('user-1')).called(1);
-    verifyNever(() => mockObservabilityClient.setUserId(null));
+    verify(() => mockTelemetryClient.setUserId('user-1')).called(1);
+    verifyNever(() => mockTelemetryClient.setUserId(null));
   });
 
   test('al cerrar sesión, desasocia al usuario de observabilidad', () {
@@ -40,9 +40,9 @@ void main() {
       false,
       null,
       mockSubscriptionStatusProvider,
-      mockObservabilityClient,
+      mockTelemetryClient,
     );
 
-    verify(() => mockObservabilityClient.setUserId(null)).called(1);
+    verify(() => mockTelemetryClient.setUserId(null)).called(1);
   });
 }

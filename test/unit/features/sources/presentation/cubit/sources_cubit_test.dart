@@ -8,6 +8,8 @@ import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
 import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
 
+import '../../../../../support/fake_telemetry_client.dart';
+
 class MockGetSources extends Mock implements GetSources {}
 
 class MockUpdateSourceName extends Mock implements UpdateSourceName {}
@@ -18,6 +20,7 @@ void main() {
   late MockGetSources mockGetSources;
   late MockUpdateSourceName mockUpdateSourceName;
   late MockDeleteSource mockDeleteSource;
+  late MockTelemetryClient mockTelemetryClient;
 
   final tSources = [
     NewsSource(
@@ -36,13 +39,18 @@ void main() {
     ),
   ];
 
-  SourcesCubit buildCubit() =>
-      SourcesCubit(mockGetSources, mockUpdateSourceName, mockDeleteSource);
+  SourcesCubit buildCubit() => SourcesCubit(
+        mockGetSources,
+        mockUpdateSourceName,
+        mockDeleteSource,
+        mockTelemetryClient,
+      );
 
   setUp(() {
     mockGetSources = MockGetSources();
     mockUpdateSourceName = MockUpdateSourceName();
     mockDeleteSource = MockDeleteSource();
+    mockTelemetryClient = MockTelemetryClient();
   });
 
   group('SourcesCubit', () {
@@ -125,6 +133,8 @@ void main() {
       expect: () => [SourcesLoaded([tSources[1]])],
       verify: (_) {
         verify(() => mockDeleteSource.execute('1')).called(1);
+        verify(() => mockTelemetryClient.trackEvent('source_deleted'))
+            .called(1);
       },
     );
 

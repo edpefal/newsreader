@@ -14,7 +14,8 @@ import 'package:newsreader/core/domain/repositories/summary_repository.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
 import 'package:newsreader/core/navigation/route_extra_resolver.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/screen_view_observer.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/utils/window_size_class.dart';
 import 'package:newsreader/core/widgets/adaptive_list_detail_scaffold.dart';
@@ -181,11 +182,13 @@ GoRoute _articleRoute({required String paramName}) {
 StatefulShellBranch articleListBranch({
   required String rootPath,
   required Widget Function() listScreenBuilder,
+  required List<NavigatorObserver> observers,
   void Function(BuildContext)? onEmptyDetailShown,
 }) {
   return StatefulShellBranch(
     routes: [
       ShellRoute(
+        observers: observers,
         builder: (context, state, child) =>
             _adaptiveBranchShell(context, listScreenBuilder(), child),
         routes: [
@@ -204,8 +207,17 @@ StatefulShellBranch articleListBranch({
   );
 }
 
+// Cada ShellRoute crea su propio Navigator anidado, y un NavigatorObserver
+// no puede estar adjunto a más de un Navigator a la vez (Flutter lo revienta
+// con 'observer.navigator == null': is not true si se comparte la misma
+// instancia). Por eso cada `observers: [...]` de abajo instancia su propio
+// `ScreenViewObserver`, aunque todos reporten al mismo `TelemetryClient`.
+ScreenViewObserver _newScreenViewObserver() =>
+    ScreenViewObserver(getIt<TelemetryClient>());
+
 final appRouter = GoRouter(
   initialLocation: '/',
+  observers: [_newScreenViewObserver()],
   refreshListenable: _AuthChangeNotifier(getIt<AuthClient>()),
   redirect: (context, state) {
     final isSignedIn = getIt<AuthClient>().isSignedIn;
@@ -243,7 +255,7 @@ final appRouter = GoRouter(
         return BlocProvider(
           create: (_) => ImportOpmlCubit(
             getIt<ImportOpml>(),
-            getIt<ObservabilityClient>(),
+            getIt<TelemetryClient>(),
           ),
           child: ImportOpmlScreen(xmlContent: xmlContent),
         );
@@ -256,6 +268,7 @@ final appRouter = GoRouter(
         articleListBranch(
           rootPath: '/',
           listScreenBuilder: () => const InboxScreen(),
+          observers: [_newScreenViewObserver()],
           // Favoritos y Archivo no tienen `openArticleId` (no difieren su
           // archivado al volver); solo el Inbox necesita este cierre
           // explícito -- ver `InboxCubit.closeOpenArticle`.
@@ -265,14 +278,17 @@ final appRouter = GoRouter(
         articleListBranch(
           rootPath: '/favorites',
           listScreenBuilder: () => const FavoritesScreen(),
+          observers: [_newScreenViewObserver()],
         ),
         articleListBranch(
           rootPath: '/archive',
           listScreenBuilder: () => const ArchiveScreen(),
+          observers: [_newScreenViewObserver()],
         ),
         StatefulShellBranch(
           routes: [
             ShellRoute(
+              observers: [_newScreenViewObserver()],
               builder: (context, state, child) =>
                   _adaptiveBranchShell(context, const SourcesScreen(), child),
               routes: [
@@ -302,7 +318,7 @@ final appRouter = GoRouter(
                           getSourceArticles: getIt<GetSourceArticles>(),
                           feedSyncTrigger: getIt<FeedSyncTrigger>(),
                           syncUserData: getIt<SyncUserData>(),
-                          observabilityClient: getIt<ObservabilityClient>(),
+                          observabilityClient: getIt<TelemetryClient>(),
                           syncOnOpen:
                               state.uri.queryParameters['justAdded'] == 'true',
                         ),
@@ -318,6 +334,7 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             ShellRoute(
+              observers: [_newScreenViewObserver()],
               builder: (context, state, child) => _adaptiveBranchShell(
                 context,
                 const SummariesScreen(),

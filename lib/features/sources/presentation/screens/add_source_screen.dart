@@ -9,7 +9,7 @@ import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/generate_email_feed.dart';
 import 'package:newsreader/core/errors/app_error_code_localizations.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/features/sources/presentation/cubit/add_source_cubit.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 
@@ -22,7 +22,7 @@ class AddSourceScreen extends StatelessWidget {
       create: (_) => AddSourceCubit(
         getIt<AddSource>(),
         getIt<GenerateEmailFeed>(),
-        getIt<ObservabilityClient>(),
+        getIt<TelemetryClient>(),
       ),
       child: const AddSourceView(),
     );

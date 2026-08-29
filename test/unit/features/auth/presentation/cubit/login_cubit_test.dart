@@ -6,19 +6,19 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 
-import '../../../../../support/fake_observability_client.dart';
+import '../../../../../support/fake_telemetry_client.dart';
 
 class MockAuthClient extends Mock implements AuthClient {}
 
 void main() {
   late MockAuthClient mockAuthClient;
-  late MockObservabilityClient mockObservabilityClient;
+  late MockTelemetryClient mockTelemetryClient;
 
-  LoginCubit buildCubit() => LoginCubit(mockAuthClient, mockObservabilityClient);
+  LoginCubit buildCubit() => LoginCubit(mockAuthClient, mockTelemetryClient);
 
   setUp(() {
     mockAuthClient = MockAuthClient();
-    mockObservabilityClient = MockObservabilityClient();
+    mockTelemetryClient = MockTelemetryClient();
   });
 
   group('LoginCubit', () {

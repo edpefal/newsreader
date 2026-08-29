@@ -9,14 +9,14 @@ import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/features/article_summary/domain/usecases/generate_article_summary.dart';
 import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
 
-import '../../../../../support/fake_observability_client.dart';
+import '../../../../../support/fake_telemetry_client.dart';
 
 class MockGenerateArticleSummary extends Mock
     implements GenerateArticleSummary {}
 
 void main() {
   late MockGenerateArticleSummary mockGenerateArticleSummary;
-  late MockObservabilityClient mockObservabilityClient;
+  late MockTelemetryClient mockTelemetryClient;
 
   final tArticle = Article(
     id: 'a1',
@@ -36,7 +36,7 @@ void main() {
 
   ArticleSummaryCubit buildCubit() => ArticleSummaryCubit(
         mockGenerateArticleSummary,
-        mockObservabilityClient,
+        mockTelemetryClient,
       );
 
   setUpAll(() {
@@ -55,7 +55,7 @@ void main() {
 
   setUp(() {
     mockGenerateArticleSummary = MockGenerateArticleSummary();
-    mockObservabilityClient = MockObservabilityClient();
+    mockTelemetryClient = MockTelemetryClient();
   });
 
   group('ArticleSummaryCubit', () {
@@ -113,7 +113,7 @@ void main() {
       ],
       verify: (_) {
         verify(
-          () => mockObservabilityClient.captureException(any(), any()),
+          () => mockTelemetryClient.captureException(any(), any()),
         ).called(1);
       },
     );
@@ -138,7 +138,7 @@ void main() {
       ],
       verify: (_) {
         verifyNever(
-          () => mockObservabilityClient.captureException(any(), any()),
+          () => mockTelemetryClient.captureException(any(), any()),
         );
       },
     );

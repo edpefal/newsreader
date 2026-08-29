@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/utils/article_text_matcher.dart';
 import 'package:newsreader/features/inbox/domain/usecases/get_inbox_articles.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
@@ -20,7 +20,7 @@ class InboxCubit extends Cubit<InboxState> {
   final FeedSyncTrigger _feedSyncTrigger;
   final MarkArticleAsRead _markArticleAsRead;
   final SyncUserData _syncUserData;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
 
   /// Invocación de `_feedSyncTrigger.execute()` en curso, si hay una. Se
   /// cachea para que `syncAndReload()` (pull-to-refresh manual) y la fase
@@ -170,6 +170,11 @@ class InboxCubit extends Cubit<InboxState> {
   }
 
   Future<FeedSyncResult> syncAndReload() async {
+    // Evento de producto solo acá, no en `syncAfterSignIn()` ni
+    // `_silentFeedRefresh()`/`syncInBackground()`: esta es la única
+    // sincronización que el usuario dispara explícitamente (pull-to-refresh
+    // manual); las demás son automáticas.
+    _observabilityClient.trackEvent('sync_triggered');
     // Subir el estado local (incluyendo borrados de fuentes) antes de
     // disparar el fetch: si se dispara primero, `sync-feeds` todavía ve en
     // Postgres una fuente que el usuario acaba de borrar localmente y le

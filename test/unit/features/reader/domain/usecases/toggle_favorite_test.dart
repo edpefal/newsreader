@@ -7,7 +7,7 @@ import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
 
-import '../../../../../support/fake_observability_client.dart';
+import '../../../../../support/fake_telemetry_client.dart';
 
 class MockArticleRepository extends Mock implements ArticleRepository {}
 
@@ -29,7 +29,7 @@ void main() {
   late MockArticleRepository mockRepository;
   late MockCloudSyncClient mockCloudSyncClient;
   late MockAuthClient mockAuthClient;
-  late MockObservabilityClient mockObservabilityClient;
+  late MockTelemetryClient mockTelemetryClient;
   late ToggleFavorite sut;
 
   setUpAll(() {
@@ -41,12 +41,12 @@ void main() {
     mockRepository = MockArticleRepository();
     mockCloudSyncClient = MockCloudSyncClient();
     mockAuthClient = MockAuthClient();
-    mockObservabilityClient = MockObservabilityClient();
+    mockTelemetryClient = MockTelemetryClient();
     sut = ToggleFavorite(
       mockRepository,
       mockCloudSyncClient,
       mockAuthClient,
-      mockObservabilityClient,
+      mockTelemetryClient,
     );
 
     when(() => mockRepository.updateArticle(any())).thenAnswer((_) async {});

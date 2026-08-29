@@ -8,7 +8,7 @@ import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 import 'package:newsreader/features/sources/presentation/cubit/import_opml_cubit.dart';
 
-import '../../../../../support/fake_observability_client.dart';
+import '../../../../../support/fake_telemetry_client.dart';
 
 class MockImportOpml extends Mock implements ImportOpml {}
 
@@ -21,15 +21,15 @@ final _tSource = NewsSource(
 
 void main() {
   late MockImportOpml mockImportOpml;
-  late MockObservabilityClient mockObservabilityClient;
+  late MockTelemetryClient mockTelemetryClient;
 
   setUp(() {
     mockImportOpml = MockImportOpml();
-    mockObservabilityClient = MockObservabilityClient();
+    mockTelemetryClient = MockTelemetryClient();
   });
 
   ImportOpmlCubit buildCubit() =>
-      ImportOpmlCubit(mockImportOpml, mockObservabilityClient);
+      ImportOpmlCubit(mockImportOpml, mockTelemetryClient);
 
   group('loadPreview', () {
     blocTest<ImportOpmlCubit, ImportOpmlState>(

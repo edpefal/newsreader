@@ -5,7 +5,7 @@ import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/generate_email_feed.dart';
 
@@ -14,7 +14,7 @@ part 'add_source_state.dart';
 class AddSourceCubit extends Cubit<AddSourceState> {
   final AddSource _addSource;
   final GenerateEmailFeed _generateEmailFeed;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
 
   AddSourceCubit(
     this._addSource,
@@ -36,6 +36,7 @@ class AddSourceCubit extends Cubit<AddSourceState> {
         trimmed,
         onHeuristicStageStarted: () => emit(const AddSourceValidatingHeuristics()),
       );
+      _observabilityClient.trackEvent('source_added');
       emit(AddSourceSuccess(source));
     } on FeedDiscoveryException catch (e) {
       emit(AddSourceFeedDiscoveryFailed(e.code, trimmed));

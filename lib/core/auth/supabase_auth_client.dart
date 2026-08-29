@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 
 /// client ID "web" de Google configurado en Supabase Auth. Se usa como
 /// serverClientId para que Google emita un ID token válido para el
@@ -16,10 +16,10 @@ const _googleServerClientId =
 class SupabaseAuthClient implements AuthClient {
   final sb.SupabaseClient _supabase;
   final GoogleSignIn _googleSignIn;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
 
   SupabaseAuthClient({
-    required ObservabilityClient observabilityClient,
+    required TelemetryClient observabilityClient,
     sb.SupabaseClient? supabase,
     GoogleSignIn? googleSignIn,
   })  : _observabilityClient = observabilityClient,

@@ -10,7 +10,7 @@ import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
 
-import '../../../support/fake_observability_client.dart';
+import '../../../support/fake_telemetry_client.dart';
 
 class MockHttpClient extends Mock implements HttpClient {}
 
@@ -19,7 +19,7 @@ class MockAuthClient extends Mock implements AuthClient {}
 void main() {
   late MockHttpClient mockHttpClient;
   late MockAuthClient mockAuthClient;
-  late MockObservabilityClient mockObservabilityClient;
+  late MockTelemetryClient mockTelemetryClient;
   late GeminiArticleSummaryGenerator sut;
 
   setUpAll(() {
@@ -30,12 +30,12 @@ void main() {
   setUp(() {
     mockHttpClient = MockHttpClient();
     mockAuthClient = MockAuthClient();
-    mockObservabilityClient = MockObservabilityClient();
+    mockTelemetryClient = MockTelemetryClient();
     when(() => mockAuthClient.currentAccessToken).thenReturn('token-de-sesion');
     sut = GeminiArticleSummaryGenerator(
       mockHttpClient,
       mockAuthClient,
-      mockObservabilityClient,
+      mockTelemetryClient,
     );
   });
 
@@ -110,7 +110,7 @@ void main() {
       ),
     );
     verify(
-      () => mockObservabilityClient.captureException(any(), any()),
+      () => mockTelemetryClient.captureException(any(), any()),
     ).called(1);
   });
 
@@ -134,7 +134,7 @@ void main() {
       ),
     );
     verify(
-      () => mockObservabilityClient.captureException(any(), any()),
+      () => mockTelemetryClient.captureException(any(), any()),
     ).called(1);
   });
 }

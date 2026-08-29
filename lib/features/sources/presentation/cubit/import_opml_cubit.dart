@@ -3,14 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 
 part 'import_opml_state.dart';
 
 class ImportOpmlCubit extends Cubit<ImportOpmlState> {
   final ImportOpml _importOpml;
-  final ObservabilityClient _observabilityClient;
+  final TelemetryClient _observabilityClient;
 
   ImportOpmlCubit(this._importOpml, this._observabilityClient)
       : super(const ImportOpmlInitial());
@@ -82,6 +82,10 @@ class ImportOpmlCubit extends Cubit<ImportOpmlState> {
 
     final result = await _importOpml.execute(selectedUrls);
 
+    _observabilityClient.trackEvent('opml_import_completed', properties: {
+      'imported_count': result.imported.length,
+      'failed_count': result.failed.length,
+    });
     emit(ImportOpmlDone(
       importedCount: result.imported.length,
       failedCount: result.failed.length,

@@ -9,7 +9,7 @@ import 'package:newsreader/features/sources/domain/usecases/get_source_articles.
 import 'package:newsreader/features/sources/presentation/cubit/source_detail_cubit.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 
-import '../../../../../support/fake_observability_client.dart';
+import '../../../../../support/fake_telemetry_client.dart';
 
 class MockGetSourceArticles extends Mock implements GetSourceArticles {}
 class MockFeedSyncTrigger extends Mock implements FeedSyncTrigger {}
@@ -19,7 +19,7 @@ void main() {
   late MockGetSourceArticles mockGetSourceArticles;
   late MockFeedSyncTrigger mockFeedSyncTrigger;
   late MockSyncUserData mockSyncUserData;
-  late MockObservabilityClient mockObservabilityClient;
+  late MockTelemetryClient mockTelemetryClient;
 
   final tArticles = [
     Article(
@@ -44,14 +44,14 @@ void main() {
     mockGetSourceArticles = MockGetSourceArticles();
     mockFeedSyncTrigger = MockFeedSyncTrigger();
     mockSyncUserData = MockSyncUserData();
-    mockObservabilityClient = MockObservabilityClient();
+    mockTelemetryClient = MockTelemetryClient();
   });
 
   SourceDetailCubit buildCubit() => SourceDetailCubit(
         mockGetSourceArticles,
         mockFeedSyncTrigger,
         mockSyncUserData,
-        mockObservabilityClient,
+        mockTelemetryClient,
       );
 
   group('SourceDetailCubit', () {

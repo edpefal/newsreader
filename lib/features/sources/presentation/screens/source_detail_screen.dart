@@ -6,7 +6,7 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/navigation/route_path.dart';
-import 'package:newsreader/core/observability/observability_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_source_articles.dart';
@@ -19,7 +19,7 @@ class SourceDetailScreen extends StatelessWidget {
   final GetSourceArticles getSourceArticles;
   final FeedSyncTrigger feedSyncTrigger;
   final SyncUserData syncUserData;
-  final ObservabilityClient observabilityClient;
+  final TelemetryClient observabilityClient;
 
   /// `true` cuando se llega a esta pantalla inmediatamente después de
   /// agregar la fuente: dispara una sincronización antes de mostrar los

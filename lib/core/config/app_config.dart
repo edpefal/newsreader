@@ -32,4 +32,10 @@ class AppConfig {
       'https://203966973282e74abe8b174b6ec6afe4@o4511954552946688.ingest.us.sentry.io/4511954576801792';
 
   static const String sentryDsn = isProd ? _prodSentryDsn : _devSentryDsn;
+
+  // El plan free de PostHog solo permite 1 Project, así que dev y prod
+  // comparten el mismo proyecto/API key (a diferencia de Supabase/Sentry).
+  // Se distinguen entre sí por la super property `environment` que registra
+  // `DefaultTelemetryClient.initPostHog` (ver openspec/changes/add-product-analytics).
+  static const String postHogApiKey = 'phc_uPfRbZA8WehSymjbD4wmBgs6ACVZXs8DiMEurY3CvqaN';
 }
