@@ -225,6 +225,8 @@
   "errorNoArticlesToday": "There are no new articles today to summarize",
   "errorGenerationFailed": "Something went wrong. Please try again.",
   "errorAiUsageLimitReached": "You've reached today's AI usage limit. Try again tomorrow.",
+  "errorContentBlocked": "We couldn't summarize this article because of the AI provider's content policy.",
+  "errorSubscriptionRequired": "This requires an active subscription.",
   "errorUnknown": "Something unexpected happened",
 
   "summariesUsageMeter": "{used} / {limit} words used today",

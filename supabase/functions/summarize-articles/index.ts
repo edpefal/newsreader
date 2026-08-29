@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (!hasActiveEntitlement(entitlementRow)) {
     return new Response(
-      JSON.stringify({ error: "Se requiere una suscripción activa" }),
+      JSON.stringify({ error: "subscription_required" }),
       { status: 403, headers: { "Content-Type": "application/json" } },
     );
   }

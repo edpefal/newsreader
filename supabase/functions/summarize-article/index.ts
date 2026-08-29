@@ -229,7 +229,7 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (!hasActiveEntitlement(entitlementRow)) {
     return new Response(
-      JSON.stringify({ error: "Se requiere una suscripción activa" }),
+      JSON.stringify({ error: "subscription_required" }),
       { status: 403, headers: { "Content-Type": "application/json" } },
     );
   }
@@ -324,8 +324,11 @@ Deno.serve(async (req) => {
         `safetyRatings: ${JSON.stringify(geminiData?.candidates?.[0]?.safetyRatings)}, ` +
         `promptFeedback: ${JSON.stringify(geminiData?.promptFeedback)}`,
     );
+    const blockReason = geminiData?.promptFeedback?.blockReason;
     return new Response(
-      JSON.stringify({ error: "Respuesta vacía del modelo" }),
+      JSON.stringify({
+        error: blockReason ? "content_blocked" : "Respuesta vacía del modelo",
+      }),
       { status: 502, headers: { "Content-Type": "application/json" } },
     );
   }

@@ -463,6 +463,13 @@ class AppLocalizationsFr extends AppLocalizations {
       'Tu as atteint la limite quotidienne d\'utilisation de l\'IA. Réessaie demain.';
 
   @override
+  String get errorContentBlocked =>
+      'Nous n\'avons pas pu résumer cet article en raison de la politique de contenu du fournisseur d\'IA.';
+
+  @override
+  String get errorSubscriptionRequired => 'Cela nécessite un abonnement actif.';
+
+  @override
   String get errorUnknown => 'Une erreur inattendue s\'est produite';
 
   @override

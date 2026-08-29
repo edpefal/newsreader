@@ -141,6 +141,8 @@
   "errorNoArticlesToday": "No hay artículos nuevos hoy para resumir",
   "errorGenerationFailed": "Algo salió mal. Intenta de nuevo.",
   "errorAiUsageLimitReached": "Alcanzaste el límite diario de uso de IA. Intenta de nuevo mañana.",
+  "errorContentBlocked": "No pudimos generar el resumen de este artículo por las políticas de contenido del proveedor de IA.",
+  "errorSubscriptionRequired": "Esto requiere una suscripción activa.",
   "errorUnknown": "Ocurrió un error inesperado",
 
   "summariesUsageMeter": "{used} / {limit} palabras usadas hoy",

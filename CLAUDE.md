@@ -133,6 +133,8 @@ emit(state..articles.add(article)); // mutación
 
 La app soporta inglés, español (neutro) y francés, vía el mecanismo oficial de Flutter — `flutter_localizations` + archivos `.arb` + `flutter gen-l10n` (no `easy_localization` ni ningún otro paquete de terceros).
 
+**Ningún texto nuevo visible al usuario se agrega sin sus 3 traducciones.** Cualquier feature o fix que introduzca un mensaje de texto (estado de error, copy de UI, notificación, etc.) SIEMPRE agrega la clave correspondiente en los 3 `.arb` (inglés, español, francés) en el mismo change — nunca solo en uno y "después se traduce". Aplica también a mensajes que se arman por código (ej. un nuevo `AppErrorCode`), no solo a texto estático de widgets.
+
 - Claves en `lib/l10n/app_en.arb` (template, siempre completo), `app_es.arb` (contenido real en español neutro con tuteo) y `app_fr.arb` (hoy con placeholders en inglés — el contenido francés real está pendiente).
 - Después de tocar cualquier `.arb`, correr `flutter gen-l10n` para regenerar `lib/l10n/app_localizations.dart`.
 - En `presentation/`, obtener las traducciones con `AppLocalizations.of(context)` (sin `!`, `nullable-getter: false` en `l10n.yaml`) e importar `package:newsreader/l10n/app_localizations.dart`.

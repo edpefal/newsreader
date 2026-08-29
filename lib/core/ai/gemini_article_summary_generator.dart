@@ -62,10 +62,19 @@ class GeminiArticleSummaryGenerator implements ArticleSummaryGenerator {
       if (summary is! String ||
           summary.trim().isEmpty ||
           rawMentions is! List) {
-        if (decoded['error'] == 'ai_usage_limit_reached') {
-          throw const ArticleSummaryGenerationException(
-            AppErrorCode.aiUsageLimitReached,
-          );
+        switch (decoded['error']) {
+          case 'ai_usage_limit_reached':
+            throw const ArticleSummaryGenerationException(
+              AppErrorCode.aiUsageLimitReached,
+            );
+          case 'content_blocked':
+            throw const ArticleSummaryGenerationException(
+              AppErrorCode.contentBlocked,
+            );
+          case 'subscription_required':
+            throw const ArticleSummaryGenerationException(
+              AppErrorCode.subscriptionRequired,
+            );
         }
         _observabilityClient.captureMessage(
           'summarize-article respondió sin summary/mentions: '

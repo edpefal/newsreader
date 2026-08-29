@@ -68,10 +68,15 @@ class GeminiSummaryGenerator implements SummaryGenerator {
       final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
       final summary = decoded['summary'];
       if (summary is! String || summary.trim().isEmpty) {
-        if (decoded['error'] == 'ai_usage_limit_reached') {
-          throw const SummaryGenerationException(
-            AppErrorCode.aiUsageLimitReached,
-          );
+        switch (decoded['error']) {
+          case 'ai_usage_limit_reached':
+            throw const SummaryGenerationException(
+              AppErrorCode.aiUsageLimitReached,
+            );
+          case 'subscription_required':
+            throw const SummaryGenerationException(
+              AppErrorCode.subscriptionRequired,
+            );
         }
         _observabilityClient.captureMessage(
           'summarize-articles respondió sin summary: '

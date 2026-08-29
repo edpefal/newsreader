@@ -459,6 +459,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'You\'ve reached today\'s AI usage limit. Try again tomorrow.';
 
   @override
+  String get errorContentBlocked =>
+      'We couldn\'t summarize this article because of the AI provider\'s content policy.';
+
+  @override
+  String get errorSubscriptionRequired =>
+      'This requires an active subscription.';
+
+  @override
   String get errorUnknown => 'Something unexpected happened';
 
   @override

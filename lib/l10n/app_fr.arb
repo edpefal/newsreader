@@ -141,6 +141,8 @@
   "errorNoArticlesToday": "Il n'y a pas de nouveaux articles aujourd'hui à résumer",
   "errorGenerationFailed": "Une erreur est survenue. Réessaie.",
   "errorAiUsageLimitReached": "Tu as atteint la limite quotidienne d'utilisation de l'IA. Réessaie demain.",
+  "errorContentBlocked": "Nous n'avons pas pu résumer cet article en raison de la politique de contenu du fournisseur d'IA.",
+  "errorSubscriptionRequired": "Cela nécessite un abonnement actif.",
   "errorUnknown": "Une erreur inattendue s'est produite",
 
   "summariesUsageMeter": "{used} / {limit} mots utilisés aujourd'hui",

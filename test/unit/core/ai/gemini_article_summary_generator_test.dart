@@ -176,4 +176,37 @@ void main() {
       () => mockTelemetryClient.captureMessage(any(), level: any(named: 'level')),
     );
   });
+
+  test('lanza AppErrorCode.contentBlocked sin llamar captureMessage cuando el backend responde content_blocked',
+      () async {
+    mockPost(jsonEncode({'error': 'content_blocked'}));
+
+    await expectLater(
+      sut.summarizeArticle('Título', 'Contenido', language: 'es'),
+      throwsA(
+        isA<ArticleSummaryGenerationException>()
+            .having((e) => e.code, 'code', AppErrorCode.contentBlocked),
+      ),
+    );
+    verifyNever(
+      () => mockTelemetryClient.captureMessage(any(), level: any(named: 'level')),
+    );
+  });
+
+  test(
+      'lanza AppErrorCode.subscriptionRequired sin llamar captureMessage cuando el backend responde subscription_required',
+      () async {
+    mockPost(jsonEncode({'error': 'subscription_required'}));
+
+    await expectLater(
+      sut.summarizeArticle('Título', 'Contenido', language: 'es'),
+      throwsA(
+        isA<ArticleSummaryGenerationException>()
+            .having((e) => e.code, 'code', AppErrorCode.subscriptionRequired),
+      ),
+    );
+    verifyNever(
+      () => mockTelemetryClient.captureMessage(any(), level: any(named: 'level')),
+    );
+  });
 }

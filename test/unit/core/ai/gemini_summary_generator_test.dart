@@ -144,6 +144,30 @@ void main() {
     );
   });
 
+  test(
+      'lanza AppErrorCode.subscriptionRequired sin llamar captureMessage cuando el backend responde subscription_required',
+      () async {
+    when(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
+      ),
+    ).thenAnswer((_) async => '{"error": "subscription_required"}');
+
+    await expectLater(
+      sut.summarize(tArticles, language: 'es'),
+      throwsA(
+        isA<SummaryGenerationException>()
+            .having((e) => e.code, 'code', AppErrorCode.subscriptionRequired),
+      ),
+    );
+    verifyNever(
+      () => mockTelemetryClient.captureMessage(any(), level: any(named: 'level')),
+    );
+  });
+
   test('usa un timeout más largo que el default de fetch de feeds', () async {
     when(
       () => mockHttpClient.post(

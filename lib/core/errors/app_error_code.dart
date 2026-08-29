@@ -62,6 +62,18 @@ enum AppErrorCode {
   /// `ai-usage-budget`); distinto de un fallo genérico de generación.
   aiUsageLimitReached,
 
+  /// El proveedor de IA bloqueó el prompt por su propia política de
+  /// contenido (ej. `promptFeedback.blockReason` de Gemini). Determinístico
+  /// para ese contenido -- reintentar el mismo artículo no cambia el
+  /// resultado, a diferencia de `generationFailed`.
+  contentBlocked,
+
+  /// El backend rechazó la generación de un resumen porque la suscripción
+  /// del usuario no está activa (puede ocurrir aunque la UI ya haya dejado
+  /// pasar la solicitud, ej. una suscripción de sandbox que expira entre
+  /// la verificación local y la del backend).
+  subscriptionRequired,
+
   /// Cualquier error no anticipado por los demás códigos.
   unknown,
 }

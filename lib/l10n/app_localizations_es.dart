@@ -457,6 +457,14 @@ class AppLocalizationsEs extends AppLocalizations {
       'Alcanzaste el límite diario de uso de IA. Intenta de nuevo mañana.';
 
   @override
+  String get errorContentBlocked =>
+      'No pudimos generar el resumen de este artículo por las políticas de contenido del proveedor de IA.';
+
+  @override
+  String get errorSubscriptionRequired =>
+      'Esto requiere una suscripción activa.';
+
+  @override
   String get errorUnknown => 'Ocurrió un error inesperado';
 
   @override

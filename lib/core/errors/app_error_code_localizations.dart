@@ -46,6 +46,10 @@ extension AppErrorCodeL10n on AppErrorCode {
         return l10n.errorGenerationFailed;
       case AppErrorCode.aiUsageLimitReached:
         return l10n.errorAiUsageLimitReached;
+      case AppErrorCode.contentBlocked:
+        return l10n.errorContentBlocked;
+      case AppErrorCode.subscriptionRequired:
+        return l10n.errorSubscriptionRequired;
       case AppErrorCode.unknown:
         return l10n.errorUnknown;
     }

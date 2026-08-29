@@ -820,6 +820,18 @@ abstract class AppLocalizations {
   /// **'You\'ve reached today\'s AI usage limit. Try again tomorrow.'**
   String get errorAiUsageLimitReached;
 
+  /// No description provided for @errorContentBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t summarize this article because of the AI provider\'s content policy.'**
+  String get errorContentBlocked;
+
+  /// No description provided for @errorSubscriptionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This requires an active subscription.'**
+  String get errorSubscriptionRequired;
+
   /// No description provided for @errorUnknown.
   ///
   /// In en, this message translates to:
