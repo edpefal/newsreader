@@ -67,6 +67,11 @@ class GeminiArticleSummaryGenerator implements ArticleSummaryGenerator {
             AppErrorCode.aiUsageLimitReached,
           );
         }
+        _observabilityClient.captureMessage(
+          'summarize-article respondió sin summary/mentions: '
+          '${decoded['error']?.toString() ?? 'sin mensaje'}',
+          level: TelemetryLevel.warning,
+        );
         throw const ArticleSummaryGenerationException(
           AppErrorCode.generationFailed,
         );

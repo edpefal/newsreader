@@ -10,6 +10,7 @@ import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 
 import '../../../support/fake_telemetry_client.dart';
 
@@ -25,6 +26,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(Uri());
+    registerFallbackValue(TelemetryLevel.info);
   });
 
   setUp(() {
@@ -103,9 +105,42 @@ void main() {
       ),
     ).thenAnswer((_) async => '{"error": "Backend mal configurado"}');
 
-    expect(
+    await expectLater(
       sut.summarize(tArticles, language: 'es'),
-      throwsA(isA<SummaryGenerationException>()),
+      throwsA(
+        isA<SummaryGenerationException>()
+            .having((e) => e.code, 'code', AppErrorCode.generationFailed),
+      ),
+    );
+    verify(
+      () => mockTelemetryClient.captureMessage(
+        any(that: contains('Backend mal configurado')),
+        level: TelemetryLevel.warning,
+      ),
+    ).called(1);
+  });
+
+  test(
+      'no llama captureMessage cuando el backend responde ai_usage_limit_reached',
+      () async {
+    when(
+      () => mockHttpClient.post(
+        any(),
+        body: any(named: 'body'),
+        headers: any(named: 'headers'),
+        timeout: any(named: 'timeout'),
+      ),
+    ).thenAnswer((_) async => '{"error": "ai_usage_limit_reached"}');
+
+    await expectLater(
+      sut.summarize(tArticles, language: 'es'),
+      throwsA(
+        isA<SummaryGenerationException>()
+            .having((e) => e.code, 'code', AppErrorCode.aiUsageLimitReached),
+      ),
+    );
+    verifyNever(
+      () => mockTelemetryClient.captureMessage(any(), level: any(named: 'level')),
     );
   });
 

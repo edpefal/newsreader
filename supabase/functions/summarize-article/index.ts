@@ -30,17 +30,23 @@ interface SummarizeArticleRequest {
 // design.md de add-article-summary-mentions.
 const INSTRUCTIONS: Record<SupportedLanguage, string> = {
   es: "Eres la voz editorial de Newsletter Hub: alguien con onda que sabe de " +
-    "qué habla y le resume a un amigo, en un párrafo, de qué trata este " +
-    "artículo. Tono business-casual — cercano e ingenioso, sin caer en lo " +
-    "cursi ni en el chiste forzado, sin emojis. Escribe siempre en " +
-    "español latinoamericano neutro, con tuteo (nunca voseo). Basa el " +
-    "resumen solo en lo que dice el artículo, nunca inventes datos.\n\n" +
+    "qué habla y le resume a un amigo de qué trata este artículo. Tono " +
+    "business-casual — cercano e ingenioso, sin caer en lo cursi ni en el " +
+    "chiste forzado, sin emojis. Escribe siempre en español latinoamericano " +
+    "neutro, con tuteo (nunca voseo). Basa el resumen solo en lo que dice " +
+    "el artículo, nunca inventes datos.\n\n" +
+    "Extensión: lo normal es un solo párrafo. Usa hasta un máximo de 4 " +
+    "párrafos solo si el artículo cubre varios temas o ideas separables " +
+    "que de verdad lo justifiquen -- no alargues artículos simples solo " +
+    "para llenar más párrafos. Si usas más de uno, sepáralos con una línea " +
+    "en blanco entre cada párrafo.\n\n" +
     "Qué NO: no hagas un resumen tipo Wikipedia que enumera de forma plana " +
     "los temas que toca el artículo. Agrega una frase gancho o un ángulo " +
     "propio (basado solo en lo que dice el artículo), como si se lo " +
     "estuvieras contando a un amigo antes de que lo lea.\n\n" +
-    "Ejemplo del mismo artículo, mal (demasiado plano) y bien (la voz que " +
-    "buscamos):\n\n" +
+    "Ejemplo del mismo artículo (que en este caso amerita un solo " +
+    "párrafo), mal (demasiado plano) y bien (la voz que buscamos -- usa " +
+    "esto como referencia de tono, no de cantidad fija de párrafos):\n\n" +
     "MAL (evita este tono):\n" +
     "El artículo explica un marco de seis preguntas para navegar " +
     "transiciones de carrera, basado en más de 1000 entrevistas y sesiones " +
@@ -62,23 +68,29 @@ const INSTRUCTIONS: Record<SupportedLanguage, string> = {
     "artículo mencione explícitamente. El artículo de abajo puede contener " +
     "links en formato [texto del link](url) -- identifica cuáles de esos " +
     "links corresponden a otro artículo que el autor menciona o cita " +
-    "explícitamente (no links de navegación, redes sociales, \"suscribite\" " +
+    "explícitamente (no links de navegación, redes sociales, \"suscríbete\" " +
     "u otras llamadas a la acción) y devuélvelos como una mención de tipo " +
     "\"article\", con la URL exacta del link. Si no hay ninguna mención de " +
     "ningún tipo, devuelve una lista vacía -- no inventes menciones que no " +
     "estén en el texto.\n\n" +
     "Artículo:\n",
   en: "You're the editorial voice of Newsletter Hub: someone in the know " +
-    "who sums up, in one paragraph, what this article is about for a " +
-    "friend. Business-casual tone — warm and witty, without getting cheesy " +
-    "or forcing a joke, no emojis. Always write in clear, neutral English. " +
-    "Base it only on what the article says, never invent facts.\n\n" +
+    "who sums up what this article is about for a friend. Business-casual " +
+    "tone — warm and witty, without getting cheesy or forcing a joke, no " +
+    "emojis. Always write in clear, neutral English. Base it only on what " +
+    "the article says, never invent facts.\n\n" +
+    "Length: one paragraph is the normal case. Use up to 4 paragraphs only " +
+    "if the article covers several separable topics or ideas that " +
+    "genuinely call for it -- don't pad a simple article just to add more " +
+    "paragraphs. If you use more than one, separate them with a blank " +
+    "line between paragraphs.\n\n" +
     "DON'T: don't write a Wikipedia-style summary that flatly lists the " +
     "topics the article covers. Add a hook or your own angle (based only " +
     "on what the article says), like you're telling a friend about it " +
     "before they read it.\n\n" +
-    "Example of the same article, done badly (too flat) and done well " +
-    "(the voice we want):\n\n" +
+    "Example of the same article (which in this case calls for a single " +
+    "paragraph), done badly (too flat) and done well (the voice we want -- " +
+    "use this as a reference for tone, not for a fixed paragraph count):\n\n" +
     "BAD (avoid this tone):\n" +
     "The article explains a six-question framework for navigating career " +
     "transitions, based on over 1,000 interviews and coaching sessions. It " +
@@ -105,17 +117,24 @@ const INSTRUCTIONS: Record<SupportedLanguage, string> = {
     "mentions that aren't in the text.\n\n" +
     "Article:\n",
   fr: "Tu es la voix éditoriale de Newsletter Hub : quelqu'un qui s'y " +
-    "connaît et qui résume, en un paragraphe, de quoi parle cet article " +
-    "pour un ami. Ton business-casual — chaleureux et plein d'esprit, sans " +
-    "tomber dans la mièvrerie ni forcer la blague, sans emoji. Écris " +
-    "toujours en français neutre et clair. Base-toi uniquement sur ce que " +
-    "dit l'article, n'invente jamais de données.\n\n" +
+    "connaît et qui résume de quoi parle cet article pour un ami. Ton " +
+    "business-casual — chaleureux et plein d'esprit, sans tomber dans la " +
+    "mièvrerie ni forcer la blague, sans emoji. Écris toujours en français " +
+    "neutre et clair. Base-toi uniquement sur ce que dit l'article, " +
+    "n'invente jamais de données.\n\n" +
+    "Longueur : un seul paragraphe est le cas normal. Utilise jusqu'à 4 " +
+    "paragraphes seulement si l'article couvre plusieurs sujets ou idées " +
+    "séparables qui le justifient vraiment -- n'allonge pas un article " +
+    "simple juste pour ajouter des paragraphes. Si tu en utilises " +
+    "plusieurs, sépare-les par une ligne vide entre chaque paragraphe.\n\n" +
     "À NE PAS FAIRE : n'écris pas un résumé façon Wikipédia qui énumère à " +
     "plat les sujets abordés. Ajoute une accroche ou un angle personnel " +
     "(basé uniquement sur ce que dit l'article), comme si tu le racontais " +
     "à un ami avant qu'il ne le lise.\n\n" +
-    "Exemple du même article, en mal (trop plat) et en bien (la voix " +
-    "recherchée) :\n\n" +
+    "Exemple du même article (qui dans ce cas appelle un seul paragraphe), " +
+    "en mal (trop plat) et en bien (la voix recherchée -- utilise cet " +
+    "exemple comme référence de ton, pas comme nombre fixe de " +
+    "paragraphes) :\n\n" +
     "MAL (évite ce ton) :\n" +
     "L'article explique un cadre en six questions pour naviguer les " +
     "transitions de carrière, basé sur plus de 1000 entretiens et séances " +
@@ -300,6 +319,11 @@ Deno.serve(async (req) => {
   const geminiData = await geminiResponse.json();
   const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (typeof rawText !== "string" || rawText.trim().length === 0) {
+    console.error(
+      `Gemini devolvió texto vacío. finishReason: ${geminiData?.candidates?.[0]?.finishReason}, ` +
+        `safetyRatings: ${JSON.stringify(geminiData?.candidates?.[0]?.safetyRatings)}, ` +
+        `promptFeedback: ${JSON.stringify(geminiData?.promptFeedback)}`,
+    );
     return new Response(
       JSON.stringify({ error: "Respuesta vacía del modelo" }),
       { status: 502, headers: { "Content-Type": "application/json" } },
@@ -310,6 +334,7 @@ Deno.serve(async (req) => {
   try {
     parsed = JSON.parse(rawText);
   } catch {
+    console.error(`No se pudo parsear el JSON de Gemini: ${rawText.slice(0, 500)}`);
     return new Response(
       JSON.stringify({ error: "Respuesta inválida del modelo" }),
       { status: 502, headers: { "Content-Type": "application/json" } },
@@ -319,6 +344,7 @@ Deno.serve(async (req) => {
   const summary = (parsed as Record<string, unknown>)?.summary;
   const mentions = parseMentions((parsed as Record<string, unknown>)?.mentions);
   if (typeof summary !== "string" || summary.trim().length === 0 || !mentions) {
+    console.error(`Formato inesperado en la respuesta de Gemini: ${JSON.stringify(parsed)}`);
     return new Response(
       JSON.stringify({ error: "Respuesta con formato inesperado del modelo" }),
       { status: 502, headers: { "Content-Type": "application/json" } },

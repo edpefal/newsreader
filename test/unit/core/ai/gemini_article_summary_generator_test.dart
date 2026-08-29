@@ -9,6 +9,7 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/network/http_client.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 
 import '../../../support/fake_telemetry_client.dart';
 
@@ -25,6 +26,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(Uri());
     registerFallbackValue(StackTrace.empty);
+    registerFallbackValue(TelemetryLevel.info);
   });
 
   setUp(() {
@@ -136,5 +138,42 @@ void main() {
     verify(
       () => mockTelemetryClient.captureException(any(), any()),
     ).called(1);
+  });
+
+  test(
+      'reporta el mensaje real del backend por captureMessage y lanza generationFailed '
+      'cuando la respuesta no trae summary/mentions', () async {
+    mockPost(jsonEncode({'error': 'Respuesta inválida del modelo'}));
+
+    await expectLater(
+      sut.summarizeArticle('Título', 'Contenido', language: 'es'),
+      throwsA(
+        isA<ArticleSummaryGenerationException>()
+            .having((e) => e.code, 'code', AppErrorCode.generationFailed),
+      ),
+    );
+    verify(
+      () => mockTelemetryClient.captureMessage(
+        any(that: contains('Respuesta inválida del modelo')),
+        level: TelemetryLevel.warning,
+      ),
+    ).called(1);
+  });
+
+  test(
+      'no llama captureMessage cuando el backend responde ai_usage_limit_reached',
+      () async {
+    mockPost(jsonEncode({'error': 'ai_usage_limit_reached'}));
+
+    await expectLater(
+      sut.summarizeArticle('Título', 'Contenido', language: 'es'),
+      throwsA(
+        isA<ArticleSummaryGenerationException>()
+            .having((e) => e.code, 'code', AppErrorCode.aiUsageLimitReached),
+      ),
+    );
+    verifyNever(
+      () => mockTelemetryClient.captureMessage(any(), level: any(named: 'level')),
+    );
   });
 }
