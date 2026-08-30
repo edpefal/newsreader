@@ -31,7 +31,9 @@ workflows:
 
       - name: Resolver siguiente build number
         script: |
-          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$BUNDLE_ID")
+          APP_ID=$(app-store-connect apps list --bundle-id-identifier "$BUNDLE_ID" --json | \
+            python3 -c "import json,sys; d=json.load(sys.stdin); print((d[0] if isinstance(d, list) else d)['id'])")
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$APP_ID" --all-versions)
           NEXT_BUILD_NUMBER=$((LATEST_BUILD_NUMBER + 1))
           echo "NEXT_BUILD_NUMBER=$NEXT_BUILD_NUMBER" >> $CM_ENV
 
