@@ -95,7 +95,9 @@ test/
 
   Credenciales necesarias (configuradas una sola vez en la UI de Codemagic, no viven en el repo):
   - Integración de App Store Connect API key (nombre `reevo_asc_api_key`) con acceso a `com.artlab.reevo`, para firma automática y resolución del build number.
-  - Un grupo interno de TestFlight llamado `Internal Testers` en App Store Connect (o ajustar `beta_groups` en `codemagic.yaml` si se usa otro nombre).
+  - Variable de entorno `CERTIFICATE_PRIVATE_KEY` (grupo `appstore_credentials`, marcada Secret) con la private key del certificado de distribución iOS.
+
+  El build se marca con `testFlightInternalTestingOnly: true` al firmar, así que queda disponible automáticamente para todos los testers internos de la cuenta (Apple no permite asignar builds a grupos internos por API — solo a grupos externos vía `beta_groups`).
 
 ## Feeds generados por email (setup de infraestructura)
 

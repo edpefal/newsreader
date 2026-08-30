@@ -4,7 +4,7 @@
 - [x] 1.2 Configurar el job con `subosito/flutter-action` (canal stable, sin pin de versión específica salvo la que ya usa el proyecto) y `flutter pub get`
 - [x] 1.3 Agregar el paso `flutter analyze`
 - [x] 1.4 Agregar el paso `flutter test`
-- [ ] 1.5 Verificar en un PR de prueba que el chequeo aparece y bloquea/aprueba correctamente según el resultado
+- [x] 1.5 Verificar en un PR de prueba que el chequeo aparece y bloquea/aprueba correctamente según el resultado
 
 ## 2. Codemagic: build y firma de iOS
 
@@ -18,7 +18,7 @@
 ## 3. Codemagic: distribución a TestFlight
 
 - [x] 3.1 Configurar la publicación (`publishing.app_store_connect`) para subir al grupo interno de TestFlight, sin marcar el build para revisión de App Store
-- [ ] 3.2 Ejecutar un primer build manual desde la UI de Codemagic y confirmar que compila, firma y sube correctamente
+- [x] 3.2 Ejecutar un primer build manual desde la UI de Codemagic y confirmar que compila, firma y sube correctamente
 - [ ] 3.3 Confirmar en App Store Connect / TestFlight que el build aparece en el grupo interno y es instalable en un dispositivo de prueba
 
 ## 4. Documentación
