@@ -35,11 +35,20 @@ const OG_FETCH_TIMEOUT_MS = 8000;
 /// Resuelve solo la portada de un libro contra Google Books, best-effort.
 /// El `link` de una mención de libro NO sale de acá -- ver
 /// `buildAmazonSearchLink` y `enrichMention`.
+///
+/// Google Books exige una API key para tráfico de producción (el acceso
+/// anónimo quedó con cupo 0 -- ver design.md de add-google-books-api-key).
+/// Si el secret no está seteado (ej. entorno local sin `supabase secrets
+/// set`), se hace la request igual sin `key`, degradando al mismo
+/// comportamiento de "sin portada" que ya maneja el caller.
 async function resolveBookCover(
   name: string,
   fetchImpl: FetchLike,
 ): Promise<string | undefined> {
-  const url = `${GOOGLE_BOOKS_URL}?q=${encodeURIComponent(name)}&maxResults=1`;
+  const apiKey = Deno.env.get("GOOGLE_BOOKS_API_KEY");
+  const keyParam = apiKey ? `&key=${encodeURIComponent(apiKey)}` : "";
+  const url =
+    `${GOOGLE_BOOKS_URL}?q=${encodeURIComponent(name)}&maxResults=1${keyParam}`;
   const response = await fetchImpl(url);
   if (!response.ok) return undefined;
   const data = await response.json();
