@@ -83,6 +83,20 @@ test/
     └── sources/
 ```
 
+## CI/CD
+
+- **CI (GitHub Actions)**: `.github/workflows/ci.yml` corre `flutter analyze` y `flutter test` automáticamente en cada push y pull request contra `main`. No requiere configuración adicional.
+- **CD a TestFlight (Codemagic)**: `codemagic.yaml` define el workflow `iOS TestFlight`, que compila, firma y sube un build de producción (`--dart-define=APP_ENV=prod`) al grupo interno de TestFlight. Es de **trigger manual** — no corre en cada push, para no consumir minutos del free tier de Codemagic.
+
+  Para correr un build manual:
+  1. Entrar a [codemagic.io](https://codemagic.io), abrir la app `Reevo`.
+  2. En el workflow **iOS TestFlight**, click en **Start new build**, elegir la rama (normalmente `main`).
+  3. El build tarda ~10-20 minutos. Al terminar, aparece en TestFlight interno (App Store Connect → TestFlight → grupo interno) y queda instalable en los dispositivos de prueba agregados a ese grupo.
+
+  Credenciales necesarias (configuradas una sola vez en la UI de Codemagic, no viven en el repo):
+  - Integración de App Store Connect API key (nombre `reevo_asc_api_key`) con acceso a `com.artlab.reevo`, para firma automática y resolución del build number.
+  - Un grupo interno de TestFlight llamado `Internal Testers` en App Store Connect (o ajustar `beta_groups` en `codemagic.yaml` si se usa otro nombre).
+
 ## Feeds generados por email (setup de infraestructura)
 
 Para newsletters sin RSS/Atom, la app puede generar una dirección de email única; cualquier correo que llegue se convierte en un item de un feed RSS servido por Supabase. Requiere un setup manual único, fuera del código, antes de que el flujo funcione:
