@@ -16,27 +16,36 @@ export type FetchLike = typeof fetch;
 const GOOGLE_BOOKS_URL = "https://www.googleapis.com/books/v1/volumes";
 const ITUNES_SEARCH_URL = "https://itunes.apple.com/search";
 
+/// Link de búsqueda de Amazon para una mención de libro. Se construye
+/// siempre a partir del nombre, sin depender de ningún proveedor externo
+/// -- ver design.md de add-book-mention-amazon-link sobre por qué se
+/// prefiere esto a la Product Advertising API. `i=stripbooks` acota la
+/// búsqueda a libros físicos, evitando que el primer resultado sea un
+/// Kindle/audiolibro o un producto no relacionado.
+function buildAmazonSearchLink(name: string): string {
+  return `https://www.amazon.com/s?k=${encodeURIComponent(name)}&i=stripbooks`;
+}
+
 // Timeout corto para el fetch de Open Graph -- una página citada que no
 // responde no debería demorar la generación del resumen. Un timeout se
 // trata igual que cualquier otra falla de fetch (mención sin enriquecer,
 // con el link original igual).
 const OG_FETCH_TIMEOUT_MS = 8000;
 
-async function resolveBook(
+/// Resuelve solo la portada de un libro contra Google Books, best-effort.
+/// El `link` de una mención de libro NO sale de acá -- ver
+/// `buildAmazonSearchLink` y `enrichMention`.
+async function resolveBookCover(
   name: string,
   fetchImpl: FetchLike,
-): Promise<{ imageUrl?: string; link?: string } | null> {
+): Promise<string | undefined> {
   const url = `${GOOGLE_BOOKS_URL}?q=${encodeURIComponent(name)}&maxResults=1`;
   const response = await fetchImpl(url);
-  if (!response.ok) return null;
+  if (!response.ok) return undefined;
   const data = await response.json();
   const item = data?.items?.[0];
   const volumeInfo = item?.volumeInfo;
-  if (!volumeInfo) return null;
-  return {
-    imageUrl: volumeInfo.imageLinks?.thumbnail,
-    link: volumeInfo.infoLink ?? volumeInfo.previewLink,
-  };
+  return volumeInfo?.imageLinks?.thumbnail;
 }
 
 async function resolveAudio(
@@ -105,10 +114,15 @@ async function resolveArticle(
   }
 }
 
-/// Resuelve una mención contra su proveedor. Si el proveedor no encuentra
-/// match, o la request falla, devuelve la mención sin `imageUrl`/`link`
-/// (nunca `null` ni la descarta) -- ver capability article-mentions,
-/// requirement "Mención sin match del proveedor se muestra igual".
+/// Resuelve una mención contra su proveedor. Para `podcast`/`music`, si el
+/// proveedor no encuentra match o la request falla, devuelve la mención sin
+/// `imageUrl`/`link` (nunca `null` ni la descarta) -- ver capability
+/// article-mentions, requirement "Mención de podcast o música sin match del
+/// proveedor se muestra igual". Para `book`, en cambio, `link` SHALL setearse
+/// siempre a un link de búsqueda de Amazon (ver `buildAmazonSearchLink`),
+/// independientemente de si Google Books encuentra la portada -- ver
+/// requirement "Mención de libro siempre tiene link, con o sin match en
+/// Google Books".
 ///
 /// Para `type: "article"`, `link` SHALL setearse siempre a la URL original
 /// detectada (haya o no éxito el fetch de Open Graph, e incluso si la URL
@@ -139,14 +153,22 @@ export async function enrichMention(
     }
   }
 
+  if (mention.type === "book") {
+    let imageUrl: string | undefined;
+    try {
+      imageUrl = await resolveBookCover(mention.name, fetchImpl);
+    } catch (e) {
+      console.error(`enrichMention (book) failed for "${mention.name}": ${e}`);
+    }
+    return { ...mention, imageUrl, link: buildAmazonSearchLink(mention.name) };
+  }
+
   try {
-    const result = mention.type === "book"
-      ? await resolveBook(mention.name, fetchImpl)
-      : await resolveAudio(
-        mention.name,
-        mention.type === "podcast" ? "podcast" : "musicTrack",
-        fetchImpl,
-      );
+    const result = await resolveAudio(
+      mention.name,
+      mention.type === "podcast" ? "podcast" : "musicTrack",
+      fetchImpl,
+    );
     return { ...mention, imageUrl: result?.imageUrl, link: result?.link };
   } catch (e) {
     console.error(`enrichMention failed for "${mention.name}": ${e}`);

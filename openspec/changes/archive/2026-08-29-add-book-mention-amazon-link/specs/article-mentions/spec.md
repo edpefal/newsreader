@@ -1,31 +1,4 @@
-# Spec: Article Mentions
-
-## Purpose
-
-Define cómo el sistema detecta menciones a libros, podcasts, música y artículos citados dentro de un artículo, cómo las enriquece con datos de proveedores externos (portada e link), y cómo se presentan y comportan en la UI, incluyendo el caso en que no se encuentra un match.
-
-## Requirements
-
-### Requirement: Detección de menciones al generar el resumen de un artículo
-
-Al generar el resumen de un artículo (capability `article-summaries`), el sistema SHALL además extraer, mediante la misma API de IA, la lista de menciones a libros, podcasts, música o artículos presentes en el contenido del artículo. Cada mención SHALL tener al menos su tipo (libro, podcast, música o artículo) y su nombre tal como aparece o se infiere del artículo; una mención de tipo artículo SHALL además incluir la URL detectada. El sistema NO SHALL detectar ni extraer menciones de ningún otro tipo (ej. productos, personas, empresas) en esta versión.
-
-Para que la API de IA pueda identificar semánticamente qué links del artículo corresponden a otro artículo mencionado/citado (a diferencia de links de navegación, redes sociales, o llamadas a la acción), el contenido enviado a la API de IA SHALL preservar los links del artículo (texto del link + URL), en vez de convertir el HTML a texto plano sin ningún link, como hace hoy `article-summaries`.
-
-#### Scenario: Artículo con menciones detectables
-
-- **WHEN** se genera el resumen de un artículo cuyo contenido menciona al menos un libro, podcast, álbum/canción, o link a otro artículo
-- **THEN** el sistema incluye, junto al resumen, la lista de esas menciones con su tipo y nombre (y su URL, si el tipo es artículo)
-
-#### Scenario: Artículo sin menciones detectables
-
-- **WHEN** se genera el resumen de un artículo cuyo contenido no menciona ningún libro, podcast, música, ni link a otro artículo
-- **THEN** el sistema persiste el resumen con una lista de menciones vacía, sin error
-
-#### Scenario: Artículo que linkea a otro artículo
-
-- **WHEN** el contenido de un artículo incluye un link que el modelo identifica como una mención a otro artículo (no un link de navegación, redes sociales, o CTA)
-- **THEN** el sistema incluye esa mención con tipo artículo, el nombre inferido, y la URL del link
+## MODIFIED Requirements
 
 ### Requirement: Enriquecimiento de menciones vía proveedor externo
 

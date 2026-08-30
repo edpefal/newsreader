@@ -18,7 +18,7 @@ function fakeHtmlFetch(html: string, ok = true): FetchLike {
     )) as unknown as FetchLike;
 }
 
-Deno.test("enriquece un libro con match en Google Books", async () => {
+Deno.test("enriquece un libro con match en Google Books: portada de Google Books, link de Amazon", async () => {
   const fetchImpl = fakeFetch({
     items: [{
       volumeInfo: {
@@ -35,7 +35,7 @@ Deno.test("enriquece un libro con match en Google Books", async () => {
     type: "book",
     name: "Project Hail Mary",
     imageUrl: "https://books.example/cover.jpg",
-    link: "https://books.example/info",
+    link: "https://www.amazon.com/s?k=Project%20Hail%20Mary&i=stripbooks",
   });
 });
 
@@ -58,7 +58,7 @@ Deno.test("enriquece un podcast con match en iTunes Search", async () => {
   });
 });
 
-Deno.test("mención sin match se devuelve sin imageUrl ni link", async () => {
+Deno.test("libro sin match en Google Books igual tiene link de Amazon, sin imageUrl", async () => {
   const fetchImpl = fakeFetch({ items: [] });
   const result = await enrichMention(
     { type: "book", name: "Un libro inexistente" },
@@ -68,11 +68,54 @@ Deno.test("mención sin match se devuelve sin imageUrl ni link", async () => {
     type: "book",
     name: "Un libro inexistente",
     imageUrl: undefined,
+    link: "https://www.amazon.com/s?k=Un%20libro%20inexistente&i=stripbooks",
+  });
+});
+
+Deno.test("falla la consulta a Google Books de un libro: igual queda con link de Amazon", async () => {
+  const fetchImpl = fakeFetch({}, false);
+  const result = await enrichMention(
+    { type: "book", name: "Un libro cualquiera" },
+    fetchImpl,
+  );
+  assertEquals(result, {
+    type: "book",
+    name: "Un libro cualquiera",
+    imageUrl: undefined,
+    link: "https://www.amazon.com/s?k=Un%20libro%20cualquiera&i=stripbooks",
+  });
+});
+
+Deno.test("una excepción de red al resolver la portada de un libro igual queda con link de Amazon", async () => {
+  const throwingFetch: FetchLike =
+    (() => Promise.reject(new Error("network down"))) as unknown as FetchLike;
+  const result = await enrichMention(
+    { type: "book", name: "Otro libro" },
+    throwingFetch,
+  );
+  assertEquals(result, {
+    type: "book",
+    name: "Otro libro",
+    imageUrl: undefined,
+    link: "https://www.amazon.com/s?k=Otro%20libro&i=stripbooks",
+  });
+});
+
+Deno.test("mención de música o podcast sin match se devuelve sin imageUrl ni link", async () => {
+  const fetchImpl = fakeFetch({ results: [] });
+  const result = await enrichMention(
+    { type: "music", name: "Una canción inexistente" },
+    fetchImpl,
+  );
+  assertEquals(result, {
+    type: "music",
+    name: "Una canción inexistente",
+    imageUrl: undefined,
     link: undefined,
   });
 });
 
-Deno.test("falla del proveedor se trata igual que sin match", async () => {
+Deno.test("falla del proveedor de música/podcast se trata igual que sin match", async () => {
   const fetchImpl = fakeFetch({}, false);
   const result = await enrichMention(
     { type: "music", name: "Random Access Memories" },
@@ -86,7 +129,7 @@ Deno.test("falla del proveedor se trata igual que sin match", async () => {
   });
 });
 
-Deno.test("una excepción de red se trata igual que sin match", async () => {
+Deno.test("una excepción de red de música/podcast se trata igual que sin match", async () => {
   const throwingFetch: FetchLike =
     (() => Promise.reject(new Error("network down"))) as unknown as FetchLike;
   const result = await enrichMention(
