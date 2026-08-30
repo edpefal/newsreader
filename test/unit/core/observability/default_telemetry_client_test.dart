@@ -52,14 +52,14 @@ void main() {
 
   test('captureException delega en Sentry.captureException', () async {
     sut.captureException(Exception('boom'), StackTrace.current);
-    await Future<void>.delayed(Duration.zero);
+    await _waitUntil(() => transport.envelopes.isNotEmpty);
 
     expect(transport.envelopes, isNotEmpty);
   });
 
   test('captureMessage delega en Sentry.captureMessage', () async {
     sut.captureMessage('algo pasó', level: TelemetryLevel.warning);
-    await Future<void>.delayed(Duration.zero);
+    await _waitUntil(() => transport.envelopes.isNotEmpty);
 
     expect(transport.envelopes, isNotEmpty);
   });
@@ -115,4 +115,19 @@ void main() {
     final call = postHogCalls.singleWhere((c) => c.method == 'capture');
     expect(call.arguments['eventName'], 'sync_triggered');
   });
+}
+
+/// Sentry procesa `capture*` de forma asíncrona en varios pasos (sampling,
+/// event processors, transporte); un solo `Future.delayed(Duration.zero)`
+/// alcanza en la mayoría de las corridas locales pero es flaky en runners de
+/// CI más lentos o cargados. Este poll evita depender de un único tick del
+/// event loop.
+Future<void> _waitUntil(
+  bool Function() condition, {
+  Duration timeout = const Duration(seconds: 2),
+}) async {
+  final deadline = DateTime.now().add(timeout);
+  while (!condition() && DateTime.now().isBefore(deadline)) {
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+  }
 }
