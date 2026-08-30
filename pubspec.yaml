@@ -71,6 +71,7 @@ dev_dependencies:
   hive_ce_generator: ^1.8.0
   build_runner: ^2.4.0
   flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.4
   sentry: ^8.14.2
   webview_flutter_platform_interface: ^2.14.0
 
@@ -85,6 +86,8 @@ flutter:
     enable-swift-package-manager: false
   assets:
     - assets/reevo_logo.png
+    - assets/reevo_logo_splash_light.png
+    - assets/reevo_logo_splash_dark.png
 
 flutter_launcher_icons:
   android: true
@@ -92,6 +95,17 @@ flutter_launcher_icons:
   image_path: assets/reevo_logo.png
   min_sdk_android: 21
   remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/reevo_logo_splash_light.png
+  color_dark: "#121212"
+  image_dark: assets/reevo_logo_splash_dark.png
+  android_12:
+    image: assets/reevo_logo_splash_light.png
+    icon_background_color: "#FFFFFF"
+    image_dark: assets/reevo_logo_splash_dark.png
+    icon_background_color_dark: "#121212"
 
 dependency_overrides:
   # webfeed_plus ^1.1.2 restringe intl a ^0.19.0, pero flutter_localizations
