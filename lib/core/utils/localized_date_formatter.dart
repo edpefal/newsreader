@@ -37,7 +37,9 @@ class LocalizedDateFormatter {
     final articleDay = DateTime(date.year, date.month, date.day);
     final diffDays = today.difference(articleDay).inDays;
 
-    if (diffDays == 0) return DateFormat.Hm(l10n.localeName).format(date);
+    if (diffDays == 0) {
+      return DateFormat('HH:mm', l10n.localeName).format(date);
+    }
     if (diffDays == 1) return l10n.commonYesterday;
     if (diffDays < 7) return l10n.commonDaysAgoShort(diffDays);
     return DateFormat.Md(l10n.localeName).format(date);
