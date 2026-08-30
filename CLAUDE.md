@@ -195,7 +195,15 @@ La app soporta inglés, español (neutro) y francés, vía el mecanismo oficial 
 
 Todos los features se implementan por medio de OpenSpec (`/opsx:propose` → `/opsx:apply` → `/opsx:archive`), sin excepción, aunque el scope parezca chico.
 
-Después de archivar un change, siempre hay que commitear y pushear — no dejar el archive sin subir.
+**`main` está protegida: nunca se pushea ni se mergea código directo ahí.** El flujo correcto es:
+
+1. Crear una rama nueva para el change (ej. `add-nombre-del-change`).
+2. Implementar en esa rama (`/opsx:apply`), corriendo `flutter analyze` y `flutter test` localmente antes de subir.
+3. Una vez que las pruebas locales pasan, pushear la rama y abrir un PR contra `main`.
+4. Esperar a que el check de CI (`analyze-and-test` en GitHub Actions) pase en el PR — `main` tiene branch protection que exige ese check en verde antes de habilitar el merge.
+5. Recién ahí mergear el PR y archivar el change de OpenSpec (`/opsx:archive`) — el archive también se sube por PR, no directo a `main`.
+
+Nunca usar `git push` directo a `main` ni `--no-verify`/bypass de branch protection salvo que el usuario lo pida explícitamente.
 
 ## Commits
 
