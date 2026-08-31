@@ -43,6 +43,8 @@
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>GIDClientID</key>
 		<string>804701846700-pmf5mc2ojoel9d5s0nmg3a1gm3ocin84.apps.googleusercontent.com</string>
+		<key>ITSAppUsesNonExemptEncryption</key>
+		<false/>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
 		<key>NSMicrophoneUsageDescription</key>
