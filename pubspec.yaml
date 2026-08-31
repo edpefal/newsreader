@@ -62,6 +62,10 @@ dependencies:
   sentry_flutter: ^8.14.2
   posthog_flutter: ^5.38.1
 
+  # Splash screen nativa: preserve()/remove() son APIs de runtime (no solo
+  # de generación de assets), así que va en dependencies, no dev_dependencies.
+  flutter_native_splash: ^2.4.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -71,7 +75,6 @@ dev_dependencies:
   hive_ce_generator: ^1.8.0
   build_runner: ^2.4.0
   flutter_launcher_icons: ^0.14.4
-  flutter_native_splash: ^2.4.4
   sentry: ^8.14.2
   webview_flutter_platform_interface: ^2.14.0
 
