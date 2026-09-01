@@ -121,7 +121,7 @@ void main() {
   });
 
   test(
-      'no llama captureMessage cuando el backend responde ai_usage_limit_reached',
+      'no llama captureMessage cuando el backend responde daily_summary_already_generated',
       () async {
     when(
       () => mockHttpClient.post(
@@ -130,13 +130,16 @@ void main() {
         headers: any(named: 'headers'),
         timeout: any(named: 'timeout'),
       ),
-    ).thenAnswer((_) async => '{"error": "ai_usage_limit_reached"}');
+    ).thenAnswer((_) async => '{"error": "daily_summary_already_generated"}');
 
     await expectLater(
       sut.summarize(tArticles, language: 'es'),
       throwsA(
-        isA<SummaryGenerationException>()
-            .having((e) => e.code, 'code', AppErrorCode.aiUsageLimitReached),
+        isA<SummaryGenerationException>().having(
+          (e) => e.code,
+          'code',
+          AppErrorCode.dailySummaryAlreadyGenerated,
+        ),
       ),
     );
     verifyNever(

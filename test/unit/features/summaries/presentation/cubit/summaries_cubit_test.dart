@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/ai/summary_generator.dart';
-import 'package:newsreader/core/ai_usage/ai_usage_policy.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
@@ -11,7 +10,6 @@ import 'package:newsreader/features/summaries/domain/usecases/generate_daily_sum
 import 'package:newsreader/features/summaries/domain/usecases/get_daily_summaries.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 
-import '../../../../../support/fake_ai_usage_policy.dart';
 import '../../../../../support/fake_telemetry_client.dart';
 
 class MockGetDailySummaries extends Mock implements GetDailySummaries {}
@@ -26,7 +24,6 @@ void main() {
   late MockGenerateDailySummary mockGenerateDailySummary;
   late MockSubscriptionStatusProvider mockSubscriptionStatusProvider;
   late MockTelemetryClient mockTelemetryClient;
-  late MockAiUsagePolicy mockAiUsagePolicy;
 
   final tSummary = DailySummary(
     id: '2026-07-09',
@@ -41,7 +38,6 @@ void main() {
         mockGenerateDailySummary,
         mockSubscriptionStatusProvider,
         mockTelemetryClient,
-        mockAiUsagePolicy,
       );
 
   setUpAll(() {
@@ -53,13 +49,12 @@ void main() {
     mockGenerateDailySummary = MockGenerateDailySummary();
     mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
     mockTelemetryClient = MockTelemetryClient();
-    mockAiUsagePolicy = MockAiUsagePolicy();
     when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(true);
-    // Consumo dentro del presupuesto por defecto: la mayoría de los tests
-    // existentes ejercitan la generación en sí, no el medidor/límite (que
-    // tiene su propio grupo de tests más abajo).
-    when(() => mockAiUsagePolicy.getStatus())
-        .thenAnswer((_) async => tAiUsageStatusNotReached);
+    // Sin resumen generado hoy por defecto: la mayoría de los tests
+    // existentes ejercitan la generación en sí, no el gate de "ya generado
+    // hoy" (que tiene su propio grupo más abajo).
+    when(() => mockGenerateDailySummary.hasGeneratedToday())
+        .thenAnswer((_) async => false);
   });
 
   group('SummariesCubit', () {
@@ -82,7 +77,7 @@ void main() {
         SummariesLoaded(
           summaries: [tSummary],
           canGenerateToday: true,
-          usage: tAiUsageStatusNotReached,
+          alreadyGeneratedToday: false,
         ),
       ],
     );
@@ -102,38 +97,30 @@ void main() {
         SummariesLoaded(
           summaries: const [],
           canGenerateToday: false,
-          usage: tAiUsageStatusNotReached,
+          alreadyGeneratedToday: false,
         ),
       ],
     );
 
     blocTest<SummariesCubit, SummariesState>(
-      'loadSummaries() expone el AiUsageStatus devuelto por AiUsagePolicy',
+      'loadSummaries() emite canGenerateToday=false y alreadyGeneratedToday=true '
+      'si ya se generó el resumen de hoy, aunque haya artículos',
       build: () {
         when(() => mockGetDailySummaries.execute())
-            .thenAnswer((_) async => []);
+            .thenAnswer((_) async => [tSummary]);
         when(() => mockGenerateDailySummary.countTodayArticles())
-            .thenAnswer((_) async => 0);
-        when(() => mockAiUsagePolicy.getStatus()).thenAnswer(
-          (_) async => AiUsageStatus(
-            wordsUsed: 25000,
-            wordLimit: 30000,
-            resetsAt: DateTime.utc(2026, 1, 2),
-          ),
-        );
+            .thenAnswer((_) async => 3);
+        when(() => mockGenerateDailySummary.hasGeneratedToday())
+            .thenAnswer((_) async => true);
         return buildCubit();
       },
       act: (cubit) => cubit.loadSummaries(),
       expect: () => [
         const SummariesLoading(),
         SummariesLoaded(
-          summaries: const [],
+          summaries: [tSummary],
           canGenerateToday: false,
-          usage: AiUsageStatus(
-            wordsUsed: 25000,
-            wordLimit: 30000,
-            resetsAt: DateTime.utc(2026, 1, 2),
-          ),
+          alreadyGeneratedToday: true,
         ),
       ],
     );
@@ -148,15 +135,15 @@ void main() {
       seed: () => SummariesLoaded(
         summaries: const [],
         canGenerateToday: true,
-        usage: tAiUsageStatusNotReached,
+        alreadyGeneratedToday: false,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => [
-        SummaryGenerating(const [], tAiUsageStatusNotReached),
+        const SummaryGenerating([]),
         SummariesLoaded(
           summaries: [tSummary],
-          canGenerateToday: true,
-          usage: tAiUsageStatusNotReached,
+          canGenerateToday: false,
+          alreadyGeneratedToday: true,
         ),
       ],
     );
@@ -171,7 +158,7 @@ void main() {
       seed: () => SummariesLoaded(
         summaries: const [],
         canGenerateToday: true,
-        usage: tAiUsageStatusNotReached,
+        alreadyGeneratedToday: false,
       ),
       act: (cubit) => cubit.generateTodaySummary('fr'),
       verify: (_) {
@@ -189,16 +176,15 @@ void main() {
       seed: () => SummariesLoaded(
         summaries: const [],
         canGenerateToday: false,
-        usage: tAiUsageStatusNotReached,
+        alreadyGeneratedToday: false,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => [
-        SummaryGenerating(const [], tAiUsageStatusNotReached),
-        SummaryGenerationError(
-          summaries: const [],
+        const SummaryGenerating([]),
+        const SummaryGenerationError(
+          summaries: [],
           canGenerateToday: false,
           code: AppErrorCode.noArticlesToday,
-          usage: tAiUsageStatusNotReached,
         ),
       ],
     );
@@ -215,16 +201,15 @@ void main() {
       seed: () => SummariesLoaded(
         summaries: const [],
         canGenerateToday: true,
-        usage: tAiUsageStatusNotReached,
+        alreadyGeneratedToday: false,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => [
-        SummaryGenerating(const [], tAiUsageStatusNotReached),
-        SummaryGenerationError(
-          summaries: const [],
+        const SummaryGenerating([]),
+        const SummaryGenerationError(
+          summaries: [],
           canGenerateToday: true,
           code: AppErrorCode.generationFailed,
-          usage: tAiUsageStatusNotReached,
         ),
       ],
       verify: (_) {
@@ -235,30 +220,64 @@ void main() {
     );
 
     blocTest<SummariesCubit, SummariesState>(
-      'generateTodaySummary() con presupuesto de IA agotado emite '
-      'SummaryGenerationError sin reportarlo a observability',
+      'generateTodaySummary() rechazado por el backend por resumen ya '
+      'generado hoy emite SummaryGenerationError sin reportarlo a '
+      'observability',
       build: () {
         when(() => mockGenerateDailySummary.execute(language: any(named: 'language')))
             .thenThrow(
-          const SummaryGenerationException(AppErrorCode.aiUsageLimitReached),
+          const SummaryGenerationException(
+            AppErrorCode.dailySummaryAlreadyGenerated,
+          ),
         );
         when(() => mockGenerateDailySummary.countTodayArticles())
             .thenAnswer((_) async => 2);
+        when(() => mockGenerateDailySummary.hasGeneratedToday())
+            .thenAnswer((_) async => true);
         return buildCubit();
       },
       seed: () => SummariesLoaded(
         summaries: const [],
         canGenerateToday: true,
-        usage: tAiUsageStatusNotReached,
+        alreadyGeneratedToday: false,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => [
-        SummaryGenerating(const [], tAiUsageStatusNotReached),
-        SummaryGenerationError(
-          summaries: const [],
-          canGenerateToday: true,
-          code: AppErrorCode.aiUsageLimitReached,
-          usage: tAiUsageStatusNotReached,
+        const SummaryGenerating([]),
+        const SummaryGenerationError(
+          summaries: [],
+          canGenerateToday: false,
+          code: AppErrorCode.dailySummaryAlreadyGenerated,
+        ),
+      ],
+      verify: (_) {
+        verifyNever(
+          () => mockTelemetryClient.captureException(any(), any()),
+        );
+      },
+    );
+
+    blocTest<SummariesCubit, SummariesState>(
+      'generateTodaySummary() rechazado localmente por resumen ya generado '
+      'hoy (chequeo local stale) emite SummaryGenerationError sin '
+      'reportarlo a observability',
+      build: () {
+        when(() => mockGenerateDailySummary.execute(language: any(named: 'language')))
+            .thenThrow(const DailySummaryAlreadyGeneratedException());
+        return buildCubit();
+      },
+      seed: () => SummariesLoaded(
+        summaries: const [],
+        canGenerateToday: true,
+        alreadyGeneratedToday: false,
+      ),
+      act: (cubit) => cubit.generateTodaySummary('es'),
+      expect: () => [
+        const SummaryGenerating([]),
+        const SummaryGenerationError(
+          summaries: [],
+          canGenerateToday: false,
+          code: AppErrorCode.dailySummaryAlreadyGenerated,
         ),
       ],
       verify: (_) {
@@ -284,7 +303,7 @@ void main() {
       seed: () => SummariesLoaded(
         summaries: const [],
         canGenerateToday: true,
-        usage: tAiUsageStatusNotReached,
+        alreadyGeneratedToday: false,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => <SummariesState>[],
@@ -324,15 +343,15 @@ void main() {
       seed: () => SummariesLoaded(
         summaries: const [],
         canGenerateToday: true,
-        usage: tAiUsageStatusNotReached,
+        alreadyGeneratedToday: false,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => [
-        SummaryGenerating(const [], tAiUsageStatusNotReached),
+        const SummaryGenerating([]),
         SummariesLoaded(
           summaries: [tSummary],
-          canGenerateToday: true,
-          usage: tAiUsageStatusNotReached,
+          canGenerateToday: false,
+          alreadyGeneratedToday: true,
         ),
       ],
     );
@@ -362,7 +381,7 @@ void main() {
       seed: () => SummariesLoaded(
         summaries: const [],
         canGenerateToday: true,
-        usage: tAiUsageStatusNotReached,
+        alreadyGeneratedToday: false,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => <SummariesState>[],
@@ -373,43 +392,6 @@ void main() {
           ),
         );
       },
-    );
-
-    blocTest<SummariesCubit, SummariesState>(
-      'generateTodaySummary() refresca el AiUsageStatus tras generar exitosamente',
-      build: () {
-        when(() => mockGenerateDailySummary.execute(language: any(named: 'language')))
-            .thenAnswer((_) async => tSummary);
-        // El usage inicial viene del estado ya cargado (seed), no de
-        // getStatus() -- este stub cubre el refresh que pasa después de
-        // generar, reflejando las palabras recién consumidas.
-        when(() => mockAiUsagePolicy.getStatus()).thenAnswer(
-          (_) async => AiUsageStatus(
-            wordsUsed: 5000,
-            wordLimit: 30000,
-            resetsAt: DateTime.utc(2026, 1, 2),
-          ),
-        );
-        return buildCubit();
-      },
-      seed: () => SummariesLoaded(
-        summaries: const [],
-        canGenerateToday: true,
-        usage: tAiUsageStatusNotReached,
-      ),
-      act: (cubit) => cubit.generateTodaySummary('es'),
-      expect: () => [
-        SummaryGenerating(const [], tAiUsageStatusNotReached),
-        SummariesLoaded(
-          summaries: [tSummary],
-          canGenerateToday: true,
-          usage: AiUsageStatus(
-            wordsUsed: 5000,
-            wordLimit: 30000,
-            resetsAt: DateTime.utc(2026, 1, 2),
-          ),
-        ),
-      ],
     );
   });
 }

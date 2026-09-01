@@ -6,13 +6,13 @@ import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { hasActiveEntitlement } from "./entitlement.ts";
 import { resolveLanguage, SupportedLanguage } from "./language.ts";
-import { type ArticleExcerpt, countArticleWords } from "./word_count.ts";
+import { todayUtcRange } from "./today_range.ts";
 
-// Presupuesto diario de palabras de input por usuario, compartido entre
-// todas las features de IA (ver ai-usage-budget). Aplicado del lado del
-// servidor vía `check_and_record_ai_usage`, nunca confiando en un conteo que
-// mande el cliente.
-const AI_DAILY_WORD_LIMIT = 30000;
+interface ArticleExcerpt {
+  title: string;
+  excerpt: string;
+  sourceName: string;
+}
 
 const GEMINI_MODEL = "gemini-3.7-flash";
 const GEMINI_URL =
@@ -248,27 +248,36 @@ Deno.serve(async (req) => {
 
   const language = resolveLanguage(body.language);
 
-  // Chequea e incrementa el presupuesto diario de palabras ANTES de invocar
-  // a Gemini -- `check_and_record_ai_usage` es atómica del lado de Postgres
-  // (ver migración `add_ai_usage_daily`), así que dos solicitudes
-  // concurrentes del mismo usuario no pueden ambas pasar el chequeo.
-  const words = countArticleWords(articles);
-  const { data: usageData, error: usageError } = await userClient.rpc(
-    "check_and_record_ai_usage",
-    { p_words: words, p_daily_limit: AI_DAILY_WORD_LIMIT },
+  // El resumen diario ya no comparte el presupuesto de palabras de
+  // ai-usage-budget (ver limit-daily-summary-to-once-per-day): se limita en
+  // su lugar a una única generación exitosa por día de servidor. Se rechaza
+  // sin invocar a Gemini si ya existe un `DailySummary` para hoy de este
+  // usuario -- la propia tabla `daily_summaries` es la fuente de verdad de
+  // "qué días tienen resumen", sin necesidad de un contador aparte.
+  const { start: startOfTodayUtc, end: startOfTomorrowUtc } = todayUtcRange(
+    new Date(),
   );
-  if (usageError) {
-    console.error(`check_and_record_ai_usage error: ${usageError.message}`);
+  const { data: existingSummary, error: existingSummaryError } =
+    await userClient
+      .from("daily_summaries")
+      .select("id")
+      .eq("user_id", userData.user.id)
+      .gte("date", startOfTodayUtc.toISOString())
+      .lt("date", startOfTomorrowUtc.toISOString())
+      .maybeSingle();
+  if (existingSummaryError) {
+    console.error(
+      `chequeo de resumen existente falló: ${existingSummaryError.message}`,
+    );
     return new Response(
       JSON.stringify({ error: "Backend mal configurado" }),
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
   }
-  const usageResult = Array.isArray(usageData) ? usageData[0] : usageData;
-  if (!usageResult?.allowed) {
+  if (existingSummary) {
     return new Response(
-      JSON.stringify({ error: "ai_usage_limit_reached" }),
-      { status: 429, headers: { "Content-Type": "application/json" } },
+      JSON.stringify({ error: "daily_summary_already_generated" }),
+      { status: 409, headers: { "Content-Type": "application/json" } },
     );
   }
 

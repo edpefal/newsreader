@@ -7,8 +7,6 @@ import 'package:newsreader/core/ai/gemini_summary_generator.dart';
 import 'package:newsreader/core/ai/mention_enricher.dart';
 import 'package:newsreader/core/ai/remote_mention_enricher.dart';
 import 'package:newsreader/core/ai/summary_generator.dart';
-import 'package:newsreader/core/ai_usage/ai_usage_policy.dart';
-import 'package:newsreader/core/ai_usage/supabase_ai_usage_policy.dart';
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/auth/supabase_auth_client.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
@@ -128,9 +126,6 @@ Future<void> setupDependencies() async {
   );
   getIt.registerLazySingleton<TelemetryClient>(
     () => DefaultTelemetryClient(),
-  );
-  getIt.registerLazySingleton<AiUsagePolicy>(
-    () => SupabaseAiUsagePolicy(getIt()),
   );
 
   // Data sources
@@ -254,7 +249,7 @@ Future<void> setupDependencies() async {
     SourcesCubit(getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerSingleton<SummariesCubit>(
-    SummariesCubit(getIt(), getIt(), getIt(), getIt(), getIt()),
+    SummariesCubit(getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerFactory<ArticleSummaryCubit>(
     () => ArticleSummaryCubit(getIt(), getIt()),

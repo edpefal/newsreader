@@ -74,6 +74,11 @@ enum AppErrorCode {
   /// la verificación local y la del backend).
   subscriptionRequired,
 
+  /// Ya existe un `DailySummary` para el día de hoy (día de servidor); el
+  /// resumen diario permite como máximo una generación exitosa por día, sin
+  /// regenerar (ver capability `daily-summaries`).
+  dailySummaryAlreadyGenerated,
+
   /// Cualquier error no anticipado por los demás códigos.
   unknown,
 }

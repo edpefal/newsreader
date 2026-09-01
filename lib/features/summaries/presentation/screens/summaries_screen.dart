@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:newsreader/core/ai_usage/ai_usage_policy.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/errors/app_error_code_localizations.dart';
-import 'package:newsreader/core/utils/date_key.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/widgets/summary_list_item.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
@@ -20,48 +18,10 @@ class SummariesScreen extends StatelessWidget {
 class SummariesView extends StatelessWidget {
   const SummariesView({super.key});
 
-  static final _placeholderUsage = AiUsageStatus(
-    wordsUsed: 0,
-    wordLimit: 0,
-    resetsAt: DateTime.now(),
-  );
-
-  Future<void> _onGeneratePressed(BuildContext context) async {
-    final cubit = context.read<SummariesCubit>();
-    final language = Localizations.localeOf(context).languageCode;
-
-    final wouldRegenerateWithSameArticles =
-        await cubit.wouldRegenerateWithSameArticles();
-    if (wouldRegenerateWithSameArticles) {
-      if (!context.mounted) return;
-      final confirmed = await _confirmRegenerate(context);
-      if (confirmed != true) return;
-    }
-
-    if (!context.mounted) return;
-    await cubit.generateTodaySummary(language);
-  }
-
-  Future<bool?> _confirmRegenerate(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.summariesRegenerateConfirmTitle),
-        content: Text(l10n.summariesRegenerateConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.commonCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.summariesRegenerateConfirmButton),
-          ),
-        ],
-      ),
-    );
-  }
+  Future<void> _onGeneratePressed(BuildContext context) =>
+      context.read<SummariesCubit>().generateTodaySummary(
+            Localizations.localeOf(context).languageCode,
+          );
 
   @override
   Widget build(BuildContext context) {
@@ -73,39 +33,36 @@ class SummariesView extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final (summaries, canGenerateToday, isGenerating, errorMessage, usage) =
-              switch (state) {
+          final (
+            summaries,
+            canGenerateToday,
+            alreadyGeneratedToday,
+            isGenerating,
+            errorMessage,
+          ) = switch (state) {
             SummariesLoaded(
               :final summaries,
               :final canGenerateToday,
-              :final usage,
+              :final alreadyGeneratedToday,
             ) =>
-              (summaries, canGenerateToday, false, null, usage),
-            SummaryGenerating(:final summaries, :final usage) => (
+              (summaries, canGenerateToday, alreadyGeneratedToday, false, null),
+            SummaryGenerating(:final summaries) => (
                 summaries,
+                false,
                 false,
                 true,
                 null,
-                usage,
               ),
             SummaryGenerationError(
               :final summaries,
               :final canGenerateToday,
               :final code,
-              :final usage,
             ) =>
-              (summaries, canGenerateToday, false, code.localize(l10n), usage),
-            SummariesLoading() => (
-                const <DailySummary>[],
-                false,
-                false,
-                null,
-                _placeholderUsage,
-              ),
+              (summaries, canGenerateToday, false, false, code.localize(l10n)),
+            SummariesLoading() => (const <DailySummary>[], false, false, false, null),
           };
 
-          final canGenerate =
-              !isGenerating && canGenerateToday && !usage.isLimitReached;
+          final canGenerate = !isGenerating && canGenerateToday;
 
           return Column(
             children: [
@@ -114,13 +71,15 @@ class SummariesView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      l10n.summariesUsageMeter(usage.wordsUsed, usage.wordLimit),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
+                    if (alreadyGeneratedToday) ...[
+                      Text(
+                        l10n.summariesAlreadyGeneratedToday,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     FilledButton.icon(
                       onPressed: canGenerate
                           ? () => _onGeneratePressed(context)
@@ -135,11 +94,7 @@ class SummariesView extends StatelessWidget {
                       label: Text(
                         isGenerating
                             ? l10n.summariesGenerating
-                            : summaries.any(
-                                (s) => s.id == dateKey(DateTime.now()),
-                              )
-                                ? l10n.summariesRegenerateTodayButton
-                                : l10n.summariesCreateTodayButton,
+                            : l10n.summariesCreateTodayButton,
                       ),
                     ),
                     if (errorMessage != null) ...[

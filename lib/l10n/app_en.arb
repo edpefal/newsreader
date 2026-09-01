@@ -139,8 +139,8 @@
   "sourcesEditNameFieldLabel": "Name",
 
   "summariesGenerating": "Generating summary...",
-  "summariesRegenerateTodayButton": "Regenerate today's summary",
   "summariesCreateTodayButton": "Create today's summary",
+  "summariesAlreadyGeneratedToday": "You already generated today's summary. Come back tomorrow for a new one.",
   "summariesEmptyTitle": "No summaries yet",
   "summariesEmptySubtitle": "Create today's summary to see what your news was about.",
   "summaryDetailTitle": "Summary for {date}",
@@ -227,20 +227,6 @@
   "errorAiUsageLimitReached": "You've reached today's AI usage limit. Try again tomorrow.",
   "errorContentBlocked": "We couldn't summarize this article because of the AI provider's content policy.",
   "errorSubscriptionRequired": "This requires an active subscription.",
-  "errorUnknown": "Something unexpected happened",
-
-  "summariesUsageMeter": "{used} / {limit} words used today",
-  "@summariesUsageMeter": {
-    "placeholders": {
-      "used": {
-        "type": "int"
-      },
-      "limit": {
-        "type": "int"
-      }
-    }
-  },
-  "summariesRegenerateConfirmTitle": "Regenerate anyway?",
-  "summariesRegenerateConfirmBody": "No new articles have arrived since the last summary. Do you want to regenerate it anyway?",
-  "summariesRegenerateConfirmButton": "Regenerate anyway"
+  "errorDailySummaryAlreadyGenerated": "You already generated today's summary. Come back tomorrow for a new one.",
+  "errorUnknown": "Something unexpected happened"
 }

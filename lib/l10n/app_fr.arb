@@ -84,8 +84,8 @@
   "sourcesEditNameFieldLabel": "Nom",
 
   "summariesGenerating": "Génération du résumé...",
-  "summariesRegenerateTodayButton": "Régénérer le résumé du jour",
   "summariesCreateTodayButton": "Créer le résumé du jour",
+  "summariesAlreadyGeneratedToday": "Tu as déjà généré le résumé du jour. Reviens demain pour en créer un nouveau.",
   "summariesEmptyTitle": "Aucun résumé pour l'instant",
   "summariesEmptySubtitle": "Crée le résumé du jour pour voir de quoi parlaient tes actualités.",
   "summaryDetailTitle": "Résumé du {date}",
@@ -143,10 +143,6 @@
   "errorAiUsageLimitReached": "Tu as atteint la limite quotidienne d'utilisation de l'IA. Réessaie demain.",
   "errorContentBlocked": "Nous n'avons pas pu résumer cet article en raison de la politique de contenu du fournisseur d'IA.",
   "errorSubscriptionRequired": "Cela nécessite un abonnement actif.",
-  "errorUnknown": "Une erreur inattendue s'est produite",
-
-  "summariesUsageMeter": "{used} / {limit} mots utilisés aujourd'hui",
-  "summariesRegenerateConfirmTitle": "Régénérer quand même ?",
-  "summariesRegenerateConfirmBody": "Aucun nouvel article n'est arrivé depuis le dernier résumé. Veux-tu le régénérer quand même ?",
-  "summariesRegenerateConfirmButton": "Régénérer quand même"
+  "errorDailySummaryAlreadyGenerated": "Tu as déjà généré le résumé du jour. Reviens demain pour en créer un nouveau.",
+  "errorUnknown": "Une erreur inattendue s'est produite"
 }

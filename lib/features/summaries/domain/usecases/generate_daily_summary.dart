@@ -13,6 +13,13 @@ class NoArticlesTodayException implements Exception {
   const NoArticlesTodayException();
 }
 
+/// Lanzada al intentar generar un resumen cuando ya existe uno para hoy --
+/// el resumen diario permite como máximo una generación exitosa por día, sin
+/// regenerar (ver capability `daily-summaries`).
+class DailySummaryAlreadyGeneratedException implements Exception {
+  const DailySummaryAlreadyGeneratedException();
+}
+
 class GenerateDailySummary {
   final ArticleRepository _articleRepository;
   final SummaryGenerator _summaryGenerator;
@@ -39,18 +46,12 @@ class GenerateDailySummary {
 
   Future<int> countTodayArticles() async => (await _todayInboxArticles()).length;
 
-  /// `true` cuando ya existe un `DailySummary` para hoy y la cantidad de
-  /// artículos de hoy en el inbox no cambió desde esa última generación (no
-  /// llegó nada nuevo) -- señal de que regenerar sería "gasto sin razón" y
-  /// la UI debería confirmar antes de proceder. `false` si no hay resumen
-  /// guardado todavía para hoy, o si el conteo cambió (llegaron artículos
-  /// nuevos).
-  Future<bool> wouldRegenerateWithSameArticles() async {
+  /// `true` cuando ya existe un `DailySummary` para hoy -- el resumen diario
+  /// permite como máximo una generación exitosa por día, sin regenerar.
+  Future<bool> hasGeneratedToday() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final existing = await _summaryRepository.getByDate(today);
-    if (existing == null) return false;
-    return await countTodayArticles() == existing.articleCount;
+    return await _summaryRepository.getByDate(today) != null;
   }
 
   /// Usa el texto completo de `contentHtml` cuando el artículo no está
@@ -85,6 +86,10 @@ class GenerateDailySummary {
   }
 
   Future<DailySummary> execute({required String language}) async {
+    if (await hasGeneratedToday()) {
+      throw const DailySummaryAlreadyGeneratedException();
+    }
+
     final todayArticles = await _todayInboxArticles();
     if (todayArticles.isEmpty) {
       throw const NoArticlesTodayException();
