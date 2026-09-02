@@ -7,11 +7,6 @@ class AppConstants {
   static const int cleanupDays = 30;
   static const Duration feedFetchTimeout = Duration(seconds: 10);
   static const Duration summaryGenerationTimeout = Duration(seconds: 45);
-  // Espejo del límite aplicado del lado del servidor en
-  // `check_and_record_ai_usage` (ver migración `add_ai_usage_daily` y
-  // `summarize-articles/index.ts`) -- solo para mostrar el medidor, la
-  // autoridad real es el backend.
-  static const int aiUsageDailyWordLimit = 30000;
   static const String settingsThemeModeKey = 'theme_mode';
   // Gatea la migración de una sola vez desde el formato binario previo
   // (solo 'light'/'dark') al de tres opciones (se agrega 'system'). Es una

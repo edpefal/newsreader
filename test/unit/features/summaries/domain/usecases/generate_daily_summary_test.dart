@@ -62,6 +62,11 @@ void main() {
       mockSummaryGenerator,
       mockSummaryRepository,
     );
+    // Por defecto no hay resumen guardado para hoy -- la mayoría de los
+    // tests ejercitan la generación en sí, no el gate de "ya generado hoy"
+    // (que tiene su propio grupo más abajo).
+    when(() => mockSummaryRepository.getByDate(any()))
+        .thenAnswer((_) async => null);
   });
 
   group('sin artículos del inbox de hoy', () {
@@ -161,22 +166,6 @@ void main() {
         (title: 'Título a1', excerpt: 'Extracto A', sourceName: 'Newsletter A'),
         (title: 'Título a2', excerpt: 'Extracto B', sourceName: 'Newsletter B'),
       ]);
-    });
-
-    test('sobrescribe el resumen existente reutilizando el mismo id', () async {
-      final now = DateTime.now();
-      when(() => mockArticleRepository.getInboxArticles()).thenAnswer(
-        (_) async => [_article(id: 'a1', publishedAt: now)],
-      );
-      when(() => mockSummaryGenerator.summarize(any(), language: any(named: 'language')))
-          .thenAnswer((_) async => 'Nuevo texto');
-      when(() => mockSummaryRepository.save(any())).thenAnswer((_) async {});
-
-      final first = await sut.execute(language: 'es');
-      final second = await sut.execute(language: 'es');
-
-      expect(first.id, second.id);
-      verify(() => mockSummaryRepository.save(any())).called(2);
     });
 
     test('persiste sourceBlocks agrupando articleIds por sourceId', () async {
@@ -311,26 +300,17 @@ void main() {
     });
   });
 
-  group('wouldRegenerateWithSameArticles', () {
+  group('hasGeneratedToday', () {
     test('false si no hay DailySummary guardado para hoy', () async {
-      final now = DateTime.now();
-      when(() => mockArticleRepository.getInboxArticles())
-          .thenAnswer((_) async => [_article(id: 'a1', publishedAt: now)]);
       when(() => mockSummaryRepository.getByDate(any()))
           .thenAnswer((_) async => null);
 
-      expect(await sut.wouldRegenerateWithSameArticles(), isFalse);
+      expect(await sut.hasGeneratedToday(), isFalse);
     });
 
-    test('true si el conteo de hoy es igual al articleCount guardado', () async {
+    test('true si ya existe un DailySummary guardado para hoy', () async {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
-      when(() => mockArticleRepository.getInboxArticles()).thenAnswer(
-        (_) async => [
-          _article(id: 'a1', publishedAt: now),
-          _article(id: 'a2', publishedAt: now),
-        ],
-      );
       when(() => mockSummaryRepository.getByDate(any())).thenAnswer(
         (_) async => DailySummary(
           id: dateKey(today),
@@ -341,29 +321,31 @@ void main() {
         ),
       );
 
-      expect(await sut.wouldRegenerateWithSameArticles(), isTrue);
+      expect(await sut.hasGeneratedToday(), isTrue);
     });
+  });
 
-    test('false si el conteo de hoy es distinto al articleCount guardado', () async {
+  group('con un resumen ya generado hoy', () {
+    test('execute() lanza DailySummaryAlreadyGeneratedException sin '
+        'consultar el inbox ni invocar al generador', () async {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
-      when(() => mockArticleRepository.getInboxArticles()).thenAnswer(
-        (_) async => [
-          _article(id: 'a1', publishedAt: now),
-          _article(id: 'a2', publishedAt: now),
-        ],
-      );
       when(() => mockSummaryRepository.getByDate(any())).thenAnswer(
         (_) async => DailySummary(
           id: dateKey(today),
           date: today,
           content: 'Resumen',
-          articleCount: 1,
+          articleCount: 2,
           createdAt: today,
         ),
       );
 
-      expect(await sut.wouldRegenerateWithSameArticles(), isFalse);
+      expect(
+        sut.execute(language: 'es'),
+        throwsA(isA<DailySummaryAlreadyGeneratedException>()),
+      );
+      verifyNever(() => mockArticleRepository.getInboxArticles());
+      verifyNever(() => mockSummaryGenerator.summarize(any(), language: any(named: 'language')));
     });
   });
 }

@@ -69,13 +69,13 @@ class GeminiSummaryGenerator implements SummaryGenerator {
       final summary = decoded['summary'];
       if (summary is! String || summary.trim().isEmpty) {
         switch (decoded['error']) {
-          case 'ai_usage_limit_reached':
-            throw const SummaryGenerationException(
-              AppErrorCode.aiUsageLimitReached,
-            );
           case 'subscription_required':
             throw const SummaryGenerationException(
               AppErrorCode.subscriptionRequired,
+            );
+          case 'daily_summary_already_generated':
+            throw const SummaryGenerationException(
+              AppErrorCode.dailySummaryAlreadyGenerated,
             );
         }
         _observabilityClient.captureMessage(

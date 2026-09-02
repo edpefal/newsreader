@@ -1,10 +1,4 @@
-# Spec: Daily Summaries
-
-## Purpose
-
-Define cómo el sistema genera, almacena y presenta resúmenes diarios de los artículos del inbox usando una API de IA en la nube. Cada día tiene como máximo un resumen, generado una única vez por día (sin posibilidad de regeneración).
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Generación de resumen diario del inbox
 El sistema SHALL generar, mediante una API de IA en la nube, un resumen de texto agrupado por fuente a partir del título y el contenido de los artículos del inbox (no leídos, no archivados) cuyo `publishedAt` corresponde a la fecha actual. Para cada artículo, el contenido usado SHALL ser el texto plano extraído de `contentHtml` cuando el artículo tiene contenido completo (no truncado); si `contentHtml` está truncado o vacío, SHALL usarse `excerpt` como fallback. El texto generado por fuente SHALL tener una voz narrativa consistente (tono cercano y con personalidad, sin emojis), aplicada por igual sin importar el tono original de cada fuente, y SHALL generarse en el idioma correspondiente al locale activo de la app en el dispositivo del usuario, de entre los idiomas que `AppLocalizations` soporta (inglés, español, francés). Si el locale activo no está entre los soportados, o no se pudo determinar, el sistema SHALL usar inglés como default.
@@ -92,50 +86,17 @@ El sistema SHALL mantener como máximo un `DailySummary` por fecha, y SHALL perm
 - **WHEN** ya existe un `DailySummary` para la fecha de hoy y el usuario intenta generar de nuevo ese mismo día (server day)
 - **THEN** el sistema rechaza el intento sin invocar la API de IA ni modificar el `DailySummary` existente de hoy
 
-### Requirement: Listado de resúmenes diarios
-El sistema SHALL mostrar una pantalla con la lista de todos los `DailySummary` existentes, ordenados de más reciente a más antiguo, cada uno mostrando la fecha y la cantidad de artículos resumidos.
+## REMOVED Requirements
 
-#### Scenario: Lista vacía en primer ingreso
-- **WHEN** el usuario entra a la pantalla de Resúmenes y no existe ningún `DailySummary`
-- **THEN** el sistema muestra únicamente el botón para crear el resumen de hoy, sin items en la lista
+### Requirement: Medidor visible de consumo de IA
+**Reason**: el resumen diario deja de estar limitado por el presupuesto compartido de palabras de `ai-usage-budget` — pasa a limitarse por "una generación por día", que no tiene un "consumo parcial" que mostrar en un medidor.
+**Migration**: reemplazado por un indicador booleano simple ("resumen de hoy ya generado" / "todavía no"), capturado en el nuevo Requirement "Indicador de resumen ya generado hoy" de este mismo delta.
 
-#### Scenario: Lista con resúmenes existentes
-- **WHEN** existen uno o más `DailySummary`
-- **THEN** el sistema los lista ordenados por fecha descendente
+### Requirement: Confirmación antes de regenerar sin artículos nuevos
+**Reason**: esta capability entera dependía de que existiera la acción de "Regenerar resumen de hoy", que se elimina junto con el límite de una generación por día — ya no hay ningún escenario en el que el usuario pueda intentar regenerar el resumen de hoy, con o sin artículos nuevos.
+**Migration**: ninguna — no hay reemplazo, la funcionalidad de regenerar deja de existir.
 
-### Requirement: Detalle de un resumen
-El sistema SHALL permitir ver el texto completo de un `DailySummary` al seleccionar su item en la lista. El texto SHALL presentarse dividido por fuente: el nombre de cada fuente (primera línea de cada bloque separado por línea en blanco) SHALL mostrarse en negrita, seguido del párrafo correspondiente.
-
-Debajo de cada párrafo, cuando el `DailySummary` tiene agrupación por fuente persistida y el nombre de esa fuente coincide con el bloque parseado, el sistema SHALL ofrecer navegación a los artículos que generaron ese párrafo:
-- Si la fuente aportó un único artículo ese día, SHALL mostrarse un link directo a su detalle.
-- Si aportó más de uno, SHALL mostrarse un link por artículo (título truncado).
-- Los artículos referenciados que ya no existan localmente (ej. su fuente fue eliminada después) SHALL omitirse sin afectar al resto de los links de ese bloque.
-
-Cuando el `DailySummary` no tiene agrupación por fuente persistida (resúmenes generados antes de esta funcionalidad), o el nombre de un bloque no coincide con ninguna fuente de la agrupación persistida, el sistema SHALL mostrar igualmente el título en negrita, sin ningún link debajo de ese bloque.
-
-#### Scenario: Ver detalle de un resumen
-- **WHEN** el usuario toca un item de la lista de resúmenes
-- **THEN** el sistema navega a una pantalla de detalle que muestra el texto completo, la fecha y la cantidad de artículos de ese resumen
-
-#### Scenario: Título de cada bloque en negrita
-- **WHEN** se muestra el detalle de un `DailySummary`
-- **THEN** el nombre de cada fuente (primera línea de cada bloque separado por línea en blanco) se muestra con estilo en negrita, distinguible del resto del párrafo
-
-#### Scenario: Un artículo por fuente muestra un link directo
-- **WHEN** la agrupación persistida indica que una fuente aportó un único artículo ese día
-- **THEN** debajo del párrafo de esa fuente se muestra un link que navega directo al detalle de ese artículo
-
-#### Scenario: Varios artículos por fuente muestran una fila de links
-- **WHEN** la agrupación persistida indica que una fuente aportó más de un artículo ese día
-- **THEN** debajo del párrafo de esa fuente se muestra un link por artículo, cada uno con el título truncado, cada uno navegando al detalle del artículo correspondiente
-
-#### Scenario: Resumen sin agrupación persistida no muestra links
-- **WHEN** el `DailySummary` fue generado antes de esta funcionalidad (sin agrupación por fuente persistida)
-- **THEN** el sistema muestra los títulos de fuente en negrita igual que cualquier otro resumen, sin ningún link debajo de los párrafos
-
-#### Scenario: Artículo referenciado ya no existe localmente
-- **WHEN** uno de los `articleIds` de la agrupación persistida ya no corresponde a ningún artículo local (fue eliminado en cascada al borrar su fuente)
-- **THEN** el sistema omite el link de ese artículo puntual sin afectar los demás links del mismo bloque ni el resto de la pantalla
+## ADDED Requirements
 
 ### Requirement: Indicador de resumen ya generado hoy
 El sistema SHALL mostrar en la pantalla de Resúmenes si el resumen de hoy ya fue generado o no, y SHALL deshabilitar el botón de generar cuando ya existe un `DailySummary` para el día de hoy de ese usuario, hasta el cambio de día de servidor.

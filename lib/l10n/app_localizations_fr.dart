@@ -278,10 +278,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get summariesGenerating => 'Génération du résumé...';
 
   @override
-  String get summariesRegenerateTodayButton => 'Régénérer le résumé du jour';
+  String get summariesCreateTodayButton => 'Créer le résumé du jour';
 
   @override
-  String get summariesCreateTodayButton => 'Créer le résumé du jour';
+  String get summariesAlreadyGeneratedToday =>
+      'Tu as déjà généré le résumé du jour. Reviens demain pour en créer un nouveau.';
 
   @override
   String get summariesEmptyTitle => 'Aucun résumé pour l\'instant';
@@ -470,20 +471,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errorSubscriptionRequired => 'Cela nécessite un abonnement actif.';
 
   @override
+  String get errorDailySummaryAlreadyGenerated =>
+      'Tu as déjà généré le résumé du jour. Reviens demain pour en créer un nouveau.';
+
+  @override
   String get errorUnknown => 'Une erreur inattendue s\'est produite';
-
-  @override
-  String summariesUsageMeter(int used, int limit) {
-    return '$used / $limit mots utilisés aujourd\'hui';
-  }
-
-  @override
-  String get summariesRegenerateConfirmTitle => 'Régénérer quand même ?';
-
-  @override
-  String get summariesRegenerateConfirmBody =>
-      'Aucun nouvel article n\'est arrivé depuis le dernier résumé. Veux-tu le régénérer quand même ?';
-
-  @override
-  String get summariesRegenerateConfirmButton => 'Régénérer quand même';
 }

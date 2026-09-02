@@ -520,17 +520,17 @@ abstract class AppLocalizations {
   /// **'Generating summary...'**
   String get summariesGenerating;
 
-  /// No description provided for @summariesRegenerateTodayButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Regenerate today\'s summary'**
-  String get summariesRegenerateTodayButton;
-
   /// No description provided for @summariesCreateTodayButton.
   ///
   /// In en, this message translates to:
   /// **'Create today\'s summary'**
   String get summariesCreateTodayButton;
+
+  /// No description provided for @summariesAlreadyGeneratedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'You already generated today\'s summary. Come back tomorrow for a new one.'**
+  String get summariesAlreadyGeneratedToday;
 
   /// No description provided for @summariesEmptyTitle.
   ///
@@ -832,35 +832,17 @@ abstract class AppLocalizations {
   /// **'This requires an active subscription.'**
   String get errorSubscriptionRequired;
 
+  /// No description provided for @errorDailySummaryAlreadyGenerated.
+  ///
+  /// In en, this message translates to:
+  /// **'You already generated today\'s summary. Come back tomorrow for a new one.'**
+  String get errorDailySummaryAlreadyGenerated;
+
   /// No description provided for @errorUnknown.
   ///
   /// In en, this message translates to:
   /// **'Something unexpected happened'**
   String get errorUnknown;
-
-  /// No description provided for @summariesUsageMeter.
-  ///
-  /// In en, this message translates to:
-  /// **'{used} / {limit} words used today'**
-  String summariesUsageMeter(int used, int limit);
-
-  /// No description provided for @summariesRegenerateConfirmTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Regenerate anyway?'**
-  String get summariesRegenerateConfirmTitle;
-
-  /// No description provided for @summariesRegenerateConfirmBody.
-  ///
-  /// In en, this message translates to:
-  /// **'No new articles have arrived since the last summary. Do you want to regenerate it anyway?'**
-  String get summariesRegenerateConfirmBody;
-
-  /// No description provided for @summariesRegenerateConfirmButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Regenerate anyway'**
-  String get summariesRegenerateConfirmButton;
 }
 
 class _AppLocalizationsDelegate

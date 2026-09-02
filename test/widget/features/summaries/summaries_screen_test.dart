@@ -5,13 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:newsreader/core/ai_usage/ai_usage_policy.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summaries_screen.dart';
 
-import '../../../support/fake_ai_usage_policy.dart';
 import '../../../support/pump_localized_app.dart';
 
 class MockSummariesCubit extends MockCubit<SummariesState>
@@ -54,11 +52,6 @@ void main() {
 
   setUp(() {
     cubit = MockSummariesCubit();
-    // La mayoría de los tests no ejercitan el diálogo de confirmación (que
-    // tiene su propio grupo más abajo) -- por defecto se comporta como si
-    // hubiera artículos nuevos, así que el tap procede directo.
-    when(() => cubit.wouldRegenerateWithSameArticles())
-        .thenAnswer((_) async => false);
   });
 
   group('SummariesScreen', () {
@@ -73,10 +66,10 @@ void main() {
 
     testWidgets('muestra estado vacío sin resúmenes', (tester) async {
       when(() => cubit.state).thenReturn(
-        SummariesLoaded(
-          summaries: const [],
+        const SummariesLoaded(
+          summaries: [],
           canGenerateToday: false,
-          usage: tAiUsageStatusNotReached,
+          alreadyGeneratedToday: false,
         ),
       );
 
@@ -88,10 +81,10 @@ void main() {
     testWidgets('botón deshabilitado cuando no hay artículos hoy',
         (tester) async {
       when(() => cubit.state).thenReturn(
-        SummariesLoaded(
-          summaries: const [],
+        const SummariesLoaded(
+          summaries: [],
           canGenerateToday: false,
-          usage: tAiUsageStatusNotReached,
+          alreadyGeneratedToday: false,
         ),
       );
 
@@ -103,10 +96,10 @@ void main() {
 
     testWidgets('botón habilitado cuando hay artículos hoy', (tester) async {
       when(() => cubit.state).thenReturn(
-        SummariesLoaded(
-          summaries: const [],
+        const SummariesLoaded(
+          summaries: [],
           canGenerateToday: true,
-          usage: tAiUsageStatusNotReached,
+          alreadyGeneratedToday: false,
         ),
       );
 
@@ -121,7 +114,7 @@ void main() {
         SummariesLoaded(
           summaries: [tSummary],
           canGenerateToday: true,
-          usage: tAiUsageStatusNotReached,
+          alreadyGeneratedToday: false,
         ),
       );
 
@@ -135,10 +128,10 @@ void main() {
         'tap en el botón invoca generateTodaySummary con el languageCode del locale activo',
         (tester) async {
       when(() => cubit.state).thenReturn(
-        SummariesLoaded(
-          summaries: const [],
+        const SummariesLoaded(
+          summaries: [],
           canGenerateToday: true,
-          usage: tAiUsageStatusNotReached,
+          alreadyGeneratedToday: false,
         ),
       );
       when(() => cubit.generateTodaySummary(any())).thenAnswer((_) async {});
@@ -155,7 +148,7 @@ void main() {
         SummariesLoaded(
           summaries: [tSummary],
           canGenerateToday: true,
-          usage: tAiUsageStatusNotReached,
+          alreadyGeneratedToday: false,
         ),
       );
 
@@ -169,11 +162,10 @@ void main() {
     testWidgets('muestra mensaje de error cuando falla la generación',
         (tester) async {
       when(() => cubit.state).thenReturn(
-        SummaryGenerationError(
-          summaries: const [],
+        const SummaryGenerationError(
+          summaries: [],
           canGenerateToday: true,
           code: AppErrorCode.generationFailed,
-          usage: tAiUsageStatusNotReached,
         ),
       );
 
@@ -185,132 +177,63 @@ void main() {
       );
     });
 
-    testWidgets('muestra mensaje de límite de IA alcanzado tras rechazo del backend',
+    testWidgets(
+        'muestra mensaje de resumen ya generado tras rechazo del backend',
         (tester) async {
       when(() => cubit.state).thenReturn(
-        SummaryGenerationError(
-          summaries: const [],
-          canGenerateToday: true,
-          code: AppErrorCode.aiUsageLimitReached,
-          usage: AiUsageStatus(
-            wordsUsed: 30000,
-            wordLimit: 30000,
-            resetsAt: DateTime.utc(2026, 1, 2),
-          ),
+        const SummaryGenerationError(
+          summaries: [],
+          canGenerateToday: false,
+          code: AppErrorCode.dailySummaryAlreadyGenerated,
         ),
       );
 
       await tester.pumpWidget(_buildSubject(cubit));
 
       expect(
-        find.text('Alcanzaste el límite diario de uso de IA. Intenta de nuevo mañana.'),
+        find.text('Ya generaste el resumen de hoy. Vuelve mañana para crear uno nuevo.'),
         findsOneWidget,
       );
     });
   });
 
-  group('medidor de consumo de IA', () {
-    testWidgets('muestra las palabras consumidas y el límite diario',
-        (tester) async {
+  group('indicador de resumen ya generado hoy', () {
+    testWidgets('muestra el indicador y deshabilita el botón cuando ya se '
+        'generó el resumen de hoy', (tester) async {
       when(() => cubit.state).thenReturn(
-        SummariesLoaded(
-          summaries: const [],
-          canGenerateToday: true,
-          usage: AiUsageStatus(
-            wordsUsed: 6300,
-            wordLimit: 30000,
-            resetsAt: DateTime.utc(2026, 1, 2),
-          ),
+        const SummariesLoaded(
+          summaries: [],
+          canGenerateToday: false,
+          alreadyGeneratedToday: true,
         ),
       );
 
       await tester.pumpWidget(_buildSubject(cubit));
 
-      expect(find.text('6300 / 30000 palabras usadas hoy'), findsOneWidget);
-    });
-
-    testWidgets('botón deshabilitado cuando el consumo alcanzó el límite,'
-        ' aunque haya artículos hoy', (tester) async {
-      when(() => cubit.state).thenReturn(
-        SummariesLoaded(
-          summaries: const [],
-          canGenerateToday: true,
-          usage: AiUsageStatus(
-            wordsUsed: 30000,
-            wordLimit: 30000,
-            resetsAt: DateTime.utc(2026, 1, 2),
-          ),
-        ),
+      expect(
+        find.text('Ya generaste el resumen de hoy. Vuelve mañana para crear uno nuevo.'),
+        findsOneWidget,
       );
-
-      await tester.pumpWidget(_buildSubject(cubit));
-
       final button = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(button.onPressed, isNull);
     });
-  });
 
-  group('confirmación antes de regenerar sin artículos nuevos', () {
-    testWidgets('muestra el diálogo cuando regenerar traería el mismo conteo',
-        (tester) async {
+    testWidgets('no muestra el indicador cuando todavía no se generó el '
+        'resumen de hoy', (tester) async {
       when(() => cubit.state).thenReturn(
-        SummariesLoaded(
-          summaries: const [],
+        const SummariesLoaded(
+          summaries: [],
           canGenerateToday: true,
-          usage: tAiUsageStatusNotReached,
+          alreadyGeneratedToday: false,
         ),
       );
-      when(() => cubit.wouldRegenerateWithSameArticles())
-          .thenAnswer((_) async => true);
 
       await tester.pumpWidget(_buildSubject(cubit));
-      await tester.tap(find.byType(FilledButton));
-      await tester.pumpAndSettle();
 
-      expect(find.text('¿Regenerar igual?'), findsOneWidget);
-      verifyNever(() => cubit.generateTodaySummary(any()));
-    });
-
-    testWidgets('confirmar el diálogo dispara la generación', (tester) async {
-      when(() => cubit.state).thenReturn(
-        SummariesLoaded(
-          summaries: const [],
-          canGenerateToday: true,
-          usage: tAiUsageStatusNotReached,
-        ),
+      expect(
+        find.text('Ya generaste el resumen de hoy. Vuelve mañana para crear uno nuevo.'),
+        findsNothing,
       );
-      when(() => cubit.wouldRegenerateWithSameArticles())
-          .thenAnswer((_) async => true);
-      when(() => cubit.generateTodaySummary(any())).thenAnswer((_) async {});
-
-      await tester.pumpWidget(_buildSubject(cubit));
-      await tester.tap(find.byType(FilledButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Regenerar igual'));
-      await tester.pumpAndSettle();
-
-      verify(() => cubit.generateTodaySummary(testLocale.languageCode)).called(1);
-    });
-
-    testWidgets('cancelar el diálogo no dispara la generación', (tester) async {
-      when(() => cubit.state).thenReturn(
-        SummariesLoaded(
-          summaries: const [],
-          canGenerateToday: true,
-          usage: tAiUsageStatusNotReached,
-        ),
-      );
-      when(() => cubit.wouldRegenerateWithSameArticles())
-          .thenAnswer((_) async => true);
-
-      await tester.pumpWidget(_buildSubject(cubit));
-      await tester.tap(find.byType(FilledButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Cancelar'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('¿Regenerar igual?'), findsNothing);
-      verifyNever(() => cubit.generateTodaySummary(any()));
     });
   });
 }

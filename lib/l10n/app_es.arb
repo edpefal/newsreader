@@ -84,8 +84,8 @@
   "sourcesEditNameFieldLabel": "Nombre",
 
   "summariesGenerating": "Generando resumen...",
-  "summariesRegenerateTodayButton": "Regenerar resumen de hoy",
   "summariesCreateTodayButton": "Crear resumen de hoy",
+  "summariesAlreadyGeneratedToday": "Ya generaste el resumen de hoy. Vuelve mañana para crear uno nuevo.",
   "summariesEmptyTitle": "Sin resúmenes todavía",
   "summariesEmptySubtitle": "Crea el resumen de hoy para ver de qué trataron tus noticias.",
   "summaryDetailTitle": "Resumen del {date}",
@@ -143,10 +143,6 @@
   "errorAiUsageLimitReached": "Alcanzaste el límite diario de uso de IA. Intenta de nuevo mañana.",
   "errorContentBlocked": "No pudimos generar el resumen de este artículo por las políticas de contenido del proveedor de IA.",
   "errorSubscriptionRequired": "Esto requiere una suscripción activa.",
-  "errorUnknown": "Ocurrió un error inesperado",
-
-  "summariesUsageMeter": "{used} / {limit} palabras usadas hoy",
-  "summariesRegenerateConfirmTitle": "¿Regenerar igual?",
-  "summariesRegenerateConfirmBody": "No llegaron artículos nuevos desde el último resumen. ¿Quieres regenerarlo igual?",
-  "summariesRegenerateConfirmButton": "Regenerar igual"
+  "errorDailySummaryAlreadyGenerated": "Ya generaste el resumen de hoy. Vuelve mañana para crear uno nuevo.",
+  "errorUnknown": "Ocurrió un error inesperado"
 }
