@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
@@ -78,9 +77,7 @@ class ArticleSummarySheetContent extends StatelessWidget {
                           l10n.articleSummarySheetTitle,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
-                        if (remainingToday != null &&
-                            remainingToday <=
-                                AppConstants.aiUsageLowRemainingThreshold)
+                        if (remainingToday != null)
                           _RemainingPill(remaining: remainingToday),
                       ],
                     ),
@@ -124,10 +121,9 @@ class ArticleSummarySheetContent extends StatelessWidget {
   }
 }
 
-/// Indicador sutil de consumo diario, visible solo con pocos resúmenes
-/// restantes (ver `AppConstants.aiUsageLowRemainingThreshold`). Tono
-/// neutro a propósito: nunca usa `ReevoAccent` (el ámbar está reservado
-/// para no-leído/favorito) -- ver design.md.
+/// Indicador sutil de consumo diario, siempre visible. Tono neutro a
+/// propósito: nunca usa `ReevoAccent` (el ámbar está reservado para
+/// no-leído/favorito) -- ver design.md.
 class _RemainingPill extends StatelessWidget {
   final int remaining;
 

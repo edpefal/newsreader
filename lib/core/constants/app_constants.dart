@@ -12,9 +12,6 @@ class AppConstants {
   // servidor es quien realmente aplica el límite, este valor solo se usa
   // para calcular el restante que se muestra en el cliente.
   static const int aiUsageDailySummaryLimit = 25;
-  // A partir de cuántos resúmenes restantes se muestra el indicador de
-  // consumo en el bottom sheet (ver Requirement: Indicador de uso restante).
-  static const int aiUsageLowRemainingThreshold = 5;
   static const String settingsThemeModeKey = 'theme_mode';
   // Gatea la migración de una sola vez desde el formato binario previo
   // (solo 'light'/'dark') al de tres opciones (se agrega 'system'). Es una

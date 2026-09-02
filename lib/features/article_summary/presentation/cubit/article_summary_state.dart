@@ -2,9 +2,8 @@ part of 'article_summary_cubit.dart';
 
 sealed class ArticleSummaryState extends Equatable {
   /// Resúmenes restantes hoy según el último `AiUsageStatus` conocido, o
-  /// `null` mientras todavía no se consultó. Se muestra en el bottom sheet
-  /// solo cuando es <= `AppConstants.aiUsageLowRemainingThreshold` -- ver
-  /// Requirement: Indicador de uso restante.
+  /// `null` mientras todavía no se consultó. Se muestra siempre en el
+  /// bottom sheet -- ver Requirement: Indicador de uso restante.
   final int? remainingToday;
 
   const ArticleSummaryState({this.remainingToday});

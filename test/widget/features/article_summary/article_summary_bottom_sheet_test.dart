@@ -136,7 +136,7 @@ void main() {
     });
 
     testWidgets(
-        'estado Loaded con 6 o más restantes no muestra el indicador de uso',
+        'estado Loaded con muchos restantes igual muestra el indicador de uso',
         (tester) async {
       final summary = ArticleSummary(
         articleId: 'a1',
@@ -147,16 +147,16 @@ void main() {
       whenListen(
         cubit,
         const Stream<ArticleSummaryState>.empty(),
-        initialState: ArticleSummaryLoaded(summary, remainingToday: 6),
+        initialState: ArticleSummaryLoaded(summary, remainingToday: 24),
       );
 
       await tester.pumpWidget(_buildSubject(cubit, launcher));
 
-      expect(find.textContaining('hoy'), findsNothing);
+      expect(find.text('Quedan 24 hoy'), findsOneWidget);
     });
 
     testWidgets(
-        'estado Loaded con 5 o menos restantes muestra el indicador de uso',
+        'estado Loaded con pocos restantes muestra el indicador de uso',
         (tester) async {
       final summary = ArticleSummary(
         articleId: 'a1',

@@ -29,7 +29,7 @@
 - [x] 5.1 Agregar el estado nuevo al sealed `ArticleSummaryState` (ej. `ArticleSummaryLimitReached`) para el caso de límite diario alcanzado, separado de `ArticleSummaryError`
 - [x] 5.2 Actualizar `ArticleSummaryCubit` para: (a) emitir el estado nuevo cuando el backend rechaza por límite diario, (b) seguir emitiendo `ArticleSummaryError` para el caso de artículo demasiado largo y demás errores existentes, (c) calcular y exponer `remainingToday` a partir de lo sincronizado en 3.3
 - [x] 5.3 En `article_summary_bottom_sheet.dart`: agregar el case nuevo del `switch` para el estado de límite alcanzado, con superficie/tono neutro (paper/ink en light, dark surface/on-surface en dark) y copy "Ya usaste tus 25 resúmenes de hoy. Vuelven mañana a las 00:00." (sin ícono de alerta ni color de error)
-- [x] 5.4 En el mismo widget, agregar el pill/texto de consumo restante ("Quedan N hoy"), visible solo cuando `remainingToday <= 5`, en tono neutro sin usar `ReevoAccent`
+- [x] 5.4 En el mismo widget, agregar el pill/texto de consumo restante ("Quedan N hoy"), siempre visible (decisión revisada: se descartó mostrarlo solo con pocos restantes), en tono neutro sin usar `ReevoAccent`
 - [x] 5.5 Confirmar que el estado de límite alcanzado sigue sin reportarse a Sentry (igual que hoy con `aiUsageLimitReached`)
 
 ## 6. Verificación

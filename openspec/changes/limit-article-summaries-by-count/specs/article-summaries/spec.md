@@ -81,14 +81,10 @@ La generación SHALL estar sujeta al límite diario de resúmenes y al techo de 
 
 ### Requirement: Indicador de uso restante en el bottom sheet
 
-El sistema SHALL mostrar, en el bottom sheet de resumen del `ReaderScreen`, un indicador del consumo diario de resúmenes solo cuando al usuario le queden 5 resúmenes o menos disponibles hoy (de los 25 diarios); mientras queden 6 o más, el sistema NO SHALL mostrar ningún indicador de consumo. El indicador SHALL usar un tono visual neutro, distinto del color de acento reservado para no-leído/favorito. Cuando el usuario alcanzó el límite diario, el sistema SHALL mostrar un estado propio y distinguible del bloque de error genérico usado para otros `AppErrorCode` (sin el color de error ni iconografía de alerta), indicando que el límite se alcanzó y cuándo vuelve a estar disponible.
+El sistema SHALL mostrar siempre, en el bottom sheet de resumen del `ReaderScreen`, un indicador con la cantidad de resúmenes restantes hoy (de los 25 diarios), sin condicionarlo a que quede poco consumo disponible. El indicador SHALL usar un tono visual neutro, distinto del color de acento reservado para no-leído/favorito. Cuando el usuario alcanzó el límite diario, el sistema SHALL mostrar un estado propio y distinguible del bloque de error genérico usado para otros `AppErrorCode` (sin el color de error ni iconografía de alerta), indicando que el límite se alcanzó y cuándo vuelve a estar disponible.
 
-#### Scenario: Uso normal, sin indicador
-- **WHEN** el usuario abre el bottom sheet de resumen y le quedan 6 o más resúmenes disponibles hoy
-- **THEN** el sistema no muestra ningún indicador de consumo en el bottom sheet
-
-#### Scenario: Quedan pocos resúmenes disponibles
-- **WHEN** el usuario abre el bottom sheet de resumen y le quedan 5 resúmenes o menos disponibles hoy
+#### Scenario: Indicador siempre visible
+- **WHEN** el usuario abre el bottom sheet de resumen con cualquier cantidad de resúmenes restantes hoy (incluido el máximo de 25)
 - **THEN** el sistema muestra un indicador informativo con la cantidad restante, en tono neutro, sin bloquear ninguna acción
 
 #### Scenario: Límite diario alcanzado se muestra en tono neutro, no como error
