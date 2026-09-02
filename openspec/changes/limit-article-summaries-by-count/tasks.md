@@ -9,7 +9,7 @@
 - [x] 2.1 Cambiar la constante de límite a `AI_DAILY_SUMMARY_LIMIT = 25` (reemplaza `AI_DAILY_WORD_LIMIT`)
 - [x] 2.2 Agregar el chequeo de techo de longitud (8,000 palabras, usando `countSingleArticleWords` ya existente) antes de llamar a `check_and_record_ai_usage`; si se supera, responder con el código de error nuevo `article_too_long` sin invocar a Gemini ni tocar `ai_usage_daily`
 - [x] 2.3 Actualizar la llamada a `check_and_record_ai_usage` con la nueva firma; si `allowed=false`, responder con el código de error existente (renombrado si aplica) de límite diario alcanzado
-- [ ] 2.4 Desplegar la edge function actualizada al/los proyecto(s) confirmados en 1.3 (`reevo` y `reevo-dev`) — pendiente, se hace antes de mergear el PR
+- [x] 2.4 Desplegar la edge function actualizada al/los proyecto(s) confirmados en 1.3 (`reevo` y `reevo-dev`)
 
 ## 3. Sincronización cliente de `ai_usage_daily`
 
