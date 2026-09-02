@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/ai/article_summary_generator.dart';
+import 'package:newsreader/core/domain/entities/ai_usage_status.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/article_summary.dart';
+import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/features/article_summary/domain/usecases/generate_article_summary.dart';
 import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
@@ -14,8 +16,11 @@ import '../../../../../support/fake_telemetry_client.dart';
 class MockGenerateArticleSummary extends Mock
     implements GenerateArticleSummary {}
 
+class MockAiUsageRepository extends Mock implements AiUsageRepository {}
+
 void main() {
   late MockGenerateArticleSummary mockGenerateArticleSummary;
+  late MockAiUsageRepository mockAiUsageRepository;
   late MockTelemetryClient mockTelemetryClient;
 
   final tArticle = Article(
@@ -36,6 +41,7 @@ void main() {
 
   ArticleSummaryCubit buildCubit() => ArticleSummaryCubit(
         mockGenerateArticleSummary,
+        mockAiUsageRepository,
         mockTelemetryClient,
       );
 
@@ -55,7 +61,12 @@ void main() {
 
   setUp(() {
     mockGenerateArticleSummary = MockGenerateArticleSummary();
+    mockAiUsageRepository = MockAiUsageRepository();
     mockTelemetryClient = MockTelemetryClient();
+    when(() => mockAiUsageRepository.getStatus()).thenAnswer(
+      (_) async =>
+          const AiUsageStatus(summariesUsedToday: 10, dailyLimit: 25),
+    );
   });
 
   group('ArticleSummaryCubit', () {
@@ -75,7 +86,7 @@ void main() {
       act: (cubit) => cubit.generate(tArticle, 'es'),
       expect: () => [
         const ArticleSummaryLoading(),
-        ArticleSummaryLoaded(tSummary),
+        ArticleSummaryLoaded(tSummary, remainingToday: 15),
       ],
     );
 
@@ -109,7 +120,10 @@ void main() {
       act: (cubit) => cubit.generate(tArticle, 'es'),
       expect: () => [
         const ArticleSummaryLoading(),
-        const ArticleSummaryError(AppErrorCode.generationFailed),
+        const ArticleSummaryError(
+          AppErrorCode.generationFailed,
+          remainingToday: 15,
+        ),
       ],
       verify: (_) {
         verify(
@@ -119,7 +133,7 @@ void main() {
     );
 
     blocTest<ArticleSummaryCubit, ArticleSummaryState>(
-      'generate() con presupuesto de IA agotado emite Error sin reportarlo',
+      'generate() con límite diario alcanzado emite LimitReached sin reportarlo',
       build: () {
         when(() => mockGenerateArticleSummary.execute(
               any(),
@@ -134,7 +148,7 @@ void main() {
       act: (cubit) => cubit.generate(tArticle, 'es'),
       expect: () => [
         const ArticleSummaryLoading(),
-        const ArticleSummaryError(AppErrorCode.aiUsageLimitReached),
+        const ArticleSummaryLimitReached(),
       ],
       verify: (_) {
         verifyNever(

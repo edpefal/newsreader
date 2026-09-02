@@ -14,6 +14,7 @@ import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/observability/default_telemetry_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
+import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/article_summary_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
@@ -131,6 +132,7 @@ Future<void> _initHive() async {
   Hive.registerAdapter(ArticleModelAdapter());
   Hive.registerAdapter(DailySummaryModelAdapter());
   Hive.registerAdapter(ArticleSummaryModelAdapter());
+  Hive.registerAdapter(AiUsageDailyModelAdapter());
   await Hive.openBox<NewsSourceModel>(AppConstants.hiveSourcesBox);
   await Hive.openBox<ArticleModel>(AppConstants.hiveArticlesBox);
   await Hive.openBox<dynamic>(AppConstants.hiveSettingsBox);
@@ -138,6 +140,7 @@ Future<void> _initHive() async {
   await Hive.openBox<ArticleSummaryModel>(
     AppConstants.hiveArticleSummariesBox,
   );
+  await Hive.openBox<AiUsageDailyModel>(AppConstants.hiveAiUsageBox);
 }
 
 Future<void> _initSupabase() async {

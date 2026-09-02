@@ -93,6 +93,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get articleSummaryMentionsTitle => 'Mentionné dans cet article';
 
   @override
+  String articleSummaryRemainingToday(int count) {
+    return 'Il en reste $count aujourd\'hui';
+  }
+
+  @override
+  String get articleSummaryLimitReachedTitle =>
+      'Tu as utilisé tes 25 résumés du jour';
+
+  @override
+  String get articleSummaryLimitReachedSubtitle =>
+      'Ils reviennent demain à 00h00.';
+
+  @override
   String get favoritesEmptyTitle => 'Aucun favori pour l\'instant';
 
   @override
@@ -473,6 +486,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errorDailySummaryAlreadyGenerated =>
       'Tu as déjà généré le résumé du jour. Reviens demain pour en créer un nouveau.';
+
+  @override
+  String get errorArticleTooLongToSummarize =>
+      'Cet article est trop long pour être résumé automatiquement.';
 
   @override
   String get errorUnknown => 'Une erreur inattendue s\'est produite';

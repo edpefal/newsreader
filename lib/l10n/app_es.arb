@@ -29,6 +29,16 @@
   "articleSummaryButtonTooltip": "Resumir artículo",
   "articleSummarySheetTitle": "Resumen",
   "articleSummaryMentionsTitle": "Menciones en este artículo",
+  "articleSummaryRemainingToday": "Quedan {count} hoy",
+  "@articleSummaryRemainingToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "articleSummaryLimitReachedTitle": "Ya usaste tus 25 resúmenes de hoy",
+  "articleSummaryLimitReachedSubtitle": "Vuelven mañana a las 00:00.",
 
   "favoritesEmptyTitle": "Sin favoritos aún",
   "favoritesEmptySubtitle": "Abre un artículo y toca la estrella para guardarlo aquí.",
@@ -144,5 +154,6 @@
   "errorContentBlocked": "No pudimos generar el resumen de este artículo por las políticas de contenido del proveedor de IA.",
   "errorSubscriptionRequired": "Esto requiere una suscripción activa.",
   "errorDailySummaryAlreadyGenerated": "Ya generaste el resumen de hoy. Vuelve mañana para crear uno nuevo.",
+  "errorArticleTooLongToSummarize": "Este artículo es demasiado largo para resumir automáticamente.",
   "errorUnknown": "Ocurrió un error inesperado"
 }

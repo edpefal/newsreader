@@ -39,6 +39,16 @@
   "articleSummaryButtonTooltip": "Summarize article",
   "articleSummarySheetTitle": "Summary",
   "articleSummaryMentionsTitle": "Mentioned in this article",
+  "articleSummaryRemainingToday": "{count} left today",
+  "@articleSummaryRemainingToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "articleSummaryLimitReachedTitle": "You've used all 25 summaries for today",
+  "articleSummaryLimitReachedSubtitle": "They're back tomorrow at 00:00.",
 
   "favoritesEmptyTitle": "No favorites yet",
   "favoritesEmptySubtitle": "Open an article and tap the star to save it here.",
@@ -228,5 +238,6 @@
   "errorContentBlocked": "We couldn't summarize this article because of the AI provider's content policy.",
   "errorSubscriptionRequired": "This requires an active subscription.",
   "errorDailySummaryAlreadyGenerated": "You already generated today's summary. Come back tomorrow for a new one.",
+  "errorArticleTooLongToSummarize": "This article is too long to summarize automatically.",
   "errorUnknown": "Something unexpected happened"
 }

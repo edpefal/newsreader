@@ -5,6 +5,7 @@ import 'package:newsreader/core/ai/article_summary_generator.dart';
 import 'package:newsreader/core/ai/mention_enricher.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/article_summary.dart';
+import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/domain/repositories/article_summary_repository.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/features/article_summary/domain/usecases/generate_article_summary.dart';
@@ -17,10 +18,13 @@ class MockArticleSummaryGenerator extends Mock
 
 class MockMentionEnricher extends Mock implements MentionEnricher {}
 
+class MockAiUsageRepository extends Mock implements AiUsageRepository {}
+
 void main() {
   late MockArticleSummaryRepository mockRepository;
   late MockArticleSummaryGenerator mockGenerator;
   late MockMentionEnricher mockEnricher;
+  late MockAiUsageRepository mockAiUsageRepository;
   late GenerateArticleSummary sut;
 
   final tArticle = Article(
@@ -50,7 +54,15 @@ void main() {
     mockRepository = MockArticleSummaryRepository();
     mockGenerator = MockArticleSummaryGenerator();
     mockEnricher = MockMentionEnricher();
-    sut = GenerateArticleSummary(mockRepository, mockGenerator, mockEnricher);
+    mockAiUsageRepository = MockAiUsageRepository();
+    when(() => mockAiUsageRepository.recordLocalUsage())
+        .thenAnswer((_) async {});
+    sut = GenerateArticleSummary(
+      mockRepository,
+      mockGenerator,
+      mockEnricher,
+      mockAiUsageRepository,
+    );
   });
 
   group('con un resumen ya persistido', () {
@@ -77,6 +89,7 @@ void main() {
       );
       verifyNever(() => mockEnricher.enrich(any()));
       verifyNever(() => mockRepository.save(any()));
+      verifyNever(() => mockAiUsageRepository.recordLocalUsage());
     });
   });
 
@@ -108,6 +121,7 @@ void main() {
       expect(result.summary, 'Resumen generado');
       expect(result.mentions.single.imageUrl, 'https://books.example/cover.jpg');
       verify(() => mockRepository.save(result)).called(1);
+      verify(() => mockAiUsageRepository.recordLocalUsage()).called(1);
     });
 
     test('usa el texto extraído de contentHtml no truncado, no el excerpt',

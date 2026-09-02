@@ -7,6 +7,14 @@ class AppConstants {
   static const int cleanupDays = 30;
   static const Duration feedFetchTimeout = Duration(seconds: 10);
   static const Duration summaryGenerationTimeout = Duration(seconds: 45);
+  // Ver capability `ai-usage-budget`. Mismo valor que
+  // `AI_DAILY_SUMMARY_LIMIT` en la edge function `summarize-article` -- el
+  // servidor es quien realmente aplica el límite, este valor solo se usa
+  // para calcular el restante que se muestra en el cliente.
+  static const int aiUsageDailySummaryLimit = 25;
+  // A partir de cuántos resúmenes restantes se muestra el indicador de
+  // consumo en el bottom sheet (ver Requirement: Indicador de uso restante).
+  static const int aiUsageLowRemainingThreshold = 5;
   static const String settingsThemeModeKey = 'theme_mode';
   // Gatea la migración de una sola vez desde el formato binario previo
   // (solo 'light'/'dark') al de tres opciones (se agrega 'system'). Es una
@@ -37,4 +45,6 @@ class AppConstants {
       AppConfig.isProd ? 'summaries' : 'summaries_dev';
   static String get hiveArticleSummariesBox =>
       AppConfig.isProd ? 'article_summaries' : 'article_summaries_dev';
+  static String get hiveAiUsageBox =>
+      AppConfig.isProd ? 'ai_usage' : 'ai_usage_dev';
 }

@@ -29,6 +29,16 @@
   "articleSummaryButtonTooltip": "Résumer l'article",
   "articleSummarySheetTitle": "Résumé",
   "articleSummaryMentionsTitle": "Mentionné dans cet article",
+  "articleSummaryRemainingToday": "Il en reste {count} aujourd'hui",
+  "@articleSummaryRemainingToday": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "articleSummaryLimitReachedTitle": "Tu as utilisé tes 25 résumés du jour",
+  "articleSummaryLimitReachedSubtitle": "Ils reviennent demain à 00h00.",
 
   "favoritesEmptyTitle": "Aucun favori pour l'instant",
   "favoritesEmptySubtitle": "Ouvre un article et touche l'étoile pour l'enregistrer ici.",
@@ -144,5 +154,6 @@
   "errorContentBlocked": "Nous n'avons pas pu résumer cet article en raison de la politique de contenu du fournisseur d'IA.",
   "errorSubscriptionRequired": "Cela nécessite un abonnement actif.",
   "errorDailySummaryAlreadyGenerated": "Tu as déjà généré le résumé du jour. Reviens demain pour en créer un nouveau.",
+  "errorArticleTooLongToSummarize": "Cet article est trop long pour être résumé automatiquement.",
   "errorUnknown": "Une erreur inattendue s'est produite"
 }

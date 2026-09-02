@@ -4,9 +4,11 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
+import 'package:newsreader/core/data/datasources/local/ai_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/article_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/source_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/summary_local_datasource.dart';
+import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
@@ -18,6 +20,9 @@ class MockSourceLocalDataSource extends Mock implements SourceLocalDataSource {}
 class MockArticleLocalDataSource extends Mock implements ArticleLocalDataSource {}
 
 class MockSummaryLocalDataSource extends Mock implements SummaryLocalDataSource {}
+
+class MockAiUsageLocalDataSource extends Mock
+    implements AiUsageLocalDataSource {}
 
 class MockCloudSyncClient extends Mock implements CloudSyncClient {}
 
@@ -53,6 +58,7 @@ void main() {
   late MockSourceLocalDataSource mockSourceLocal;
   late MockArticleLocalDataSource mockArticleLocal;
   late MockSummaryLocalDataSource mockSummaryLocal;
+  late MockAiUsageLocalDataSource mockAiUsageLocal;
   late MockCloudSyncClient mockCloudSyncClient;
   late MockAuthClient mockAuthClient;
   late MockSettingsBox mockSettingsBox;
@@ -73,12 +79,16 @@ void main() {
         createdAt: DateTime(2026),
       ),
     );
+    registerFallbackValue(
+      AiUsageDailyModel(day: DateTime(2026), summariesUsed: 0),
+    );
   });
 
   setUp(() {
     mockSourceLocal = MockSourceLocalDataSource();
     mockArticleLocal = MockArticleLocalDataSource();
     mockSummaryLocal = MockSummaryLocalDataSource();
+    mockAiUsageLocal = MockAiUsageLocalDataSource();
     mockCloudSyncClient = MockCloudSyncClient();
     mockAuthClient = MockAuthClient();
     mockSettingsBox = MockSettingsBox();
@@ -86,6 +96,7 @@ void main() {
       mockSourceLocal,
       mockArticleLocal,
       mockSummaryLocal,
+      mockAiUsageLocal,
       mockCloudSyncClient,
       mockAuthClient,
       mockSettingsBox,
@@ -98,8 +109,15 @@ void main() {
     when(() => mockSourceLocal.applyRemote(any())).thenAnswer((_) async {});
     when(() => mockArticleLocal.applyRemote(any())).thenAnswer((_) async {});
     when(() => mockSummaryLocal.applyRemote(any())).thenAnswer((_) async {});
+    when(() => mockAiUsageLocal.applyRemote(any())).thenAnswer((_) async {});
     when(() => mockCloudSyncClient.updatePartial(any(), any()))
         .thenAnswer((_) async {});
+    // Stub por defecto para la tabla nueva de solo lectura: la mayoría de
+    // los tests no le interesa `ai_usage_daily`, solo evitar un
+    // MissingStubError -- los tests que sí necesitan otro comportamiento
+    // pueden seguir registrando su propio `when` más específico.
+    when(() => mockCloudSyncClient.fetchChangedSince('ai_usage_daily', any()))
+        .thenAnswer((_) async => []);
   });
 
   group('sin sesión activa', () {
@@ -375,6 +393,45 @@ void main() {
           .single as ArticleModel;
       expect(applied.title, 'Título editado en otro dispositivo');
       expect(applied.isRead, true);
+    });
+  });
+
+  group('ai_usage_daily (solo lectura)', () {
+    test('aplica localmente lo que devuelve el servidor, sin subir nada',
+        () async {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(null);
+      when(() => mockSourceLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockArticleLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('sources', null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('articles', null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('daily_summaries', null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('ai_usage_daily', null))
+          .thenAnswer((_) async => [
+                {
+                  'day': DateTime(2026, 1, 5).toIso8601String(),
+                  'summaries_used': 7,
+                  'updated_at': DateTime(2026, 1, 5, 10).toIso8601String(),
+                },
+              ]);
+
+      await sut.execute();
+
+      final applied = verify(() => mockAiUsageLocal.applyRemote(captureAny()))
+          .captured
+          .single as AiUsageDailyModel;
+      expect(applied.summariesUsed, 7);
+      verifyNever(() => mockCloudSyncClient.upsert('ai_usage_daily', any()));
+      verifyNever(
+        () => mockCloudSyncClient.updatePartial('ai_usage_daily', any()),
+      );
     });
   });
 

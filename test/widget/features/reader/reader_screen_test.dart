@@ -4,7 +4,9 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:newsreader/core/domain/entities/ai_usage_status.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
@@ -28,7 +30,17 @@ class MockExternalLinkLauncher extends Mock implements ExternalLinkLauncher {}
 class MockGenerateArticleSummary extends Mock
     implements GenerateArticleSummary {}
 
+class MockAiUsageRepository extends Mock implements AiUsageRepository {}
+
 class MockTelemetryClient extends Mock implements TelemetryClient {}
+
+AiUsageRepository _fakeAiUsageRepository() {
+  final mock = MockAiUsageRepository();
+  when(() => mock.getStatus()).thenAnswer(
+    (_) async => const AiUsageStatus(summariesUsedToday: 0, dailyLimit: 25),
+  );
+  return mock;
+}
 
 Widget _buildSubject(
   Article article,
@@ -48,6 +60,7 @@ Widget _buildSubject(
               subscriptionStatusProvider ?? MockSubscriptionStatusProvider(),
           createArticleSummaryCubit: () => ArticleSummaryCubit(
             MockGenerateArticleSummary(),
+            _fakeAiUsageRepository(),
             MockTelemetryClient(),
           ),
           externalLinkLauncher: MockExternalLinkLauncher(),

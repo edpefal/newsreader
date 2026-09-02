@@ -93,6 +93,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get articleSummaryMentionsTitle => 'Mentioned in this article';
 
   @override
+  String articleSummaryRemainingToday(int count) {
+    return '$count left today';
+  }
+
+  @override
+  String get articleSummaryLimitReachedTitle =>
+      'You\'ve used all 25 summaries for today';
+
+  @override
+  String get articleSummaryLimitReachedSubtitle =>
+      'They\'re back tomorrow at 00:00.';
+
+  @override
   String get favoritesEmptyTitle => 'No favorites yet';
 
   @override
@@ -470,6 +483,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorDailySummaryAlreadyGenerated =>
       'You already generated today\'s summary. Come back tomorrow for a new one.';
+
+  @override
+  String get errorArticleTooLongToSummarize =>
+      'This article is too long to summarize automatically.';
 
   @override
   String get errorUnknown => 'Something unexpected happened';

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:newsreader/core/ai/article_summary_generator.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/article_summary.dart';
+import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/features/article_summary/domain/usecases/generate_article_summary.dart';
@@ -20,10 +21,12 @@ part 'article_summary_state.dart';
 /// se invoca, la suscripción activa ya está garantizada.
 class ArticleSummaryCubit extends Cubit<ArticleSummaryState> {
   final GenerateArticleSummary _generateArticleSummary;
+  final AiUsageRepository _aiUsageRepository;
   final TelemetryClient _observabilityClient;
 
   ArticleSummaryCubit(
     this._generateArticleSummary,
+    this._aiUsageRepository,
     this._observabilityClient,
   ) : super(const ArticleSummaryLoading());
 
@@ -35,17 +38,25 @@ class ArticleSummaryCubit extends Cubit<ArticleSummaryState> {
         article,
         language: language,
       );
-      emit(ArticleSummaryLoaded(summary));
+      final remaining = await _remainingToday();
+      emit(ArticleSummaryLoaded(summary, remainingToday: remaining));
     } catch (e, st) {
       final code = e is ArticleSummaryGenerationException
           ? e.code
           : AppErrorCode.generationFailed;
-      // aiUsageLimitReached es un estado esperado y alcanzable por diseño,
-      // no un bug -- no se reporta a Sentry, igual que en SummariesCubit.
-      if (code != AppErrorCode.aiUsageLimitReached) {
-        _observabilityClient.captureException(e, st);
+      // El límite diario alcanzado es un estado esperado y alcanzable por
+      // diseño, no un bug -- estado propio (ver ArticleSummaryLimitReached),
+      // sin reportarse a Sentry, igual que antes.
+      if (code == AppErrorCode.aiUsageLimitReached) {
+        emit(const ArticleSummaryLimitReached());
+        return;
       }
-      emit(ArticleSummaryError(code));
+      _observabilityClient.captureException(e, st);
+      final remaining = await _remainingToday();
+      emit(ArticleSummaryError(code, remainingToday: remaining));
     }
   }
+
+  Future<int> _remainingToday() async =>
+      (await _aiUsageRepository.getStatus()).remaining;
 }

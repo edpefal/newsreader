@@ -2,6 +2,7 @@ import 'package:newsreader/core/ai/article_summary_generator.dart';
 import 'package:newsreader/core/ai/mention_enricher.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/article_summary.dart';
+import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/domain/repositories/article_summary_repository.dart';
 import 'package:newsreader/core/utils/feed_content_checker.dart';
 import 'package:newsreader/core/utils/html_to_linked_text.dart';
@@ -12,11 +13,13 @@ class GenerateArticleSummary {
   final ArticleSummaryRepository _articleSummaryRepository;
   final ArticleSummaryGenerator _articleSummaryGenerator;
   final MentionEnricher _mentionEnricher;
+  final AiUsageRepository _aiUsageRepository;
 
   const GenerateArticleSummary(
     this._articleSummaryRepository,
     this._articleSummaryGenerator,
     this._mentionEnricher,
+    this._aiUsageRepository,
   );
 
   /// Mismo criterio que `GenerateDailySummary` para elegir la fuente del
@@ -83,6 +86,10 @@ class GenerateArticleSummary {
       createdAt: DateTime.now(),
     );
     await _articleSummaryRepository.save(summary);
+    // Solo se registra acá (generación fresca), nunca en el early return de
+    // arriba -- reabrir un resumen ya persistido no descuenta del límite
+    // diario, ver capability `article-summaries`.
+    await _aiUsageRepository.recordLocalUsage();
     return summary;
   }
 }
