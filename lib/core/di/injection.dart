@@ -27,22 +27,27 @@ import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/observability/default_telemetry_client.dart';
 import 'package:newsreader/core/utils/id_generator.dart';
 import 'package:newsreader/core/utils/uuid_id_generator.dart';
+import 'package:newsreader/core/data/datasources/local/ai_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/article_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/article_summary_local_datasource.dart';
+import 'package:newsreader/core/data/datasources/local/hive_ai_usage_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_article_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_article_summary_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_source_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_summary_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/source_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/summary_local_datasource.dart';
+import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/article_summary_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
+import 'package:newsreader/core/data/repositories/ai_usage_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/article_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/article_summary_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/source_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/summary_repository_impl.dart';
+import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/article_summary_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
@@ -149,6 +154,11 @@ Future<void> setupDependencies() async {
       Hive.box<ArticleSummaryModel>(AppConstants.hiveArticleSummariesBox),
     ),
   );
+  getIt.registerLazySingleton<AiUsageLocalDataSource>(
+    () => HiveAiUsageDatasource(
+      Hive.box<AiUsageDailyModel>(AppConstants.hiveAiUsageBox),
+    ),
+  );
 
   // Repositories
   getIt.registerLazySingleton<SourceRepository>(
@@ -162,6 +172,9 @@ Future<void> setupDependencies() async {
   );
   getIt.registerLazySingleton<ArticleSummaryRepository>(
     () => ArticleSummaryRepositoryImpl(getIt()),
+  );
+  getIt.registerLazySingleton<AiUsageRepository>(
+    () => AiUsageRepositoryImpl(getIt()),
   );
 
   // Use cases — Sources
@@ -206,12 +219,13 @@ Future<void> setupDependencies() async {
 
   // Use cases — Article summary
   getIt.registerLazySingleton(
-    () => GenerateArticleSummary(getIt(), getIt(), getIt()),
+    () => GenerateArticleSummary(getIt(), getIt(), getIt(), getIt()),
   );
 
   // Use cases — Sync
   getIt.registerLazySingleton(
     () => SyncUserData(
+      getIt(),
       getIt(),
       getIt(),
       getIt(),
@@ -252,6 +266,6 @@ Future<void> setupDependencies() async {
     SummariesCubit(getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerFactory<ArticleSummaryCubit>(
-    () => ArticleSummaryCubit(getIt(), getIt()),
+    () => ArticleSummaryCubit(getIt(), getIt(), getIt()),
   );
 }

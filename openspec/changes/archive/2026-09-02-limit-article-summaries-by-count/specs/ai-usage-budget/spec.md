@@ -1,10 +1,4 @@
-# Spec: AI Usage Budget
-
-## Purpose
-
-Mantener, del lado del servidor, un límite diario de resúmenes de artículo generados por el usuario, para acotar el costo de las llamadas a la API de IA sin depender de que el cliente se autolimite.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Límite diario de resúmenes de artículo por usuario
 El sistema SHALL mantener, por usuario, un contador de resúmenes de artículo generados exitosamente (capability `article-summaries`, incluyendo la detección de menciones de `article-mentions` que viaja en el mismo request) en el día en curso (día del servidor). El límite diario SHALL ser de 25 resúmenes. Cada resumen de artículo generado exitosamente SHALL contar como exactamente 1 unidad contra este límite, sin importar la longitud del artículo resumido. La capability `daily-summaries` (resumen diario) NO SHALL consumir ni chequear este límite — se limita en su lugar a una generación por día, según su propia spec.
@@ -20,17 +14,6 @@ El sistema SHALL mantener, por usuario, un contador de resúmenes de artículo g
 #### Scenario: El resumen diario no consume ni chequea este límite
 - **WHEN** el usuario genera un resumen diario (capability `daily-summaries`)
 - **THEN** el sistema no consulta ni descuenta nada de este límite — esa generación se limita únicamente por la regla de "una generación por día" de `daily-summaries`
-
-### Requirement: Techo de longitud por artículo individual
-El sistema SHALL rechazar generar el resumen automático de un artículo cuyo contenido (texto plano de input enviado a la API de IA) supere las 8,000 palabras, sin invocar a la API de IA y sin incrementar el consumo del límite diario de resúmenes. Este techo SHALL aplicarse independientemente del consumo diario disponible del usuario (incluso con el contador en 0, un artículo que supera el techo SHALL rechazarse igual), y SHALL responder con un error distinguible del error de límite diario alcanzado.
-
-#### Scenario: Artículo dentro del techo de longitud
-- **WHEN** el contenido de input de un artículo tiene 8,000 palabras o menos
-- **THEN** el sistema aplica el chequeo normal del límite diario de resúmenes, sin rechazar por longitud
-
-#### Scenario: Artículo supera el techo de longitud
-- **WHEN** el contenido de input de un artículo supera las 8,000 palabras
-- **THEN** el sistema rechaza la solicitud sin invocar a la API de IA, sin descontar del límite diario de resúmenes, y responde con un error específico de artículo demasiado largo
 
 ### Requirement: Chequeo e incremento atómicos
 El sistema SHALL chequear el consumo disponible e incrementarlo como una única operación atómica del lado del servidor, de forma que dos solicitudes concurrentes del mismo usuario no puedan ambas pasar el chequeo y hacer que el consumo total termine superando el límite diario de 25 resúmenes.
@@ -56,3 +39,16 @@ El sistema SHALL permitir que el usuario autenticado consulte su propio consumo 
 #### Scenario: Usuario sin consumo previo
 - **WHEN** un usuario que nunca generó un resumen de artículo consulta su estado de uso
 - **THEN** el sistema devuelve 0 resúmenes generados y el límite diario vigente
+
+## ADDED Requirements
+
+### Requirement: Techo de longitud por artículo individual
+El sistema SHALL rechazar generar el resumen automático de un artículo cuyo contenido (texto plano de input enviado a la API de IA) supere las 8,000 palabras, sin invocar a la API de IA y sin incrementar el consumo del límite diario de resúmenes. Este techo SHALL aplicarse independientemente del consumo diario disponible del usuario (incluso con el contador en 0, un artículo que supera el techo SHALL rechazarse igual), y SHALL responder con un error distinguible del error de límite diario alcanzado.
+
+#### Scenario: Artículo dentro del techo de longitud
+- **WHEN** el contenido de input de un artículo tiene 8,000 palabras o menos
+- **THEN** el sistema aplica el chequeo normal del límite diario de resúmenes, sin rechazar por longitud
+
+#### Scenario: Artículo supera el techo de longitud
+- **WHEN** el contenido de input de un artículo supera las 8,000 palabras
+- **THEN** el sistema rechaza la solicitud sin invocar a la API de IA, sin descontar del límite diario de resúmenes, y responde con un error específico de artículo demasiado largo

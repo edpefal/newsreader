@@ -1,10 +1,4 @@
-# Spec: Article Summaries
-
-## Purpose
-
-Define cómo el sistema genera, almacena y presenta un resumen de un artículo individual usando una API de IA en la nube, on-demand, con persistencia por artículo para no regenerar innecesariamente.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Generación on-demand del resumen de un artículo
 
@@ -83,6 +77,8 @@ La generación SHALL estar sujeta al límite diario de resúmenes y al techo de 
 - **WHEN** el backend rechaza la solicitud de generación porque la suscripción del usuario no está activa en la tabla de entitlements (por ejemplo, expiró entre la verificación local de la UI y la verificación del backend)
 - **THEN** el sistema muestra un estado de error específico que indica que se requiere una suscripción activa, distinguible del error genérico de generación
 
+## ADDED Requirements
+
 ### Requirement: Indicador de uso restante en el bottom sheet
 
 El sistema SHALL mostrar siempre, en el bottom sheet de resumen del `ReaderScreen`, un indicador con la cantidad de resúmenes restantes hoy (de los 25 diarios), sin condicionarlo a que quede poco consumo disponible. El indicador SHALL usar un tono visual neutro, distinto del color de acento reservado para no-leído/favorito. Cuando el usuario alcanzó el límite diario, el sistema SHALL mostrar un estado propio y distinguible del bloque de error genérico usado para otros `AppErrorCode` (sin el color de error ni iconografía de alerta), indicando que el límite se alcanzó y cuándo vuelve a estar disponible.
@@ -94,26 +90,3 @@ El sistema SHALL mostrar siempre, en el bottom sheet de resumen del `ReaderScree
 #### Scenario: Límite diario alcanzado se muestra en tono neutro, no como error
 - **WHEN** el backend rechaza la generación porque el usuario ya alcanzó el límite diario de 25 resúmenes
 - **THEN** el sistema muestra, en el bottom sheet, un estado propio con superficie y tono neutro (no el bloque rojo de error genérico) indicando el límite alcanzado y cuándo se resetea
-
-### Requirement: Persistencia del resumen por artículo, sin regenerar
-
-El sistema SHALL persistir localmente, como máximo un resumen por artículo, asociado al id de ese artículo. Cuando el usuario abre el bottom sheet de resumen de un artículo que ya tiene un resumen persistido, el sistema SHALL mostrar directamente ese resultado guardado, sin invocar la API de IA ni descontar presupuesto diario de nuevo. No existe, en esta versión, ninguna acción de "regenerar" un resumen de artículo ya existente.
-
-#### Scenario: Reabrir un artículo con resumen ya generado
-
-- **WHEN** el usuario toca el botón de resumen de un artículo que ya tiene un resumen persistido de una sesión anterior
-- **THEN** el sistema muestra el resumen guardado inmediatamente, sin llamar al backend ni consumir presupuesto de IA
-
-#### Scenario: Primer resumen de un artículo se persiste
-
-- **WHEN** el sistema genera exitosamente el resumen de un artículo que no tenía uno persistido
-- **THEN** el sistema lo guarda asociado a ese artículo, disponible para próximas aperturas sin regenerar
-
-### Requirement: Presentación del resumen en el lector
-
-El sistema SHALL mostrar un botón en el AppBar del `ReaderScreen` que, al tocarlo, abre un bottom sheet con el resultado del resumen (y las menciones detectadas, ver capability `article-mentions`) del artículo abierto.
-
-#### Scenario: Abrir el bottom sheet de resumen
-
-- **WHEN** el usuario toca el botón de resumen en el AppBar del lector
-- **THEN** el sistema abre un bottom sheet mostrando el resumen del artículo (generándolo primero si no existe uno persistido, o mostrando el guardado si ya existe)

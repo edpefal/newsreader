@@ -2,9 +2,11 @@ import 'package:hive_ce/hive.dart';
 
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
+import 'package:newsreader/core/data/datasources/local/ai_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/article_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/source_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/summary_local_datasource.dart';
+import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
@@ -24,10 +26,12 @@ class SyncUserData {
   static const _sourcesTable = 'sources';
   static const _articlesTable = 'articles';
   static const _summariesTable = 'daily_summaries';
+  static const _aiUsageTable = 'ai_usage_daily';
 
   final SourceLocalDataSource _sourceLocalDataSource;
   final ArticleLocalDataSource _articleLocalDataSource;
   final SummaryLocalDataSource _summaryLocalDataSource;
+  final AiUsageLocalDataSource _aiUsageLocalDataSource;
   final CloudSyncClient _cloudSyncClient;
   final AuthClient _authClient;
   final Box<dynamic> _settingsBox;
@@ -36,6 +40,7 @@ class SyncUserData {
     this._sourceLocalDataSource,
     this._articleLocalDataSource,
     this._summaryLocalDataSource,
+    this._aiUsageLocalDataSource,
     this._cloudSyncClient,
     this._authClient,
     this._settingsBox,
@@ -51,6 +56,7 @@ class SyncUserData {
     newCursor = _maxCursor(newCursor, await _syncSources(userId, lastSyncedAt));
     newCursor = _maxCursor(newCursor, await _syncArticles(userId, lastSyncedAt));
     newCursor = _maxCursor(newCursor, await _syncSummaries(userId, lastSyncedAt));
+    newCursor = _maxCursor(newCursor, await _syncAiUsage(lastSyncedAt));
 
     // El cursor se deriva de los `updated_at` que realmente devolvió el
     // servidor, nunca del reloj del dispositivo (`DateTime.now()`): si el
@@ -256,5 +262,22 @@ class SyncUserData {
         articleCount: row['article_count'] as int,
         createdAt: DateTime.parse(row['created_at'] as String),
         updatedAt: DateTime.parse(row['updated_at'] as String),
+      );
+
+  // --- AI usage (solo lectura -- el cliente nunca sube esta tabla) ---
+
+  Future<DateTime?> _syncAiUsage(DateTime? lastSyncedAt) async {
+    final remote =
+        await _cloudSyncClient.fetchChangedSince(_aiUsageTable, lastSyncedAt);
+    for (final row in remote) {
+      await _aiUsageLocalDataSource.applyRemote(_aiUsageFromRow(row));
+    }
+    return _maxUpdatedAt(remote);
+  }
+
+  AiUsageDailyModel _aiUsageFromRow(Map<String, dynamic> row) =>
+      AiUsageDailyModel(
+        day: DateTime.parse(row['day'] as String),
+        summariesUsed: row['summaries_used'] as int,
       );
 }

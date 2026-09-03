@@ -79,6 +79,11 @@ enum AppErrorCode {
   /// regenerar (ver capability `daily-summaries`).
   dailySummaryAlreadyGenerated,
 
+  /// El contenido del artículo supera el techo de longitud para resumir
+  /// automáticamente (ver capability `ai-usage-budget`); no descuenta del
+  /// límite diario de resúmenes.
+  articleTooLongToSummarize,
+
   /// Cualquier error no anticipado por los demás códigos.
   unknown,
 }

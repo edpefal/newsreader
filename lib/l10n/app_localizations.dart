@@ -244,6 +244,24 @@ abstract class AppLocalizations {
   /// **'Mentioned in this article'**
   String get articleSummaryMentionsTitle;
 
+  /// No description provided for @articleSummaryRemainingToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} left today'**
+  String articleSummaryRemainingToday(int count);
+
+  /// No description provided for @articleSummaryLimitReachedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve used all 25 summaries for today'**
+  String get articleSummaryLimitReachedTitle;
+
+  /// No description provided for @articleSummaryLimitReachedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'They\'re back tomorrow at 00:00.'**
+  String get articleSummaryLimitReachedSubtitle;
+
   /// No description provided for @favoritesEmptyTitle.
   ///
   /// In en, this message translates to:
@@ -837,6 +855,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You already generated today\'s summary. Come back tomorrow for a new one.'**
   String get errorDailySummaryAlreadyGenerated;
+
+  /// No description provided for @errorArticleTooLongToSummarize.
+  ///
+  /// In en, this message translates to:
+  /// **'This article is too long to summarize automatically.'**
+  String get errorArticleTooLongToSummarize;
 
   /// No description provided for @errorUnknown.
   ///

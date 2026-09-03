@@ -67,6 +67,10 @@ class GeminiArticleSummaryGenerator implements ArticleSummaryGenerator {
             throw const ArticleSummaryGenerationException(
               AppErrorCode.aiUsageLimitReached,
             );
+          case 'article_too_long':
+            throw const ArticleSummaryGenerationException(
+              AppErrorCode.articleTooLongToSummarize,
+            );
           case 'content_blocked':
             throw const ArticleSummaryGenerationException(
               AppErrorCode.contentBlocked,

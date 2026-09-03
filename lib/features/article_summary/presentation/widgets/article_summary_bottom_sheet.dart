@@ -52,6 +52,8 @@ class ArticleSummarySheetContent extends StatelessWidget {
                   height: 160,
                   child: Center(child: CircularProgressIndicator()),
                 ),
+              ArticleSummaryLimitReached() =>
+                _LimitReachedContent(l10n: l10n),
               ArticleSummaryError(:final code) => SizedBox(
                   height: 120,
                   child: Center(
@@ -63,13 +65,21 @@ class ArticleSummarySheetContent extends StatelessWidget {
                     ),
                   ),
                 ),
-              ArticleSummaryLoaded(:final summary) => Column(
+              ArticleSummaryLoaded(:final summary, :final remainingToday) =>
+                Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.articleSummarySheetTitle,
-                      style: Theme.of(context).textTheme.titleMedium,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          l10n.articleSummarySheetTitle,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        if (remainingToday != null)
+                          _RemainingPill(remaining: remainingToday),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     Text(summary.summary),
@@ -105,6 +115,72 @@ class ArticleSummarySheetContent extends StatelessWidget {
                 ),
             };
           },
+        ),
+      ),
+    );
+  }
+}
+
+/// Indicador sutil de consumo diario, siempre visible. Tono neutro a
+/// propósito: nunca usa `ReevoAccent` (el ámbar está reservado para
+/// no-leído/favorito) -- ver design.md.
+class _RemainingPill extends StatelessWidget {
+  final int remaining;
+
+  const _RemainingPill({required this.remaining});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        l10n.articleSummaryRemainingToday(remaining),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+      ),
+    );
+  }
+}
+
+/// Estado propio para el límite diario alcanzado -- superficie y tono
+/// neutro (paper/ink en light, dark surface/on-surface en dark), sin el
+/// color ni la iconografía de error genérico: no es una falla, es un tope
+/// esperado por diseño (ver ArticleSummaryLimitReached).
+class _LimitReachedContent extends StatelessWidget {
+  final AppLocalizations l10n;
+
+  const _LimitReachedContent({required this.l10n});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: 120,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.articleSummaryLimitReachedTitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              l10n.articleSummaryLimitReachedSubtitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+            ),
+          ],
         ),
       ),
     );

@@ -11,7 +11,12 @@ import { resolveLanguage, SupportedLanguage } from "./language.ts";
 import { countSingleArticleWords } from "./word_count.ts";
 import { MENTION_TYPES, parseMentions } from "./mentions.ts";
 
-const AI_DAILY_WORD_LIMIT = 30000;
+const AI_DAILY_SUMMARY_LIMIT = 25;
+// Techo de longitud por artículo individual (ver ai-usage-budget): protege
+// el costo de un caso raro (piezas larguísimas) sin depender del contador
+// diario -- se rechaza sin invocar a Gemini y sin descontar del límite
+// diario, sin importar cuánto consumo le quede al usuario.
+const MAX_ARTICLE_WORDS = 8000;
 
 const GEMINI_MODEL = "gemini-3.7-flash";
 const GEMINI_URL =
@@ -257,9 +262,16 @@ Deno.serve(async (req) => {
     title: body.title,
     content: body.content,
   });
+  if (words > MAX_ARTICLE_WORDS) {
+    return new Response(
+      JSON.stringify({ error: "article_too_long" }),
+      { status: 422, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   const { data: usageData, error: usageError } = await userClient.rpc(
     "check_and_record_ai_usage",
-    { p_words: words, p_daily_limit: AI_DAILY_WORD_LIMIT },
+    { p_daily_limit: AI_DAILY_SUMMARY_LIMIT },
   );
   if (usageError) {
     console.error(`check_and_record_ai_usage error: ${usageError.message}`);

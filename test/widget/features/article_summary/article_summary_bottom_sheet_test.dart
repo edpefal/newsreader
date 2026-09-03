@@ -134,5 +134,63 @@ void main() {
 
       verify(() => launcher.open('https://books.example/info')).called(1);
     });
+
+    testWidgets(
+        'estado Loaded con muchos restantes igual muestra el indicador de uso',
+        (tester) async {
+      final summary = ArticleSummary(
+        articleId: 'a1',
+        summary: 'Resumen',
+        mentions: const [],
+        createdAt: DateTime(2024, 3, 15),
+      );
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: ArticleSummaryLoaded(summary, remainingToday: 24),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit, launcher));
+
+      expect(find.text('Quedan 24 hoy'), findsOneWidget);
+    });
+
+    testWidgets(
+        'estado Loaded con pocos restantes muestra el indicador de uso',
+        (tester) async {
+      final summary = ArticleSummary(
+        articleId: 'a1',
+        summary: 'Resumen',
+        mentions: const [],
+        createdAt: DateTime(2024, 3, 15),
+      );
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: ArticleSummaryLoaded(summary, remainingToday: 3),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit, launcher));
+
+      expect(find.text('Quedan 3 hoy'), findsOneWidget);
+    });
+
+    testWidgets(
+        'estado LimitReached muestra un estado neutro, sin color de error',
+        (tester) async {
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: const ArticleSummaryLimitReached(),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit, launcher));
+
+      expect(
+        find.text('Ya usaste tus 25 resúmenes de hoy'),
+        findsOneWidget,
+      );
+      expect(find.text('Vuelven mañana a las 00:00.'), findsOneWidget);
+    });
   });
 }
