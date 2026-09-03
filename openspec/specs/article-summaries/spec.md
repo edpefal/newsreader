@@ -16,7 +16,7 @@ La solicitud SHALL autenticarse con el access token de la sesión activa del usu
 
 Generar un resumen de artículo SHALL requerir una suscripción activa (capability `subscription-entitlements`), verificada tanto en la UI (paywall) como en el backend, con el mismo comportamiento que `daily-summaries` ante el cierre del paywall sin comprar (no dispara la generación) y ante la compra completada (dispara la generación automáticamente a continuación).
 
-La generación SHALL estar sujeta al mismo presupuesto diario de palabras de `ai-usage-budget` que ya comparten las demás features de IA de la app: si generar excedería el presupuesto disponible, el backend SHALL rechazar la solicitud sin invocar a la API de IA, y el sistema SHALL mostrar un estado de error distinguible que indica el límite diario alcanzado.
+La generación SHALL estar sujeta al límite diario de resúmenes y al techo de longitud por artículo de `ai-usage-budget`: si generar excedería el límite diario disponible, o si el contenido del artículo supera el techo de longitud, el backend SHALL rechazar la solicitud sin invocar a la API de IA, y el sistema SHALL mostrar un estado de error distinguible para cada uno de esos dos casos.
 
 #### Scenario: Generar resumen de un artículo abierto
 
@@ -58,10 +58,15 @@ La generación SHALL estar sujeta al mismo presupuesto diario de palabras de `ai
 - **WHEN** no hay una sesión de usuario activa en el dispositivo
 - **THEN** el sistema no envía ninguna solicitud de generación al backend, y falla con un error indicando que se requiere sesión activa
 
-#### Scenario: Rechazo por presupuesto diario de IA agotado
+#### Scenario: Rechazo por límite diario de resúmenes agotado
 
-- **WHEN** el usuario toca el botón de resumen y generar excedería el presupuesto diario de palabras disponible
-- **THEN** el backend rechaza la solicitud sin invocar a la API de IA, y el sistema muestra un estado de error que indica específicamente el límite diario alcanzado
+- **WHEN** el usuario toca el botón de resumen y ya generó 25 resúmenes de artículo hoy
+- **THEN** el backend rechaza la solicitud sin invocar a la API de IA, y el sistema muestra el estado neutro de límite diario alcanzado (ver Requirement: Indicador de uso restante en el bottom sheet)
+
+#### Scenario: Rechazo por artículo demasiado largo para resumir
+
+- **WHEN** el usuario toca el botón de resumen de un artículo cuyo contenido supera el techo de longitud de `ai-usage-budget`
+- **THEN** el backend rechaza la solicitud sin invocar a la API de IA y sin descontar del límite diario, y el sistema muestra un estado de error específico indicando que ese artículo es demasiado largo para resumir automáticamente
 
 #### Scenario: Falla la generación por un motivo genérico
 
@@ -77,6 +82,18 @@ La generación SHALL estar sujeta al mismo presupuesto diario de palabras de `ai
 
 - **WHEN** el backend rechaza la solicitud de generación porque la suscripción del usuario no está activa en la tabla de entitlements (por ejemplo, expiró entre la verificación local de la UI y la verificación del backend)
 - **THEN** el sistema muestra un estado de error específico que indica que se requiere una suscripción activa, distinguible del error genérico de generación
+
+### Requirement: Indicador de uso restante en el bottom sheet
+
+El sistema SHALL mostrar siempre, en el bottom sheet de resumen del `ReaderScreen`, un indicador con la cantidad de resúmenes restantes hoy (de los 25 diarios), sin condicionarlo a que quede poco consumo disponible. El indicador SHALL usar un tono visual neutro, distinto del color de acento reservado para no-leído/favorito. Cuando el usuario alcanzó el límite diario, el sistema SHALL mostrar un estado propio y distinguible del bloque de error genérico usado para otros `AppErrorCode` (sin el color de error ni iconografía de alerta), indicando que el límite se alcanzó y cuándo vuelve a estar disponible.
+
+#### Scenario: Indicador siempre visible
+- **WHEN** el usuario abre el bottom sheet de resumen con cualquier cantidad de resúmenes restantes hoy (incluido el máximo de 25)
+- **THEN** el sistema muestra un indicador informativo con la cantidad restante, en tono neutro, sin bloquear ninguna acción
+
+#### Scenario: Límite diario alcanzado se muestra en tono neutro, no como error
+- **WHEN** el backend rechaza la generación porque el usuario ya alcanzó el límite diario de 25 resúmenes
+- **THEN** el sistema muestra, en el bottom sheet, un estado propio con superficie y tono neutro (no el bloque rojo de error genérico) indicando el límite alcanzado y cuándo se resetea
 
 ### Requirement: Persistencia del resumen por artículo, sin regenerar
 

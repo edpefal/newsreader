@@ -37,4 +37,4 @@
 - [x] 6.1 `flutter analyze` sin warnings
 - [x] 6.2 `flutter test` — cubrir: reset diario, chequeo/incremento atómico con la nueva firma (si hay tests de la función SQL), mapeo del nuevo `AppErrorCode`, estados nuevos del Cubit (`bloc_test`), y el widget test del bottom sheet para los 3 estados (normal, quedan pocos, límite alcanzado)
 - [x] 6.3 Correr el test de español neutro (`test/unit/l10n/neutral_spanish_test.dart`) tras agregar las cadenas nuevas en `app_es.arb`
-- [ ] 6.4 Verificación manual en simulador (la hace el usuario): generar resúmenes hasta ver aparecer el pill, hasta alcanzar el límite, y confirmar el estado neutro del sheet en light y dark
+- [x] 6.4 Verificación manual en simulador (la hace el usuario): generar resúmenes hasta ver aparecer el pill, hasta alcanzar el límite, y confirmar el estado neutro del sheet en light y dark
