@@ -3,7 +3,9 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/domain/entities/summary_source_block.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
+import 'package:newsreader/core/domain/repositories/daily_summary_free_usage_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/utils/date_key.dart';
 import 'package:newsreader/core/utils/feed_content_checker.dart';
 import 'package:newsreader/core/utils/html_to_plain_text.dart';
@@ -24,11 +26,15 @@ class GenerateDailySummary {
   final ArticleRepository _articleRepository;
   final SummaryGenerator _summaryGenerator;
   final SummaryRepository _summaryRepository;
+  final DailySummaryFreeUsageRepository _dailySummaryFreeUsageRepository;
+  final SubscriptionStatusProvider _subscriptionStatusProvider;
 
   const GenerateDailySummary(
     this._articleRepository,
     this._summaryGenerator,
     this._summaryRepository,
+    this._dailySummaryFreeUsageRepository,
+    this._subscriptionStatusProvider,
   );
 
   static bool _isToday(DateTime date) {
@@ -122,6 +128,14 @@ class GenerateDailySummary {
     );
 
     await _summaryRepository.save(summary);
+    // Solo se registra acá (persistencia exitosa), nunca antes de invocar a
+    // la API de IA -- si esto se llamara antes de generar, una falla
+    // transitoria de Gemini le costaría al usuario gratis su único intento
+    // de la semana (ver design.md del change add-daily-summary-free-tier).
+    // Un usuario con suscripción activa no consume ni consulta este cupo.
+    if (!_subscriptionStatusProvider.isSubscribed) {
+      await _dailySummaryFreeUsageRepository.recordLocalUsage();
+    }
     return summary;
   }
 }

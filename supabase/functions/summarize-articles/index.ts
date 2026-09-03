@@ -5,6 +5,7 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { hasActiveEntitlement } from "./entitlement.ts";
+import { hasFreeUsageAvailable } from "./free_usage.ts";
 import { resolveLanguage, SupportedLanguage } from "./language.ts";
 import { todayUtcRange } from "./today_range.ts";
 
@@ -230,22 +231,47 @@ Deno.serve(async (req) => {
     );
   }
 
-  // El resumen diario es la única feature paga de la app: se rechaza sin
-  // invocar a Gemini si el usuario autenticado no tiene una suscripción
-  // activa en `entitlements` -- la tabla que sincroniza `superwall-webhook`.
-  // Se lee con `userClient` (scoped al usuario, mismo cliente de arriba),
-  // apoyándose en la policy `entitlements_select_own` en vez de necesitar
-  // `service_role` para leer.
+  // El resumen diario requiere, alternativamente, suscripción activa o cupo
+  // gratis semanal disponible (ver openspec/changes/add-daily-summary-free-tier,
+  // capability `ai-usage-budget`). Se lee con `userClient` (scoped al
+  // usuario, mismo cliente de arriba), apoyándose en las policies
+  // `entitlements_select_own`/`daily_summary_free_usage_select_own` en vez
+  // de necesitar `service_role` para leer.
   const { data: entitlementRow } = await userClient
     .from("entitlements")
     .select("is_active")
     .eq("user_id", userData.user.id)
     .maybeSingle();
-  if (!hasActiveEntitlement(entitlementRow)) {
-    return new Response(
-      JSON.stringify({ error: "subscription_required" }),
-      { status: 403, headers: { "Content-Type": "application/json" } },
-    );
+  const isSubscribed = hasActiveEntitlement(entitlementRow);
+
+  // Sin suscripción activa: solo se permite seguir si todavía queda cupo
+  // gratis semanal. Se consulta (no se descuenta acá -- eso ocurre recién
+  // tras generar con éxito, ver más abajo) para no invocar a Gemini si el
+  // usuario ya gastó su único resumen gratis de la semana.
+  let hasFreeUsage = false;
+  if (!isSubscribed) {
+    const { data: freeUsageData, error: freeUsageError } = await userClient
+      .rpc("get_daily_summary_free_usage_status");
+    if (freeUsageError) {
+      console.error(
+        `get_daily_summary_free_usage_status error: ${freeUsageError.message}`,
+      );
+      return new Response(
+        JSON.stringify({ error: "Backend mal configurado" }),
+        { status: 500, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    const freeUsageResult = Array.isArray(freeUsageData)
+      ? freeUsageData[0]
+      : freeUsageData;
+    hasFreeUsage = hasFreeUsageAvailable(freeUsageResult);
+
+    if (!hasFreeUsage) {
+      return new Response(
+        JSON.stringify({ error: "subscription_required" }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      );
+    }
   }
 
   let body: SummarizeRequest;
@@ -351,6 +377,23 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: "Respuesta vacía del modelo" }),
       { status: 502, headers: { "Content-Type": "application/json" } },
     );
+  }
+
+  // Recién acá, con el resumen ya generado, se descuenta el cupo gratis
+  // semanal -- si esto fallara antes de generar (chequeo-e-incremento como
+  // hace `check_and_record_ai_usage`), un error transitorio de Gemini le
+  // costaría al usuario gratis su único intento de la semana (ver design.md
+  // del change). No bloquea la respuesta: un fallo acá no debería impedir
+  // que el usuario reciba el resumen que ya generó.
+  if (!isSubscribed) {
+    const { error: recordError } = await userClient.rpc(
+      "check_and_record_daily_summary_free_usage",
+    );
+    if (recordError) {
+      console.error(
+        `check_and_record_daily_summary_free_usage error: ${recordError.message}`,
+      );
+    }
   }
 
   return new Response(
