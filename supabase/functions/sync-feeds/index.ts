@@ -8,6 +8,7 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import Parser from "npm:rss-parser@^3";
+import { isSafePublicUrl } from "./url_safety.ts";
 
 const FEED_FETCH_TIMEOUT_MS = 10_000;
 // Fetch + parseo sin límite de concurrencia (Promise.all de todas las
@@ -106,6 +107,13 @@ async function syncSource(
   source: SourceRow,
 ): Promise<{ ok: boolean; sourceId: string }> {
   try {
+    // Un feed_url apuntando a un host privado/localhost es tratado igual que
+    // cualquier otro fallo de fuente (ver isSafePublicUrl): sin este chequeo,
+    // un usuario podría usar la Edge Function como proxy hacia
+    // infraestructura interna (SSRF) declarando una fuente con esa URL.
+    if (!isSafePublicUrl(source.feed_url)) {
+      throw new Error(`feed_url no es una URL pública válida: ${source.feed_url}`);
+    }
     const xml = await fetchWithTimeout(source.feed_url, FEED_FETCH_TIMEOUT_MS);
     // deno-lint-ignore no-explicit-any
     const feed = await parser.parseString(xml) as any;

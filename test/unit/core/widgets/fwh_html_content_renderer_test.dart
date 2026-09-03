@@ -235,4 +235,88 @@ void main() {
       expect(ensureViewportMeta(html), html);
     });
   });
+
+  group('stripScriptExecutionVectors', () {
+    test('quita un bloque <script>...</script> completo', () {
+      const html = '<p>antes</p><script>alert(1)</script><p>después</p>';
+
+      expect(
+        stripScriptExecutionVectors(html),
+        '<p>antes</p><p>después</p>',
+      );
+    });
+
+    test('quita un <script> con atributos (src, type, etc.)', () {
+      const html = '<script type="text/javascript" src="evil.js"></script>'
+          '<p>hola</p>';
+
+      expect(stripScriptExecutionVectors(html), '<p>hola</p>');
+    });
+
+    test('quita un <script> multilínea', () {
+      const html = '<script>\n  alert(1);\n  alert(2);\n</script><p>x</p>';
+
+      expect(stripScriptExecutionVectors(html), '<p>x</p>');
+    });
+
+    test('detecta <script> sin importar mayúsculas/minúsculas', () {
+      const html = '<SCRIPT>alert(1)</SCRIPT><p>x</p>';
+
+      expect(stripScriptExecutionVectors(html), '<p>x</p>');
+    });
+
+    test('un <script> sin cerrar descarta todo lo que sigue, igual que un '
+        'parser HTML real', () {
+      const html = '<p>antes</p><script>alert(1)';
+
+      expect(stripScriptExecutionVectors(html), '<p>antes</p>');
+    });
+
+    test('quita atributos onclick/onload/onerror con comillas dobles', () {
+      const html = '<img src="x.png" onerror="alert(1)">'
+          '<button onclick="alert(2)">x</button>'
+          '<body onload="alert(3)">';
+
+      final result = stripScriptExecutionVectors(html);
+
+      expect(result, isNot(contains('onerror')));
+      expect(result, isNot(contains('onclick')));
+      expect(result, isNot(contains('onload')));
+      expect(result, contains('<img src="x.png">'));
+    });
+
+    test('quita atributos de evento con comillas simples y sin comillas', () {
+      const html = "<div onmouseover='alert(1)'>x</div>"
+          '<div onfocus=alert(2)>y</div>';
+
+      final result = stripScriptExecutionVectors(html);
+
+      expect(result, isNot(contains('onmouseover')));
+      expect(result, isNot(contains('onfocus')));
+    });
+
+    test('neutraliza el esquema javascript: en href', () {
+      const html = '<a href="javascript:alert(1)">click</a>';
+
+      final result = stripScriptExecutionVectors(html);
+
+      expect(result, isNot(contains('javascript:')));
+      expect(result, contains('href="'));
+    });
+
+    test('neutraliza el esquema vbscript: en src', () {
+      const html = '<img src="vbscript:msgbox(1)">';
+
+      expect(stripScriptExecutionVectors(html), isNot(contains('vbscript:')));
+    });
+
+    test('no toca HTML/CSS/atributos normales de un newsletter real', () {
+      const html = '<table width="600" style="color:#000">'
+          '<tr><td><img src="https://x.com/logo.png" alt="Logo"></td></tr>'
+          '<tr><td><a href="https://x.com/articulo">Leer más</a></td></tr>'
+          '</table>';
+
+      expect(stripScriptExecutionVectors(html), html);
+    });
+  });
 }
