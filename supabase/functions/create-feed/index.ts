@@ -3,9 +3,12 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-// Tope por hora como segunda capa de protección, redundante con la
-// exigencia de sesión autenticada de más abajo (ver
-// require-authenticated-session-for-summary-and-email-feed).
+// Tope por hora, por usuario, como segunda capa de protección, redundante
+// con la exigencia de sesión autenticada de más abajo (ver
+// require-authenticated-session-for-summary-and-email-feed). Contar por
+// usuario (en vez de global) evita que una sola cuenta agote la cuota
+// horaria de creación de feeds para el resto de la base de usuarios (ver
+// change harden-security-vulnerabilities).
 const MAX_FEEDS_PER_HOUR = 20;
 
 interface CreateFeedRequest {
@@ -65,6 +68,7 @@ Deno.serve(async (req) => {
   const { count, error: countError } = await supabase
     .from("generated_feeds")
     .select("id", { count: "exact", head: true })
+    .eq("user_id", userData.user.id)
     .gte("created_at", oneHourAgo);
 
   if (countError) {
@@ -84,7 +88,7 @@ Deno.serve(async (req) => {
 
   const { data, error } = await supabase
     .from("generated_feeds")
-    .insert({ label })
+    .insert({ label, user_id: userData.user.id })
     .select("id")
     .single();
 
