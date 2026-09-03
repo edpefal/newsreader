@@ -298,6 +298,14 @@ class AppLocalizationsFr extends AppLocalizations {
       'Tu as déjà généré le résumé du jour. Reviens demain pour en créer un nouveau.';
 
   @override
+  String get summariesFreeTierAvailable =>
+      'Il te reste 1 résumé gratuit cette semaine';
+
+  @override
+  String get summariesFreeTierExhausted =>
+      'Tu as déjà utilisé ton résumé gratuit de la semaine — il se renouvelle lundi, ou abonne-toi pour des résumés illimités';
+
+  @override
   String get summariesEmptyTitle => 'Aucun résumé pour l\'instant';
 
   @override

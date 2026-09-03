@@ -5,7 +5,9 @@ import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
+import 'package:newsreader/core/domain/repositories/daily_summary_free_usage_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/utils/date_key.dart';
 import 'package:newsreader/features/summaries/domain/usecases/generate_daily_summary.dart';
 
@@ -14,6 +16,12 @@ class MockArticleRepository extends Mock implements ArticleRepository {}
 class MockSummaryGenerator extends Mock implements SummaryGenerator {}
 
 class MockSummaryRepository extends Mock implements SummaryRepository {}
+
+class MockDailySummaryFreeUsageRepository extends Mock
+    implements DailySummaryFreeUsageRepository {}
+
+class MockSubscriptionStatusProvider extends Mock
+    implements SubscriptionStatusProvider {}
 
 Article _article({
   required String id,
@@ -38,6 +46,8 @@ void main() {
   late MockArticleRepository mockArticleRepository;
   late MockSummaryGenerator mockSummaryGenerator;
   late MockSummaryRepository mockSummaryRepository;
+  late MockDailySummaryFreeUsageRepository mockDailySummaryFreeUsageRepository;
+  late MockSubscriptionStatusProvider mockSubscriptionStatusProvider;
   late GenerateDailySummary sut;
 
   setUpAll(() {
@@ -57,16 +67,26 @@ void main() {
     mockArticleRepository = MockArticleRepository();
     mockSummaryGenerator = MockSummaryGenerator();
     mockSummaryRepository = MockSummaryRepository();
+    mockDailySummaryFreeUsageRepository = MockDailySummaryFreeUsageRepository();
+    mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
     sut = GenerateDailySummary(
       mockArticleRepository,
       mockSummaryGenerator,
       mockSummaryRepository,
+      mockDailySummaryFreeUsageRepository,
+      mockSubscriptionStatusProvider,
     );
     // Por defecto no hay resumen guardado para hoy -- la mayoría de los
     // tests ejercitan la generación en sí, no el gate de "ya generado hoy"
     // (que tiene su propio grupo más abajo).
     when(() => mockSummaryRepository.getByDate(any()))
         .thenAnswer((_) async => null);
+    // Por defecto sin suscripción activa (el caso que sí toca el cupo
+    // gratis semanal) -- los tests de este grupo no le interesa el cupo en
+    // sí, solo que no exploten por un MissingStubError.
+    when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(false);
+    when(() => mockDailySummaryFreeUsageRepository.recordLocalUsage())
+        .thenAnswer((_) async {});
   });
 
   group('sin artículos del inbox de hoy', () {
@@ -346,6 +366,75 @@ void main() {
       );
       verifyNever(() => mockArticleRepository.getInboxArticles());
       verifyNever(() => mockSummaryGenerator.summarize(any(), language: any(named: 'language')));
+    });
+  });
+
+  group('cupo gratis semanal', () {
+    test('sin suscripción activa, genera con éxito registra 1 uso gratis', () async {
+      final now = DateTime.now();
+      when(() => mockArticleRepository.getInboxArticles()).thenAnswer(
+        (_) async => [_article(id: 'a1', publishedAt: now, excerpt: 'E')],
+      );
+      when(() => mockSummaryGenerator.summarize(any(), language: any(named: 'language')))
+          .thenAnswer((_) async => 'Resumen');
+      when(() => mockSummaryRepository.save(any())).thenAnswer((_) async {});
+      when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(false);
+
+      await sut.execute(language: 'es');
+
+      verify(() => mockDailySummaryFreeUsageRepository.recordLocalUsage()).called(1);
+    });
+
+    test('con suscripción activa, genera sin registrar uso gratis', () async {
+      final now = DateTime.now();
+      when(() => mockArticleRepository.getInboxArticles()).thenAnswer(
+        (_) async => [_article(id: 'a1', publishedAt: now, excerpt: 'E')],
+      );
+      when(() => mockSummaryGenerator.summarize(any(), language: any(named: 'language')))
+          .thenAnswer((_) async => 'Resumen');
+      when(() => mockSummaryRepository.save(any())).thenAnswer((_) async {});
+      when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(true);
+
+      await sut.execute(language: 'es');
+
+      verifyNever(() => mockDailySummaryFreeUsageRepository.recordLocalUsage());
+    });
+
+    test('NoArticlesTodayException no registra uso gratis', () async {
+      final yesterday = DateTime.now().subtract(const Duration(days: 1));
+      when(() => mockArticleRepository.getInboxArticles()).thenAnswer(
+        (_) async => [_article(id: 'a1', publishedAt: yesterday)],
+      );
+      when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(false);
+
+      await expectLater(
+        sut.execute(language: 'es'),
+        throwsA(isA<NoArticlesTodayException>()),
+      );
+
+      verifyNever(() => mockDailySummaryFreeUsageRepository.recordLocalUsage());
+    });
+
+    test('DailySummaryAlreadyGeneratedException no registra uso gratis', () async {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      when(() => mockSummaryRepository.getByDate(any())).thenAnswer(
+        (_) async => DailySummary(
+          id: dateKey(today),
+          date: today,
+          content: 'Resumen',
+          articleCount: 2,
+          createdAt: today,
+        ),
+      );
+      when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(false);
+
+      await expectLater(
+        sut.execute(language: 'es'),
+        throwsA(isA<DailySummaryAlreadyGeneratedException>()),
+      );
+
+      verifyNever(() => mockDailySummaryFreeUsageRepository.recordLocalUsage());
     });
   });
 }

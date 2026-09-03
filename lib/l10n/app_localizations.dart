@@ -550,6 +550,18 @@ abstract class AppLocalizations {
   /// **'You already generated today\'s summary. Come back tomorrow for a new one.'**
   String get summariesAlreadyGeneratedToday;
 
+  /// No description provided for @summariesFreeTierAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'You have 1 free summary left this week'**
+  String get summariesFreeTierAvailable;
+
+  /// No description provided for @summariesFreeTierExhausted.
+  ///
+  /// In en, this message translates to:
+  /// **'You already used your free summary this week — it renews on Monday, or subscribe for unlimited summaries'**
+  String get summariesFreeTierExhausted;
+
   /// No description provided for @summariesEmptyTitle.
   ///
   /// In en, this message translates to:

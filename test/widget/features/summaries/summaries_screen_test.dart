@@ -70,6 +70,8 @@ void main() {
           summaries: [],
           canGenerateToday: false,
           alreadyGeneratedToday: false,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       );
 
@@ -85,6 +87,8 @@ void main() {
           summaries: [],
           canGenerateToday: false,
           alreadyGeneratedToday: false,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       );
 
@@ -100,6 +104,8 @@ void main() {
           summaries: [],
           canGenerateToday: true,
           alreadyGeneratedToday: false,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       );
 
@@ -115,6 +121,8 @@ void main() {
           summaries: [tSummary],
           canGenerateToday: true,
           alreadyGeneratedToday: false,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       );
 
@@ -132,6 +140,8 @@ void main() {
           summaries: [],
           canGenerateToday: true,
           alreadyGeneratedToday: false,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       );
       when(() => cubit.generateTodaySummary(any())).thenAnswer((_) async {});
@@ -149,6 +159,8 @@ void main() {
           summaries: [tSummary],
           canGenerateToday: true,
           alreadyGeneratedToday: false,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       );
 
@@ -205,6 +217,8 @@ void main() {
           summaries: [],
           canGenerateToday: false,
           alreadyGeneratedToday: true,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       );
 
@@ -225,6 +239,8 @@ void main() {
           summaries: [],
           canGenerateToday: true,
           alreadyGeneratedToday: false,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       );
 
@@ -232,6 +248,75 @@ void main() {
 
       expect(
         find.text('Ya generaste el resumen de hoy. Vuelve mañana para crear uno nuevo.'),
+        findsNothing,
+      );
+    });
+  });
+
+  group('indicador de cupo gratis semanal', () {
+    testWidgets('muestra el contador de cupo disponible sin suscripción',
+        (tester) async {
+      when(() => cubit.state).thenReturn(
+        const SummariesLoaded(
+          summaries: [],
+          canGenerateToday: true,
+          alreadyGeneratedToday: false,
+          isSubscribed: false,
+          freeTierAvailable: true,
+        ),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(
+        find.text('Te queda 1 resumen gratis esta semana'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('muestra el mensaje de cupo agotado sin suscripción',
+        (tester) async {
+      when(() => cubit.state).thenReturn(
+        const SummariesLoaded(
+          summaries: [],
+          canGenerateToday: true,
+          alreadyGeneratedToday: false,
+          isSubscribed: false,
+          freeTierAvailable: false,
+        ),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(
+        find.text(
+          'Ya usaste tu resumen gratis de esta semana — se renueva el lunes, '
+          'o suscríbete para tener resúmenes ilimitados',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('no muestra ningún indicador de cupo gratis con suscripción '
+        'activa', (tester) async {
+      when(() => cubit.state).thenReturn(
+        const SummariesLoaded(
+          summaries: [],
+          canGenerateToday: true,
+          alreadyGeneratedToday: false,
+          isSubscribed: true,
+          freeTierAvailable: false,
+        ),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit));
+
+      expect(find.text('Te queda 1 resumen gratis esta semana'), findsNothing);
+      expect(
+        find.text(
+          'Ya usaste tu resumen gratis de esta semana — se renueva el lunes, '
+          'o suscríbete para tener resúmenes ilimitados',
+        ),
         findsNothing,
       );
     });

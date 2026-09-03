@@ -30,7 +30,9 @@ import 'package:newsreader/core/utils/uuid_id_generator.dart';
 import 'package:newsreader/core/data/datasources/local/ai_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/article_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/article_summary_local_datasource.dart';
+import 'package:newsreader/core/data/datasources/local/daily_summary_free_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_ai_usage_datasource.dart';
+import 'package:newsreader/core/data/datasources/local/hive_daily_summary_free_usage_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_article_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_article_summary_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_source_datasource.dart';
@@ -40,16 +42,19 @@ import 'package:newsreader/core/data/datasources/local/summary_local_datasource.
 import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/article_summary_model.dart';
+import 'package:newsreader/core/data/models/daily_summary_free_usage_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
 import 'package:newsreader/core/data/repositories/ai_usage_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/article_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/article_summary_repository_impl.dart';
+import 'package:newsreader/core/data/repositories/daily_summary_free_usage_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/source_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/summary_repository_impl.dart';
 import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/article_summary_repository.dart';
+import 'package:newsreader/core/domain/repositories/daily_summary_free_usage_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
 import 'package:newsreader/core/sharing/file_sharer.dart';
@@ -159,6 +164,13 @@ Future<void> setupDependencies() async {
       Hive.box<AiUsageDailyModel>(AppConstants.hiveAiUsageBox),
     ),
   );
+  getIt.registerLazySingleton<DailySummaryFreeUsageLocalDataSource>(
+    () => HiveDailySummaryFreeUsageDatasource(
+      Hive.box<DailySummaryFreeUsageModel>(
+        AppConstants.hiveDailySummaryFreeUsageBox,
+      ),
+    ),
+  );
 
   // Repositories
   getIt.registerLazySingleton<SourceRepository>(
@@ -175,6 +187,9 @@ Future<void> setupDependencies() async {
   );
   getIt.registerLazySingleton<AiUsageRepository>(
     () => AiUsageRepositoryImpl(getIt()),
+  );
+  getIt.registerLazySingleton<DailySummaryFreeUsageRepository>(
+    () => DailySummaryFreeUsageRepositoryImpl(getIt()),
   );
 
   // Use cases — Sources
@@ -213,7 +228,7 @@ Future<void> setupDependencies() async {
   // Use cases — Summaries
   getIt.registerLazySingleton(() => GetDailySummaries(getIt()));
   getIt.registerLazySingleton(
-    () => GenerateDailySummary(getIt(), getIt(), getIt()),
+    () => GenerateDailySummary(getIt(), getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerLazySingleton(() => ResolveSummaryArticles(getIt()));
 
@@ -225,6 +240,7 @@ Future<void> setupDependencies() async {
   // Use cases — Sync
   getIt.registerLazySingleton(
     () => SyncUserData(
+      getIt(),
       getIt(),
       getIt(),
       getIt(),
@@ -263,7 +279,7 @@ Future<void> setupDependencies() async {
     SourcesCubit(getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerSingleton<SummariesCubit>(
-    SummariesCubit(getIt(), getIt(), getIt(), getIt()),
+    SummariesCubit(getIt(), getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerFactory<ArticleSummaryCubit>(
     () => ArticleSummaryCubit(getIt(), getIt(), getIt()),

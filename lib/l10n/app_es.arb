@@ -96,6 +96,8 @@
   "summariesGenerating": "Generando resumen...",
   "summariesCreateTodayButton": "Crear resumen de hoy",
   "summariesAlreadyGeneratedToday": "Ya generaste el resumen de hoy. Vuelve mañana para crear uno nuevo.",
+  "summariesFreeTierAvailable": "Te queda 1 resumen gratis esta semana",
+  "summariesFreeTierExhausted": "Ya usaste tu resumen gratis de esta semana — se renueva el lunes, o suscríbete para tener resúmenes ilimitados",
   "summariesEmptyTitle": "Sin resúmenes todavía",
   "summariesEmptySubtitle": "Crea el resumen de hoy para ver de qué trataron tus noticias.",
   "summaryDetailTitle": "Resumen del {date}",

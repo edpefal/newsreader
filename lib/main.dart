@@ -17,6 +17,7 @@ import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/article_summary_model.dart';
+import 'package:newsreader/core/data/models/daily_summary_free_usage_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
 import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dart';
@@ -133,6 +134,7 @@ Future<void> _initHive() async {
   Hive.registerAdapter(DailySummaryModelAdapter());
   Hive.registerAdapter(ArticleSummaryModelAdapter());
   Hive.registerAdapter(AiUsageDailyModelAdapter());
+  Hive.registerAdapter(DailySummaryFreeUsageModelAdapter());
   await Hive.openBox<NewsSourceModel>(AppConstants.hiveSourcesBox);
   await Hive.openBox<ArticleModel>(AppConstants.hiveArticlesBox);
   await Hive.openBox<dynamic>(AppConstants.hiveSettingsBox);
@@ -141,6 +143,9 @@ Future<void> _initHive() async {
     AppConstants.hiveArticleSummariesBox,
   );
   await Hive.openBox<AiUsageDailyModel>(AppConstants.hiveAiUsageBox);
+  await Hive.openBox<DailySummaryFreeUsageModel>(
+    AppConstants.hiveDailySummaryFreeUsageBox,
+  );
 }
 
 Future<void> _initSupabase() async {

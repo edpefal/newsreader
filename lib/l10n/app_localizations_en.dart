@@ -297,6 +297,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'You already generated today\'s summary. Come back tomorrow for a new one.';
 
   @override
+  String get summariesFreeTierAvailable =>
+      'You have 1 free summary left this week';
+
+  @override
+  String get summariesFreeTierExhausted =>
+      'You already used your free summary this week — it renews on Monday, or subscribe for unlimited summaries';
+
+  @override
   String get summariesEmptyTitle => 'No summaries yet';
 
   @override

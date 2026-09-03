@@ -44,4 +44,7 @@ class AppConstants {
       AppConfig.isProd ? 'article_summaries' : 'article_summaries_dev';
   static String get hiveAiUsageBox =>
       AppConfig.isProd ? 'ai_usage' : 'ai_usage_dev';
+  static String get hiveDailySummaryFreeUsageBox => AppConfig.isProd
+      ? 'daily_summary_free_usage'
+      : 'daily_summary_free_usage_dev';
 }

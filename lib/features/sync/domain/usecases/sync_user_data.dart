@@ -4,10 +4,12 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/data/datasources/local/ai_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/article_local_datasource.dart';
+import 'package:newsreader/core/data/datasources/local/daily_summary_free_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/source_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/summary_local_datasource.dart';
 import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
+import 'package:newsreader/core/data/models/daily_summary_free_usage_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
 import 'package:newsreader/core/sync/article_state_row.dart';
@@ -27,11 +29,13 @@ class SyncUserData {
   static const _articlesTable = 'articles';
   static const _summariesTable = 'daily_summaries';
   static const _aiUsageTable = 'ai_usage_daily';
+  static const _dailySummaryFreeUsageTable = 'daily_summary_free_usage';
 
   final SourceLocalDataSource _sourceLocalDataSource;
   final ArticleLocalDataSource _articleLocalDataSource;
   final SummaryLocalDataSource _summaryLocalDataSource;
   final AiUsageLocalDataSource _aiUsageLocalDataSource;
+  final DailySummaryFreeUsageLocalDataSource _dailySummaryFreeUsageLocalDataSource;
   final CloudSyncClient _cloudSyncClient;
   final AuthClient _authClient;
   final Box<dynamic> _settingsBox;
@@ -41,6 +45,7 @@ class SyncUserData {
     this._articleLocalDataSource,
     this._summaryLocalDataSource,
     this._aiUsageLocalDataSource,
+    this._dailySummaryFreeUsageLocalDataSource,
     this._cloudSyncClient,
     this._authClient,
     this._settingsBox,
@@ -57,6 +62,10 @@ class SyncUserData {
     newCursor = _maxCursor(newCursor, await _syncArticles(userId, lastSyncedAt));
     newCursor = _maxCursor(newCursor, await _syncSummaries(userId, lastSyncedAt));
     newCursor = _maxCursor(newCursor, await _syncAiUsage(lastSyncedAt));
+    newCursor = _maxCursor(
+      newCursor,
+      await _syncDailySummaryFreeUsage(lastSyncedAt),
+    );
 
     // El cursor se deriva de los `updated_at` que realmente devolvió el
     // servidor, nunca del reloj del dispositivo (`DateTime.now()`): si el
@@ -279,5 +288,29 @@ class SyncUserData {
       AiUsageDailyModel(
         day: DateTime.parse(row['day'] as String),
         summariesUsed: row['summaries_used'] as int,
+      );
+
+  // --- Cupo gratis semanal de resumen diario (solo lectura -- el cliente
+  // nunca sube esta tabla) ---
+
+  Future<DateTime?> _syncDailySummaryFreeUsage(DateTime? lastSyncedAt) async {
+    final remote = await _cloudSyncClient.fetchChangedSince(
+      _dailySummaryFreeUsageTable,
+      lastSyncedAt,
+    );
+    for (final row in remote) {
+      await _dailySummaryFreeUsageLocalDataSource.applyRemote(
+        _dailySummaryFreeUsageFromRow(row),
+      );
+    }
+    return _maxUpdatedAt(remote);
+  }
+
+  DailySummaryFreeUsageModel _dailySummaryFreeUsageFromRow(
+    Map<String, dynamic> row,
+  ) =>
+      DailySummaryFreeUsageModel(
+        weekStart: DateTime.parse(row['week_start'] as String),
+        used: row['used'] as bool,
       );
 }

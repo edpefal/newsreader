@@ -39,27 +39,57 @@ class SummariesView extends StatelessWidget {
             alreadyGeneratedToday,
             isGenerating,
             errorMessage,
+            isSubscribed,
+            freeTierAvailable,
           ) = switch (state) {
             SummariesLoaded(
               :final summaries,
               :final canGenerateToday,
               :final alreadyGeneratedToday,
+              :final isSubscribed,
+              :final freeTierAvailable,
             ) =>
-              (summaries, canGenerateToday, alreadyGeneratedToday, false, null),
+              (
+                summaries,
+                canGenerateToday,
+                alreadyGeneratedToday,
+                false,
+                null,
+                isSubscribed,
+                freeTierAvailable,
+              ),
             SummaryGenerating(:final summaries) => (
                 summaries,
                 false,
                 false,
                 true,
                 null,
+                true,
+                true,
               ),
             SummaryGenerationError(
               :final summaries,
               :final canGenerateToday,
               :final code,
             ) =>
-              (summaries, canGenerateToday, false, false, code.localize(l10n)),
-            SummariesLoading() => (const <DailySummary>[], false, false, false, null),
+              (
+                summaries,
+                canGenerateToday,
+                false,
+                false,
+                code.localize(l10n),
+                true,
+                true,
+              ),
+            SummariesLoading() => (
+                const <DailySummary>[],
+                false,
+                false,
+                false,
+                null,
+                true,
+                true,
+              ),
           };
 
           final canGenerate = !isGenerating && canGenerateToday;
@@ -74,6 +104,16 @@ class SummariesView extends StatelessWidget {
                     if (alreadyGeneratedToday) ...[
                       Text(
                         l10n.summariesAlreadyGeneratedToday,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                    ] else if (!isSubscribed) ...[
+                      Text(
+                        freeTierAvailable
+                            ? l10n.summariesFreeTierAvailable
+                            : l10n.summariesFreeTierExhausted,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),

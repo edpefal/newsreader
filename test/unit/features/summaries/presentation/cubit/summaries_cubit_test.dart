@@ -4,6 +4,8 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/core/domain/entities/daily_summary_free_usage_status.dart';
+import 'package:newsreader/core/domain/repositories/daily_summary_free_usage_repository.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/summaries/domain/usecases/generate_daily_summary.dart';
@@ -16,12 +18,16 @@ class MockGetDailySummaries extends Mock implements GetDailySummaries {}
 
 class MockGenerateDailySummary extends Mock implements GenerateDailySummary {}
 
+class MockDailySummaryFreeUsageRepository extends Mock
+    implements DailySummaryFreeUsageRepository {}
+
 class MockSubscriptionStatusProvider extends Mock
     implements SubscriptionStatusProvider {}
 
 void main() {
   late MockGetDailySummaries mockGetDailySummaries;
   late MockGenerateDailySummary mockGenerateDailySummary;
+  late MockDailySummaryFreeUsageRepository mockDailySummaryFreeUsageRepository;
   late MockSubscriptionStatusProvider mockSubscriptionStatusProvider;
   late MockTelemetryClient mockTelemetryClient;
 
@@ -36,6 +42,7 @@ void main() {
   SummariesCubit buildCubit() => SummariesCubit(
         mockGetDailySummaries,
         mockGenerateDailySummary,
+        mockDailySummaryFreeUsageRepository,
         mockSubscriptionStatusProvider,
         mockTelemetryClient,
       );
@@ -47,9 +54,23 @@ void main() {
   setUp(() {
     mockGetDailySummaries = MockGetDailySummaries();
     mockGenerateDailySummary = MockGenerateDailySummary();
+    mockDailySummaryFreeUsageRepository = MockDailySummaryFreeUsageRepository();
     mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
     mockTelemetryClient = MockTelemetryClient();
     when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(true);
+    // Sin cupo gratis disponible por defecto: los tests existentes de
+    // "sin suscripción" ya asumían que siempre se mostraba el paywall
+    // (comportamiento previo a este change, cuando no existía el cupo
+    // gratis semanal) -- los tests nuevos de este change sobreescriben
+    // este stub cuando quieren ejercitar el camino de cupo disponible.
+    when(() => mockDailySummaryFreeUsageRepository.getStatus()).thenAnswer(
+      (_) async => DailySummaryFreeUsageStatus(
+        usedThisWeek: true,
+        weekStart: DateTime(2026, 7, 6),
+      ),
+    );
+    when(() => mockDailySummaryFreeUsageRepository.recordLocalUsage())
+        .thenAnswer((_) async {});
     // Sin resumen generado hoy por defecto: la mayoría de los tests
     // existentes ejercitan la generación en sí, no el gate de "ya generado
     // hoy" (que tiene su propio grupo más abajo).
@@ -78,6 +99,8 @@ void main() {
           summaries: [tSummary],
           canGenerateToday: true,
           alreadyGeneratedToday: false,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       ],
     );
@@ -98,6 +121,8 @@ void main() {
           summaries: const [],
           canGenerateToday: false,
           alreadyGeneratedToday: false,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       ],
     );
@@ -121,6 +146,8 @@ void main() {
           summaries: [tSummary],
           canGenerateToday: false,
           alreadyGeneratedToday: true,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       ],
     );
@@ -136,6 +163,8 @@ void main() {
         summaries: const [],
         canGenerateToday: true,
         alreadyGeneratedToday: false,
+        isSubscribed: true,
+        freeTierAvailable: true,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => [
@@ -144,6 +173,8 @@ void main() {
           summaries: [tSummary],
           canGenerateToday: false,
           alreadyGeneratedToday: true,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       ],
     );
@@ -159,6 +190,8 @@ void main() {
         summaries: const [],
         canGenerateToday: true,
         alreadyGeneratedToday: false,
+        isSubscribed: true,
+        freeTierAvailable: true,
       ),
       act: (cubit) => cubit.generateTodaySummary('fr'),
       verify: (_) {
@@ -177,6 +210,8 @@ void main() {
         summaries: const [],
         canGenerateToday: false,
         alreadyGeneratedToday: false,
+        isSubscribed: true,
+        freeTierAvailable: true,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => [
@@ -202,6 +237,8 @@ void main() {
         summaries: const [],
         canGenerateToday: true,
         alreadyGeneratedToday: false,
+        isSubscribed: true,
+        freeTierAvailable: true,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => [
@@ -240,6 +277,8 @@ void main() {
         summaries: const [],
         canGenerateToday: true,
         alreadyGeneratedToday: false,
+        isSubscribed: true,
+        freeTierAvailable: true,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => [
@@ -270,6 +309,8 @@ void main() {
         summaries: const [],
         canGenerateToday: true,
         alreadyGeneratedToday: false,
+        isSubscribed: true,
+        freeTierAvailable: true,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => [
@@ -304,6 +345,8 @@ void main() {
         summaries: const [],
         canGenerateToday: true,
         alreadyGeneratedToday: false,
+        isSubscribed: true,
+        freeTierAvailable: true,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => <SummariesState>[],
@@ -344,6 +387,8 @@ void main() {
         summaries: const [],
         canGenerateToday: true,
         alreadyGeneratedToday: false,
+        isSubscribed: true,
+        freeTierAvailable: true,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => [
@@ -352,6 +397,8 @@ void main() {
           summaries: [tSummary],
           canGenerateToday: false,
           alreadyGeneratedToday: true,
+          isSubscribed: true,
+          freeTierAvailable: true,
         ),
       ],
     );
@@ -382,6 +429,8 @@ void main() {
         summaries: const [],
         canGenerateToday: true,
         alreadyGeneratedToday: false,
+        isSubscribed: true,
+        freeTierAvailable: true,
       ),
       act: (cubit) => cubit.generateTodaySummary('es'),
       expect: () => <SummariesState>[],
@@ -391,6 +440,94 @@ void main() {
             language: any(named: 'language'),
           ),
         );
+      },
+    );
+
+    blocTest<SummariesCubit, SummariesState>(
+      'generateTodaySummary() sin suscripción pero con cupo gratis semanal '
+      'disponible genera directo, sin mostrar el paywall',
+      build: () {
+        when(() => mockSubscriptionStatusProvider.isSubscribed)
+            .thenReturn(false);
+        when(() => mockDailySummaryFreeUsageRepository.getStatus()).thenAnswer(
+          (_) async => DailySummaryFreeUsageStatus(
+            usedThisWeek: false,
+            weekStart: DateTime(2026, 7, 6),
+          ),
+        );
+        when(() => mockGenerateDailySummary.execute(language: any(named: 'language')))
+            .thenAnswer((_) async => tSummary);
+        return buildCubit();
+      },
+      seed: () => SummariesLoaded(
+        summaries: const [],
+        canGenerateToday: true,
+        alreadyGeneratedToday: false,
+        isSubscribed: false,
+        freeTierAvailable: true,
+      ),
+      act: (cubit) => cubit.generateTodaySummary('es'),
+      expect: () => [
+        const SummaryGenerating([]),
+        SummariesLoaded(
+          summaries: [tSummary],
+          canGenerateToday: false,
+          alreadyGeneratedToday: true,
+          isSubscribed: false,
+          freeTierAvailable: true,
+        ),
+      ],
+      verify: (_) {
+        verifyNever(
+          () => mockSubscriptionStatusProvider.showPaywall(
+            onSubscribed: any(named: 'onSubscribed'),
+          ),
+        );
+      },
+    );
+
+    blocTest<SummariesCubit, SummariesState>(
+      'loadSummaries() refleja isSubscribed=false y freeTierAvailable '
+      'según el cupo gratis semanal',
+      build: () {
+        when(() => mockGetDailySummaries.execute()).thenAnswer((_) async => []);
+        when(() => mockGenerateDailySummary.countTodayArticles())
+            .thenAnswer((_) async => 0);
+        when(() => mockSubscriptionStatusProvider.isSubscribed)
+            .thenReturn(false);
+        when(() => mockDailySummaryFreeUsageRepository.getStatus()).thenAnswer(
+          (_) async => DailySummaryFreeUsageStatus(
+            usedThisWeek: false,
+            weekStart: DateTime(2026, 7, 6),
+          ),
+        );
+        return buildCubit();
+      },
+      act: (cubit) => cubit.loadSummaries(),
+      expect: () => [
+        const SummariesLoading(),
+        SummariesLoaded(
+          summaries: const [],
+          canGenerateToday: false,
+          alreadyGeneratedToday: false,
+          isSubscribed: false,
+          freeTierAvailable: true,
+        ),
+      ],
+    );
+
+    blocTest<SummariesCubit, SummariesState>(
+      'loadSummaries() con suscripción activa nunca consulta el cupo '
+      'gratis semanal',
+      build: () {
+        when(() => mockGetDailySummaries.execute()).thenAnswer((_) async => []);
+        when(() => mockGenerateDailySummary.countTodayArticles())
+            .thenAnswer((_) async => 0);
+        return buildCubit();
+      },
+      act: (cubit) => cubit.loadSummaries(),
+      verify: (_) {
+        verifyNever(() => mockDailySummaryFreeUsageRepository.getStatus());
       },
     );
   });

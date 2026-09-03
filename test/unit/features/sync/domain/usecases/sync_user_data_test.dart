@@ -6,10 +6,12 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/data/datasources/local/ai_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/article_local_datasource.dart';
+import 'package:newsreader/core/data/datasources/local/daily_summary_free_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/source_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/summary_local_datasource.dart';
 import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
+import 'package:newsreader/core/data/models/daily_summary_free_usage_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
@@ -23,6 +25,9 @@ class MockSummaryLocalDataSource extends Mock implements SummaryLocalDataSource 
 
 class MockAiUsageLocalDataSource extends Mock
     implements AiUsageLocalDataSource {}
+
+class MockDailySummaryFreeUsageLocalDataSource extends Mock
+    implements DailySummaryFreeUsageLocalDataSource {}
 
 class MockCloudSyncClient extends Mock implements CloudSyncClient {}
 
@@ -59,6 +64,7 @@ void main() {
   late MockArticleLocalDataSource mockArticleLocal;
   late MockSummaryLocalDataSource mockSummaryLocal;
   late MockAiUsageLocalDataSource mockAiUsageLocal;
+  late MockDailySummaryFreeUsageLocalDataSource mockDailySummaryFreeUsageLocal;
   late MockCloudSyncClient mockCloudSyncClient;
   late MockAuthClient mockAuthClient;
   late MockSettingsBox mockSettingsBox;
@@ -82,6 +88,9 @@ void main() {
     registerFallbackValue(
       AiUsageDailyModel(day: DateTime(2026), summariesUsed: 0),
     );
+    registerFallbackValue(
+      DailySummaryFreeUsageModel(weekStart: DateTime(2026), used: false),
+    );
   });
 
   setUp(() {
@@ -89,6 +98,7 @@ void main() {
     mockArticleLocal = MockArticleLocalDataSource();
     mockSummaryLocal = MockSummaryLocalDataSource();
     mockAiUsageLocal = MockAiUsageLocalDataSource();
+    mockDailySummaryFreeUsageLocal = MockDailySummaryFreeUsageLocalDataSource();
     mockCloudSyncClient = MockCloudSyncClient();
     mockAuthClient = MockAuthClient();
     mockSettingsBox = MockSettingsBox();
@@ -97,6 +107,7 @@ void main() {
       mockArticleLocal,
       mockSummaryLocal,
       mockAiUsageLocal,
+      mockDailySummaryFreeUsageLocal,
       mockCloudSyncClient,
       mockAuthClient,
       mockSettingsBox,
@@ -110,6 +121,8 @@ void main() {
     when(() => mockArticleLocal.applyRemote(any())).thenAnswer((_) async {});
     when(() => mockSummaryLocal.applyRemote(any())).thenAnswer((_) async {});
     when(() => mockAiUsageLocal.applyRemote(any())).thenAnswer((_) async {});
+    when(() => mockDailySummaryFreeUsageLocal.applyRemote(any()))
+        .thenAnswer((_) async {});
     when(() => mockCloudSyncClient.updatePartial(any(), any()))
         .thenAnswer((_) async {});
     // Stub por defecto para la tabla nueva de solo lectura: la mayoría de
@@ -118,6 +131,10 @@ void main() {
     // pueden seguir registrando su propio `when` más específico.
     when(() => mockCloudSyncClient.fetchChangedSince('ai_usage_daily', any()))
         .thenAnswer((_) async => []);
+    when(() => mockCloudSyncClient
+        .fetchChangedSince('daily_summary_free_usage', any())).thenAnswer(
+      (_) async => [],
+    );
   });
 
   group('sin sesión activa', () {
