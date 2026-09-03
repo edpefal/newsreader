@@ -306,6 +306,48 @@ String ensureViewportMeta(String htmlContent) {
   );
 }
 
+final _scriptBlockPattern = RegExp(
+  r'<script\b[^>]*>[\s\S]*?</script\s*>',
+  caseSensitive: false,
+);
+// Defensivo: un `<script` sin `</script>` de cierre (deliberado o no) hace
+// que un parser HTML real trate todo lo que sigue como contenido de script
+// hasta el fin del documento -- se remueve con el mismo criterio.
+final _unclosedScriptPattern = RegExp(
+  r'<script\b[^>]*>[\s\S]*$',
+  caseSensitive: false,
+);
+final _eventHandlerAttrPattern = RegExp(
+  r'''\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)''',
+  caseSensitive: false,
+);
+final _dangerousUriSchemePattern = RegExp(
+  r'''((?:href|src|action|formaction)\s*=\s*["'])\s*(?:javascript|vbscript):''',
+  caseSensitive: false,
+);
+
+/// Quita los vectores de ejecución de script de [html]: bloques `<script>`
+/// (incluido uno sin cerrar, tratado igual que lo haría un parser HTML real:
+/// todo lo que sigue se descarta), atributos `on*=` (`onclick`, `onload`,
+/// `onerror`, etc.), y el esquema `javascript:`/`vbscript:` en atributos que
+/// aceptan una URI (`href`, `src`, `action`, `formaction`).
+///
+/// Es una remoción de texto dirigida a los vectores conocidos, no un
+/// sanitizador HTML completo tipo allowlist (ver Non-Goals en design.md):
+/// no reparsea ni reserializa el árbol, así que no reintroduce el riesgo de
+/// mutation-XSS típico de sanitizadores basados en un roundtrip parse+render.
+@visibleForTesting
+String stripScriptExecutionVectors(String html) {
+  var sanitized = html.replaceAll(_scriptBlockPattern, '');
+  sanitized = sanitized.replaceAll(_unclosedScriptPattern, '');
+  sanitized = sanitized.replaceAll(_eventHandlerAttrPattern, '');
+  sanitized = sanitized.replaceAllMapped(
+    _dangerousUriSchemePattern,
+    (match) => match.group(1)!,
+  );
+  return sanitized;
+}
+
 const _resizeObserverScript = '''
 (function() {
   function reportHeight() {
@@ -326,14 +368,16 @@ const _resizeObserverScript = '''
 /// mejor. Se acepta que estos artículos se lean con su diseño original,
 /// igual que en Gmail o Apple Mail.
 ///
-/// `WebViewWidget` necesita una altura acotada -- no puede crecer con su
-/// contenido como un widget nativo -- así que la altura real se mide desde
-/// JS (`document.documentElement.scrollHeight`, vía un `ResizeObserver` para
-/// capturar reflows tardíos por imágenes) y se usa para dimensionar este
-/// widget dentro del `SingleChildScrollView` de `ReaderScreen`. Mientras la
-/// altura es desconocida se muestra un `CircularProgressIndicator` superpuesto,
-/// igual que el que ya muestra `HtmlWidget` por defecto para el resto del
-/// contenido.
+/// El HTML viene de un remitente no confiable (cualquiera que le mande un
+/// correo a la dirección generada del feed, ver capability
+/// `email-to-rss-feeds`), así que se le aplica [stripScriptExecutionVectors]
+/// antes de cargarlo (ver change harden-security-vulnerabilities). Se
+/// descartó aislarlo en un iframe `sandbox` (más robusto en teoría, ver
+/// design.md): WKWebView no resuelve de forma confiable URLs relativas
+/// (imágenes) dentro de un `srcdoc` contra el `baseUrl` del documento
+/// contenedor, lo que dejaba newsletters reales (mayormente compuestos de
+/// bloques con imagen) en blanco. Cargar el HTML saneado directo en el
+/// documento del `WebView`, como siempre, evita ese problema.
 ///
 /// La navegación dentro del WebView se bloquea después de la carga inicial
 /// (`onNavigationRequest`): el contenido viene de un remitente no confiable
@@ -384,7 +428,7 @@ class _RawEmailWebViewState extends State<_RawEmailWebView> {
         ),
       )
       ..loadHtmlString(
-        ensureViewportMeta(widget.htmlContent),
+        ensureViewportMeta(stripScriptExecutionVectors(widget.htmlContent)),
         baseUrl: widget.articleUrl,
       );
   }
