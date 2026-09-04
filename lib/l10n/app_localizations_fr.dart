@@ -303,7 +303,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get summariesFreeTierExhausted =>
-      'Tu as déjà utilisé ton résumé gratuit de la semaine — il se renouvelle lundi, ou abonne-toi pour des résumés illimités';
+      'Tu as déjà utilisé ton résumé gratuit de la semaine — il se renouvelle lundi, ou abonne-toi pour avoir un résumé tous les jours';
 
   @override
   String get summariesEmptyTitle => 'Aucun résumé pour l\'instant';

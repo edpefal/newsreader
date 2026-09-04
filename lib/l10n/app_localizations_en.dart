@@ -302,7 +302,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get summariesFreeTierExhausted =>
-      'You already used your free summary this week — it renews on Monday, or subscribe for unlimited summaries';
+      'You already used your free summary this week — it renews on Monday, or subscribe to get a summary every day';
 
   @override
   String get summariesEmptyTitle => 'No summaries yet';

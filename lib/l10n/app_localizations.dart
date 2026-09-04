@@ -559,7 +559,7 @@ abstract class AppLocalizations {
   /// No description provided for @summariesFreeTierExhausted.
   ///
   /// In en, this message translates to:
-  /// **'You already used your free summary this week — it renews on Monday, or subscribe for unlimited summaries'**
+  /// **'You already used your free summary this week — it renews on Monday, or subscribe to get a summary every day'**
   String get summariesFreeTierExhausted;
 
   /// No description provided for @summariesEmptyTitle.
