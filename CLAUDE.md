@@ -207,6 +207,7 @@ Todos los features se implementan por medio de OpenSpec (`/opsx:propose` → `/o
 4. Esperar a que el check de CI (`analyze-and-test` en GitHub Actions) pase en el PR — `main` tiene branch protection que exige ese check en verde antes de habilitar el merge.
 5. Recién ahí mergear el PR.
 6. Una vez verificado el flujo completo (todas las tareas de `tasks.md` confirmadas, no solo implementadas), archivar el change de OpenSpec (`/opsx:archive`) — el archive también se sube por PR, no directo a `main`.
+7. Tras mergear el PR (de implementación, de archive, o cualquier PR suelto), volver a `main`, actualizarla, y borrar la rama ya mergeada (local y remota) — no dejar ramas viejas acumulándose. Un feature no queda "terminado" hasta este paso.
 
 **Cerrar tareas y archivar van en el mismo PR final**, no en dos PRs separados — marcar `tasks.md` como completo y mover el change a `archive/` es un solo commit/PR. Solo se separan si aparece un bug real a mitad de camino que necesita su propio ciclo de verificación (rama + PR + CI) antes de poder cerrar la tarea correspondiente.
 
