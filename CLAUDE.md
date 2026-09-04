@@ -16,7 +16,10 @@ flutter analyze                          # lint (correr antes de considerar algo
 dart run build_runner build              # regenerar TypeAdapters de Hive CE
 dart run build_runner build --delete-conflicting-outputs  # si hay conflictos
 flutter gen-l10n                         # regenerar AppLocalizations tras tocar lib/l10n/*.arb
+(cd supabase/functions/<nombre> && deno test --allow-env)  # tests de una Edge Function puntual
 ```
+
+`deno test` sin `--allow-env` falla en funciones que leen alguna variable de entorno en el código bajo test (ej. `enrich-mentions` lee `GOOGLE_BOOKS_API_KEY`) — el `PermissionDenied` suele quedar atrapado por un `try/catch` interno y aparece como una aserción fallida random, no como un error de permisos obvio. Correr siempre con `--allow-env`.
 
 Correr `flutter analyze` después de cualquier cambio de código. No dejar warnings sin resolver.
 
