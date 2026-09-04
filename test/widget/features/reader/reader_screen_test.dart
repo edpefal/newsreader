@@ -47,6 +47,7 @@ Widget _buildSubject(
   MarkArticleAsRead markAsRead,
   ToggleFavorite toggleFavorite, {
   SubscriptionStatusProvider? subscriptionStatusProvider,
+  AiUsageRepository? aiUsageRepository,
 }) {
   final router = GoRouter(
     routes: [
@@ -58,6 +59,7 @@ Widget _buildSubject(
           toggleFavorite: toggleFavorite,
           subscriptionStatusProvider:
               subscriptionStatusProvider ?? MockSubscriptionStatusProvider(),
+          aiUsageRepository: aiUsageRepository ?? _fakeAiUsageRepository(),
           createArticleSummaryCubit: () => ArticleSummaryCubit(
             MockGenerateArticleSummary(),
             _fakeAiUsageRepository(),
@@ -343,6 +345,98 @@ void main() {
         find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
         findsOneWidget,
       );
+    });
+
+    testWidgets(
+        'sin suscripción y con cupo gratis, tap en resumen abre el sheet '
+        'sin mostrar el paywall', (tester) async {
+      final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
+      when(() => mockSubscriptionStatusProvider.isSubscribed)
+          .thenReturn(false);
+      final mockAiUsageRepository = MockAiUsageRepository();
+      when(() => mockAiUsageRepository.getStatus()).thenAnswer(
+        (_) async => const AiUsageStatus(summariesUsedToday: 0, dailyLimit: 2),
+      );
+
+      await tester.pumpWidget(_buildSubject(
+        tArticle,
+        mockMarkAsRead,
+        mockToggleFavorite,
+        subscriptionStatusProvider: mockSubscriptionStatusProvider,
+        aiUsageRepository: mockAiUsageRepository,
+      ));
+      await tester.tap(
+        find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
+      );
+      await tester.pumpAndSettle();
+
+      verify(() => mockAiUsageRepository.getStatus()).called(1);
+      verifyNever(
+        () => mockSubscriptionStatusProvider.showPaywall(
+          onSubscribed: any(named: 'onSubscribed'),
+        ),
+      );
+      expect(find.byType(BottomSheet), findsOneWidget);
+    });
+
+    testWidgets(
+        'sin suscripción y sin cupo gratis, tap en resumen muestra el '
+        'paywall sin abrir el sheet', (tester) async {
+      final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
+      when(() => mockSubscriptionStatusProvider.isSubscribed)
+          .thenReturn(false);
+      when(
+        () => mockSubscriptionStatusProvider.showPaywall(
+          onSubscribed: any(named: 'onSubscribed'),
+        ),
+      ).thenAnswer((_) async {});
+      final mockAiUsageRepository = MockAiUsageRepository();
+      when(() => mockAiUsageRepository.getStatus()).thenAnswer(
+        (_) async => const AiUsageStatus(summariesUsedToday: 2, dailyLimit: 2),
+      );
+
+      await tester.pumpWidget(_buildSubject(
+        tArticle,
+        mockMarkAsRead,
+        mockToggleFavorite,
+        subscriptionStatusProvider: mockSubscriptionStatusProvider,
+        aiUsageRepository: mockAiUsageRepository,
+      ));
+      await tester.tap(
+        find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
+      );
+      await tester.pumpAndSettle();
+
+      verify(
+        () => mockSubscriptionStatusProvider.showPaywall(
+          onSubscribed: any(named: 'onSubscribed'),
+        ),
+      ).called(1);
+      expect(find.byType(BottomSheet), findsNothing);
+    });
+
+    testWidgets(
+        'con suscripción activa, tap en resumen abre el sheet directo sin '
+        'consultar el cupo gratis', (tester) async {
+      final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
+      when(() => mockSubscriptionStatusProvider.isSubscribed)
+          .thenReturn(true);
+      final mockAiUsageRepository = MockAiUsageRepository();
+
+      await tester.pumpWidget(_buildSubject(
+        tArticle,
+        mockMarkAsRead,
+        mockToggleFavorite,
+        subscriptionStatusProvider: mockSubscriptionStatusProvider,
+        aiUsageRepository: mockAiUsageRepository,
+      ));
+      await tester.tap(
+        find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
+      );
+      await tester.pumpAndSettle();
+
+      verifyNever(() => mockAiUsageRepository.getStatus());
+      expect(find.byType(BottomSheet), findsOneWidget);
     });
 
     // --- US-13/14: Favoritos ---

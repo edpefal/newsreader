@@ -98,8 +98,9 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get articleSummaryLimitReachedTitle =>
-      'Tu as utilisé tes 25 résumés du jour';
+  String articleSummaryLimitReachedTitle(int limit) {
+    return 'Tu as utilisé tes $limit résumés du jour';
+  }
 
   @override
   String get articleSummaryLimitReachedSubtitle =>

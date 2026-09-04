@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
 import 'package:newsreader/core/navigation/route_path.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
@@ -47,6 +48,7 @@ class ReaderScreen extends StatefulWidget {
   final MarkArticleAsRead markAsRead;
   final ToggleFavorite toggleFavorite;
   final SubscriptionStatusProvider subscriptionStatusProvider;
+  final AiUsageRepository aiUsageRepository;
   final ArticleSummaryCubit Function() createArticleSummaryCubit;
   final ExternalLinkLauncher externalLinkLauncher;
 
@@ -56,6 +58,7 @@ class ReaderScreen extends StatefulWidget {
     required this.markAsRead,
     required this.toggleFavorite,
     required this.subscriptionStatusProvider,
+    required this.aiUsageRepository,
     required this.createArticleSummaryCubit,
     required this.externalLinkLauncher,
   });
@@ -125,22 +128,33 @@ class _ReaderScreenState extends State<ReaderScreen>
     await widget.toggleFavorite.execute(widget.article.id);
   }
 
-  /// Mismo patrón que `SummariesView`: si no hay suscripción activa,
-  /// muestra el paywall antes de abrir el bottom sheet, y vuelve a chequear
-  /// `isSubscribed` tras su cierre en vez de confiar únicamente en que
+  /// Mismo patrón que `SummariesCubit.generateTodaySummary`: con
+  /// suscripción activa, abre el sheet directo; sin suscripción, primero
+  /// chequea el cupo diario gratis (2/día, ver capability
+  /// `ai-usage-budget`) -- con cupo disponible abre el sheet igual que con
+  /// suscripción, sin cupo muestra el paywall. Tras cerrar el paywall,
+  /// vuelve a chequear `isSubscribed` en vez de confiar únicamente en que
   /// Superwall haya invocado el callback de compra completada.
   Future<void> _onSummaryPressed(BuildContext context) async {
-    if (!widget.subscriptionStatusProvider.isSubscribed) {
-      await widget.subscriptionStatusProvider.showPaywall(
-        onSubscribed: () async {
-          if (!widget.subscriptionStatusProvider.isSubscribed) return;
-          if (!mounted) return;
-          _openSummarySheet(context);
-        },
-      );
+    if (widget.subscriptionStatusProvider.isSubscribed) {
+      _openSummarySheet(context);
       return;
     }
-    _openSummarySheet(context);
+
+    final freeStatus = await widget.aiUsageRepository.getStatus();
+    if (!freeStatus.limitReached) {
+      if (!context.mounted) return;
+      _openSummarySheet(context);
+      return;
+    }
+
+    await widget.subscriptionStatusProvider.showPaywall(
+      onSubscribed: () async {
+        if (!widget.subscriptionStatusProvider.isSubscribed) return;
+        if (!mounted) return;
+        _openSummarySheet(context);
+      },
+    );
   }
 
   void _openSummarySheet(BuildContext context) {

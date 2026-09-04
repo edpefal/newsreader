@@ -186,7 +186,7 @@ Future<void> setupDependencies() async {
     () => ArticleSummaryRepositoryImpl(getIt()),
   );
   getIt.registerLazySingleton<AiUsageRepository>(
-    () => AiUsageRepositoryImpl(getIt()),
+    () => AiUsageRepositoryImpl(getIt(), getIt()),
   );
   getIt.registerLazySingleton<DailySummaryFreeUsageRepository>(
     () => DailySummaryFreeUsageRepositoryImpl(getIt()),

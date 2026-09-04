@@ -52,8 +52,8 @@ class ArticleSummarySheetContent extends StatelessWidget {
                   height: 160,
                   child: Center(child: CircularProgressIndicator()),
                 ),
-              ArticleSummaryLimitReached() =>
-                _LimitReachedContent(l10n: l10n),
+              ArticleSummaryLimitReached(:final dailyLimit) =>
+                _LimitReachedContent(l10n: l10n, dailyLimit: dailyLimit),
               ArticleSummaryError(:final code) => SizedBox(
                   height: 120,
                   child: Center(
@@ -155,8 +155,9 @@ class _RemainingPill extends StatelessWidget {
 /// esperado por diseño (ver ArticleSummaryLimitReached).
 class _LimitReachedContent extends StatelessWidget {
   final AppLocalizations l10n;
+  final int dailyLimit;
 
-  const _LimitReachedContent({required this.l10n});
+  const _LimitReachedContent({required this.l10n, required this.dailyLimit});
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +169,7 @@ class _LimitReachedContent extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              l10n.articleSummaryLimitReachedTitle,
+              l10n.articleSummaryLimitReachedTitle(dailyLimit),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleSmall,
             ),

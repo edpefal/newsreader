@@ -253,8 +253,8 @@ abstract class AppLocalizations {
   /// No description provided for @articleSummaryLimitReachedTitle.
   ///
   /// In en, this message translates to:
-  /// **'You\'ve used all 25 summaries for today'**
-  String get articleSummaryLimitReachedTitle;
+  /// **'You\'ve used all {limit} summaries for today'**
+  String articleSummaryLimitReachedTitle(int limit);
 
   /// No description provided for @articleSummaryLimitReachedSubtitle.
   ///
