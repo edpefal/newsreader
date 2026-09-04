@@ -21,17 +21,24 @@ class MockExternalLinkLauncher extends Mock implements ExternalLinkLauncher {}
 
 Widget _buildSubject(
   ArticleSummaryCubit cubit,
-  ExternalLinkLauncher launcher,
-) {
+  ExternalLinkLauncher launcher, {
+  double? maxHeight,
+}) {
+  final content = BlocProvider<ArticleSummaryCubit>.value(
+    value: cubit,
+    child: ArticleSummarySheetContent(externalLinkLauncher: launcher),
+  );
   return MaterialApp(
     locale: testLocale,
     localizationsDelegates: testLocalizationsDelegates,
     supportedLocales: testSupportedLocales,
     home: Scaffold(
-      body: BlocProvider<ArticleSummaryCubit>.value(
-        value: cubit,
-        child: ArticleSummarySheetContent(externalLinkLauncher: launcher),
-      ),
+      body: maxHeight == null
+          ? content
+          : Align(
+              alignment: Alignment.bottomCenter,
+              child: SizedBox(height: maxHeight, child: content),
+            ),
     ),
   );
 }
@@ -108,6 +115,29 @@ void main() {
       await tester.pumpWidget(_buildSubject(cubit, launcher));
 
       expect(find.byType(MentionCard), findsNWidgets(2));
+    });
+
+    testWidgets(
+        'estado Loaded con resumen largo en un alto acotado scrollea en vez '
+        'de desbordar (regresión REEVO-PROD-8)', (tester) async {
+      final summary = ArticleSummary(
+        articleId: 'a1',
+        summary: 'Párrafo largo. ' * 200,
+        mentions: const [
+          (type: MentionType.book, name: 'Libro A', imageUrl: null, link: 'https://a.example'),
+          (type: MentionType.podcast, name: 'Podcast B', imageUrl: null, link: null),
+        ],
+        createdAt: DateTime(2024, 3, 15),
+      );
+      whenListen(cubit, const Stream<ArticleSummaryState>.empty(),
+          initialState: ArticleSummaryLoaded(summary));
+
+      // Mismo alto acotado que tendría un bottom sheet real -- antes del
+      // fix, esto disparaba "A RenderFlex overflowed" (ver REEVO-PROD-8).
+      await tester.pumpWidget(_buildSubject(cubit, launcher, maxHeight: 300));
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
     });
 
     testWidgets('tocar una mención enriquecida abre el link con el launcher',

@@ -37,7 +37,10 @@ void showArticleSummarySheet(
 class ArticleSummarySheetContent extends StatelessWidget {
   final ExternalLinkLauncher externalLinkLauncher;
 
-  const ArticleSummarySheetContent({super.key, required this.externalLinkLauncher});
+  const ArticleSummarySheetContent({
+    super.key,
+    required this.externalLinkLauncher,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -45,16 +48,23 @@ class ArticleSummarySheetContent extends StatelessWidget {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: BlocBuilder<ArticleSummaryCubit, ArticleSummaryState>(
-          builder: (context, state) {
-            return switch (state) {
-              ArticleSummaryLoading() => const SizedBox(
+        // `showModalBottomSheet` no scrollea su contenido por sí solo: un
+        // resumen largo (hasta 4 párrafos, ver capability `article-summaries`)
+        // más el carrusel de menciones puede superar el alto disponible del
+        // sheet y desbordar (ver REEVO-PROD-8). `SingleChildScrollView`
+        // deja que el contenido scrollee en vez de desbordar, sin afectar
+        // los casos cortos (Loading/Error/LimitReached).
+        child: SingleChildScrollView(
+          child: BlocBuilder<ArticleSummaryCubit, ArticleSummaryState>(
+            builder: (context, state) {
+              return switch (state) {
+                ArticleSummaryLoading() => const SizedBox(
                   height: 160,
                   child: Center(child: CircularProgressIndicator()),
                 ),
-              ArticleSummaryLimitReached(:final dailyLimit) =>
-                _LimitReachedContent(l10n: l10n, dailyLimit: dailyLimit),
-              ArticleSummaryError(:final code) => SizedBox(
+                ArticleSummaryLimitReached(:final dailyLimit) =>
+                  _LimitReachedContent(l10n: l10n, dailyLimit: dailyLimit),
+                ArticleSummaryError(:final code) => SizedBox(
                   height: 120,
                   child: Center(
                     child: Text(
@@ -65,56 +75,57 @@ class ArticleSummarySheetContent extends StatelessWidget {
                     ),
                   ),
                 ),
-              ArticleSummaryLoaded(:final summary, :final remainingToday) =>
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          l10n.articleSummarySheetTitle,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        if (remainingToday != null)
-                          _RemainingPill(remaining: remainingToday),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(summary.summary),
-                    if (summary.mentions.isNotEmpty) ...[
-                      const SizedBox(height: 20),
-                      Text(
-                        l10n.articleSummaryMentionsTitle,
-                        style: Theme.of(context).textTheme.titleSmall,
+                ArticleSummaryLoaded(:final summary, :final remainingToday) =>
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            l10n.articleSummarySheetTitle,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          if (remainingToday != null)
+                            _RemainingPill(remaining: remainingToday),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 128,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: summary.mentions.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (context, index) {
-                            final mention = summary.mentions[index];
-                            return MentionCard(
-                              mention: mention,
-                              onTap: mention.link == null
-                                  ? null
-                                  : () => externalLinkLauncher.open(
+                      const SizedBox(height: 12),
+                      Text(summary.summary),
+                      if (summary.mentions.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        Text(
+                          l10n.articleSummaryMentionsTitle,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 128,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: summary.mentions.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 12),
+                            itemBuilder: (context, index) {
+                              final mention = summary.mentions[index];
+                              return MentionCard(
+                                mention: mention,
+                                onTap: mention.link == null
+                                    ? null
+                                    : () => externalLinkLauncher.open(
                                         mention.link!,
                                       ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
-                ),
-            };
-          },
+                  ),
+              };
+            },
+          ),
         ),
       ),
     );
@@ -142,8 +153,8 @@ class _RemainingPill extends StatelessWidget {
       child: Text(
         l10n.articleSummaryRemainingToday(remaining),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
+          color: colorScheme.onSurface.withValues(alpha: 0.7),
+        ),
       ),
     );
   }
@@ -178,8 +189,8 @@ class _LimitReachedContent extends StatelessWidget {
               l10n.articleSummaryLimitReachedSubtitle,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
             ),
           ],
         ),
