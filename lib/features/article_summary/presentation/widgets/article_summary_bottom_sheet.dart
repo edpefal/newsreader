@@ -19,9 +19,20 @@ void showArticleSummarySheet(
   required ExternalLinkLauncher externalLinkLauncher,
 }) {
   final language = Localizations.localeOf(context).languageCode;
+  // Tope de alto explícito: sin esto, un resumen largo dentro del
+  // `SingleChildScrollView` de `ArticleSummarySheetContent` hace crecer el
+  // sheet hasta tapar el status bar (ver fix de REEVO-PROD-8 y su
+  // regresión). Se resta el inset superior seguro (notch/status bar) más
+  // un margen chico, para que el sheet nunca lo cubra sin importar cuán
+  // largo sea el contenido -- el `SingleChildScrollView` interno se encarga
+  // de que el contenido que no entra en ese alto scrollee, en vez de
+  // desbordar ni de empujar el sheet más allá de este tope.
+  final maxHeight =
+      MediaQuery.sizeOf(context).height - MediaQuery.paddingOf(context).top - 24;
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    constraints: BoxConstraints(maxHeight: maxHeight),
     builder: (sheetContext) => BlocProvider<ArticleSummaryCubit>(
       create: (_) => createCubit()..generate(article, language),
       child: ArticleSummarySheetContent(
