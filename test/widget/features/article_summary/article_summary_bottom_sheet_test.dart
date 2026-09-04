@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/ai/mention_enricher.dart';
+import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/article_summary.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
@@ -49,6 +50,16 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(const ArticleSummaryLoading());
+    registerFallbackValue(
+      Article(
+        id: 'fallback',
+        sourceId: 's1',
+        sourceName: 'Newsletter A',
+        title: 'Título',
+        publishedAt: DateTime(2000),
+        articleUrl: 'https://example.com/fallback',
+      ),
+    );
   });
 
   setUp(() {
@@ -238,6 +249,68 @@ void main() {
         find.text('Ya usaste tus 2 resúmenes de hoy'),
         findsOneWidget,
       );
+    });
+  });
+
+  group('showArticleSummarySheet', () {
+    final tArticle = Article(
+      id: 'a1',
+      sourceId: 's1',
+      sourceName: 'Newsletter A',
+      title: 'Un artículo',
+      publishedAt: DateTime(2024, 3, 15),
+      articleUrl: 'https://example.com/a1',
+    );
+
+    testWidgets(
+        'el sheet nunca tapa el status bar, ni con un resumen muy largo '
+        '(regresión del fix de REEVO-PROD-8)', (tester) async {
+      // Simula un dispositivo con status bar/notch (mismo criterio que
+      // `MediaQuery.paddingOf(context).top` que usa `showArticleSummarySheet`).
+      const topInset = 47.0;
+      tester.view.padding = const FakeViewPadding(top: topInset);
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      when(() => cubit.generate(any(), any())).thenAnswer((_) async {});
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: ArticleSummaryLoaded(
+          ArticleSummary(
+            articleId: 'a1',
+            summary: 'Párrafo largo. ' * 300,
+            mentions: const [],
+            createdAt: DateTime(2024, 3, 15),
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(MaterialApp(
+        locale: testLocale,
+        localizationsDelegates: testLocalizationsDelegates,
+        supportedLocales: testSupportedLocales,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: ElevatedButton(
+              onPressed: () => showArticleSummarySheet(
+                context,
+                article: tArticle,
+                createCubit: () => cubit,
+                externalLinkLauncher: launcher,
+              ),
+              child: const Text('Abrir'),
+            ),
+          ),
+        ),
+      ));
+      await tester.tap(find.text('Abrir'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final sheetTop = tester.getTopLeft(find.byType(BottomSheet)).dy;
+      expect(sheetTop, greaterThanOrEqualTo(topInset));
     });
   });
 }
