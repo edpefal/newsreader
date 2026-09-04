@@ -31,6 +31,10 @@ Existen dos proyectos de Supabase, ambos bajo la misma organización:
 
 Al desplegar una Edge Function (`supabase functions deploy <nombre>`), por defecto solo se despliega al proyecto linkeado (`reevo`, prod). Para desplegar también a `reevo-dev`, agregar `--project-ref xgwnxhpdcrghrtdbrmpn` sin cambiar el link del repo. Antes de dar por terminado un cambio de Edge Function, confirmar con el usuario a cuál(es) de los dos proyectos hay que desplegarlo — no asumir que solo uno basta.
 
+### Cuentas de Gemini (dev vs prod)
+
+Los proyectos `reevo` y `reevo-dev` usan cuentas de Google AI/Gemini **separadas** para el `GEMINI_API_KEY` de las Edge Functions que llaman a Gemini (`summarize-article`, `summarize-articles`). Solo la de **prod (`reevo`) tiene billing habilitado** — no está sujeta al límite del free tier de Gemini (20 requests/día). La de dev sigue en el free tier, así que features que dependan de una cuota alta de requests pueden funcionar en prod y toparse con el límite en dev. Al diseñar un feature de IA nuevo o pensar en un free tier para el usuario final, no asumir que el límite de 20/día del free tier de Gemini aplica en prod.
+
 ## Arquitectura: Feature-Based Clean Architecture
 
 El proyecto usa Clean Architecture organizada por features, no por capas globales.
