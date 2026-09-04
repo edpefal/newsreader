@@ -8,10 +8,10 @@ import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { hasActiveEntitlement } from "./entitlement.ts";
 import { resolveLanguage, SupportedLanguage } from "./language.ts";
+import { resolveDailyLimit } from "./usage_limit.ts";
 import { countSingleArticleWords } from "./word_count.ts";
 import { MENTION_TYPES, parseMentions } from "./mentions.ts";
 
-const AI_DAILY_SUMMARY_LIMIT = 25;
 // Techo de longitud por artículo individual (ver ai-usage-budget): protege
 // el costo de un caso raro (piezas larguísimas) sin depender del contador
 // diario -- se rechaza sin invocar a Gemini y sin descontar del límite
@@ -242,19 +242,17 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Mismo gate de suscripción que summarize-articles: el resumen de
-  // artículo es parte de la misma feature paga (ver proposal.md).
+  // El resumen de artículo requiere, alternativamente, suscripción activa
+  // o cupo disponible del límite diario gratis (2/día, ver capability
+  // `ai-usage-budget`). No se rechaza acá sin suscripción -- el límite
+  // efectivo se resuelve más abajo y `check_and_record_ai_usage` es quien
+  // determina si hay cupo (ver openspec/changes/add-article-summary-free-tier).
   const { data: entitlementRow } = await userClient
     .from("entitlements")
     .select("is_active")
     .eq("user_id", userData.user.id)
     .maybeSingle();
-  if (!hasActiveEntitlement(entitlementRow)) {
-    return new Response(
-      JSON.stringify({ error: "subscription_required" }),
-      { status: 403, headers: { "Content-Type": "application/json" } },
-    );
-  }
+  const isSubscribed = hasActiveEntitlement(entitlementRow);
 
   let body: SummarizeArticleRequest;
   try {
@@ -288,7 +286,7 @@ Deno.serve(async (req) => {
 
   const { data: usageData, error: usageError } = await userClient.rpc(
     "check_and_record_ai_usage",
-    { p_daily_limit: AI_DAILY_SUMMARY_LIMIT },
+    { p_daily_limit: resolveDailyLimit(isSubscribed) },
   );
   if (usageError) {
     console.error(`check_and_record_ai_usage error: ${usageError.message}`);
@@ -299,9 +297,20 @@ Deno.serve(async (req) => {
   }
   const usageResult = Array.isArray(usageData) ? usageData[0] : usageData;
   if (!usageResult?.allowed) {
+    // Sin suscripción activa, agotar el cupo gratis (2/día) se comunica
+    // como "se requiere suscripción" -- mismo error que ya usaba el
+    // rechazo incondicional, sin distinguir "nunca tuvo suscripción" de
+    // "gastó su cupo gratis de hoy" (el cliente ya mostró el paywall antes
+    // de llegar acá, ver ReaderScreen). Con suscripción activa, se
+    // mantiene el error de límite diario alcanzado ya existente.
     return new Response(
-      JSON.stringify({ error: "ai_usage_limit_reached" }),
-      { status: 429, headers: { "Content-Type": "application/json" } },
+      JSON.stringify({
+        error: isSubscribed ? "ai_usage_limit_reached" : "subscription_required",
+      }),
+      {
+        status: isSubscribed ? 429 : 403,
+        headers: { "Content-Type": "application/json" },
+      },
     );
   }
 

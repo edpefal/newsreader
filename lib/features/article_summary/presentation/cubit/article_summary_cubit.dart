@@ -15,10 +15,11 @@ part 'article_summary_state.dart';
 /// apertura del bottom sheet (no singleton, a diferencia de `SummariesCubit`):
 /// se crea con el `Article` puntual que se está mostrando.
 ///
-/// El chequeo de suscripción/paywall NO vive acá: ocurre antes, en el
-/// botón que abre el bottom sheet (mismo lugar donde `SummariesView`
-/// resuelve el paywall antes de llamar al cubit) -- para cuando este cubit
-/// se invoca, la suscripción activa ya está garantizada.
+/// El chequeo de suscripción/cupo gratis/paywall NO vive acá: ocurre antes,
+/// en el botón que abre el bottom sheet (`ReaderScreen._onSummaryPressed`,
+/// mismo lugar donde `SummariesCubit` resuelve el paywall antes de generar)
+/// -- para cuando este cubit se invoca, el acceso (suscripción activa o
+/// cupo diario gratis disponible) ya está garantizado.
 class ArticleSummaryCubit extends Cubit<ArticleSummaryState> {
   final GenerateArticleSummary _generateArticleSummary;
   final AiUsageRepository _aiUsageRepository;
@@ -48,7 +49,8 @@ class ArticleSummaryCubit extends Cubit<ArticleSummaryState> {
       // diseño, no un bug -- estado propio (ver ArticleSummaryLimitReached),
       // sin reportarse a Sentry, igual que antes.
       if (code == AppErrorCode.aiUsageLimitReached) {
-        emit(const ArticleSummaryLimitReached());
+        final status = await _aiUsageRepository.getStatus();
+        emit(ArticleSummaryLimitReached(dailyLimit: status.dailyLimit));
         return;
       }
       _observabilityClient.captureException(e, st);

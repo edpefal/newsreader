@@ -70,6 +70,7 @@ Widget _buildSubject(
           markAsRead: markAsRead,
           toggleFavorite: toggleFavorite,
           subscriptionStatusProvider: MockSubscriptionStatusProvider(),
+          aiUsageRepository: _fakeAiUsageRepository(),
           createArticleSummaryCubit: () => ArticleSummaryCubit(
             MockGenerateArticleSummary(),
             _fakeAiUsageRepository(),

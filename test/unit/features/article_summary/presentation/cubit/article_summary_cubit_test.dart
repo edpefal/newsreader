@@ -148,13 +148,37 @@ void main() {
       act: (cubit) => cubit.generate(tArticle, 'es'),
       expect: () => [
         const ArticleSummaryLoading(),
-        const ArticleSummaryLimitReached(),
+        const ArticleSummaryLimitReached(dailyLimit: 25),
       ],
       verify: (_) {
         verifyNever(
           () => mockTelemetryClient.captureException(any(), any()),
         );
       },
+    );
+
+    blocTest<ArticleSummaryCubit, ArticleSummaryState>(
+      'generate() con límite gratis (free tier) alcanzado emite LimitReached con dailyLimit=2',
+      build: () {
+        when(() => mockGenerateArticleSummary.execute(
+              any(),
+              language: any(named: 'language'),
+            )).thenThrow(
+          const ArticleSummaryGenerationException(
+            AppErrorCode.aiUsageLimitReached,
+          ),
+        );
+        when(() => mockAiUsageRepository.getStatus()).thenAnswer(
+          (_) async =>
+              const AiUsageStatus(summariesUsedToday: 2, dailyLimit: 2),
+        );
+        return buildCubit();
+      },
+      act: (cubit) => cubit.generate(tArticle, 'es'),
+      expect: () => [
+        const ArticleSummaryLoading(),
+        const ArticleSummaryLimitReached(dailyLimit: 2),
+      ],
     );
   });
 }

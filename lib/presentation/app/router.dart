@@ -8,6 +8,7 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
@@ -154,6 +155,7 @@ GoRoute _articleRoute({required String paramName}) {
         markAsRead: getIt<MarkArticleAsRead>(),
         toggleFavorite: getIt<ToggleFavorite>(),
         subscriptionStatusProvider: getIt<SubscriptionStatusProvider>(),
+        aiUsageRepository: getIt<AiUsageRepository>(),
         createArticleSummaryCubit: () => getIt<ArticleSummaryCubit>(),
         externalLinkLauncher: getIt<ExternalLinkLauncher>(),
       ),

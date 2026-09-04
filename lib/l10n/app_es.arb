@@ -37,7 +37,14 @@
       }
     }
   },
-  "articleSummaryLimitReachedTitle": "Ya usaste tus 25 resúmenes de hoy",
+  "articleSummaryLimitReachedTitle": "Ya usaste tus {limit} resúmenes de hoy",
+  "@articleSummaryLimitReachedTitle": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
   "articleSummaryLimitReachedSubtitle": "Vuelven mañana a las 00:00.",
 
   "favoritesEmptyTitle": "Sin favoritos aún",

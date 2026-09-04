@@ -39,9 +39,16 @@ final class ArticleSummaryError extends ArticleSummaryState {
 /// un tope esperado y alcanzable por diseño), así que el bottom sheet lo
 /// renderiza con superficie/tono neutro en vez del bloque rojo de error.
 /// Ver design.md, decisión 6.
+///
+/// [dailyLimit] es el límite vigente al momento del rechazo (25 con
+/// suscripción activa, 2 sin ella, ver capability `ai-usage-budget`), para
+/// que el copy muestre el número correcto en vez de uno fijo.
 final class ArticleSummaryLimitReached extends ArticleSummaryState {
-  const ArticleSummaryLimitReached() : super(remainingToday: 0);
+  final int dailyLimit;
+
+  const ArticleSummaryLimitReached({required this.dailyLimit})
+      : super(remainingToday: 0);
 
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [dailyLimit];
 }

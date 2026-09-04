@@ -47,7 +47,14 @@
       }
     }
   },
-  "articleSummaryLimitReachedTitle": "You've used all 25 summaries for today",
+  "articleSummaryLimitReachedTitle": "You've used all {limit} summaries for today",
+  "@articleSummaryLimitReachedTitle": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
   "articleSummaryLimitReachedSubtitle": "They're back tomorrow at 00:00.",
 
   "favoritesEmptyTitle": "No favorites yet",

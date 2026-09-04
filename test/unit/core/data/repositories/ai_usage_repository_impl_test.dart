@@ -5,17 +5,24 @@ import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/data/datasources/local/ai_usage_local_datasource.dart';
 import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/repositories/ai_usage_repository_impl.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 
 class MockAiUsageLocalDataSource extends Mock
     implements AiUsageLocalDataSource {}
 
+class MockSubscriptionStatusProvider extends Mock
+    implements SubscriptionStatusProvider {}
+
 void main() {
   late MockAiUsageLocalDataSource mockDataSource;
+  late MockSubscriptionStatusProvider mockSubscriptionStatusProvider;
   late AiUsageRepositoryImpl sut;
 
   setUp(() {
     mockDataSource = MockAiUsageLocalDataSource();
-    sut = AiUsageRepositoryImpl(mockDataSource);
+    mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
+    when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(true);
+    sut = AiUsageRepositoryImpl(mockDataSource, mockSubscriptionStatusProvider);
   });
 
   group('getStatus', () {
@@ -53,6 +60,24 @@ void main() {
 
       expect(status.summariesUsedToday, 0);
       expect(status.remaining, AppConstants.aiUsageDailySummaryLimit);
+    });
+
+    test('con suscripción activa, el límite vigente es 25', () async {
+      when(() => mockDataSource.get()).thenAnswer((_) async => null);
+      when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(true);
+
+      final status = await sut.getStatus();
+
+      expect(status.dailyLimit, AppConstants.aiUsageDailySummaryLimit);
+    });
+
+    test('sin suscripción activa, el límite vigente es el del free tier', () async {
+      when(() => mockDataSource.get()).thenAnswer((_) async => null);
+      when(() => mockSubscriptionStatusProvider.isSubscribed).thenReturn(false);
+
+      final status = await sut.getStatus();
+
+      expect(status.dailyLimit, AppConstants.aiUsageFreeTierDailyLimit);
     });
   });
 

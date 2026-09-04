@@ -5,7 +5,6 @@
 // design.md de add-article-summary-mentions.
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { hasActiveEntitlement } from "./entitlement.ts";
 import { isValidRawMention, type RawMention } from "./mention_types.ts";
 import { enrichMention } from "./providers.ts";
 
@@ -38,17 +37,13 @@ Deno.serve(async (req) => {
     );
   }
 
-  const { data: entitlementRow } = await userClient
-    .from("entitlements")
-    .select("is_active")
-    .eq("user_id", userData.user.id)
-    .maybeSingle();
-  if (!hasActiveEntitlement(entitlementRow)) {
-    return new Response(
-      JSON.stringify({ error: "Se requiere una suscripción activa" }),
-      { status: 403, headers: { "Content-Type": "application/json" } },
-    );
-  }
+  // Sin chequeo de suscripción: el control de acceso real ya ocurrió en
+  // summarize-article (que genera las menciones raw y descuenta el límite
+  // diario correspondiente, 25 con suscripción o 2 sin ella). Este proxy
+  // no invoca a Gemini ni descuenta presupuesto, así que no hay costo que
+  // justifique restringirlo más allá de requerir sesión autenticada (ver
+  // capability article-mentions, requirement "Enriquecimiento sin
+  // restricción de suscripción").
 
   let body: EnrichMentionsRequest;
   try {

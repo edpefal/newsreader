@@ -181,7 +181,7 @@ void main() {
       whenListen(
         cubit,
         const Stream<ArticleSummaryState>.empty(),
-        initialState: const ArticleSummaryLimitReached(),
+        initialState: const ArticleSummaryLimitReached(dailyLimit: 25),
       );
 
       await tester.pumpWidget(_buildSubject(cubit, launcher));
@@ -191,6 +191,23 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Vuelven mañana a las 00:00.'), findsOneWidget);
+    });
+
+    testWidgets(
+        'estado LimitReached sin suscripción muestra el límite gratis (2), no 25',
+        (tester) async {
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: const ArticleSummaryLimitReached(dailyLimit: 2),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit, launcher));
+
+      expect(
+        find.text('Ya usaste tus 2 resúmenes de hoy'),
+        findsOneWidget,
+      );
     });
   });
 }

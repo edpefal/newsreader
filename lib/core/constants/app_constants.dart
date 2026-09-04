@@ -12,6 +12,11 @@ class AppConstants {
   // servidor es quien realmente aplica el límite, este valor solo se usa
   // para calcular el restante que se muestra en el cliente.
   static const int aiUsageDailySummaryLimit = 25;
+  // Límite diario para usuarios sin suscripción activa (ver capability
+  // `ai-usage-budget`). Mismo valor que `AI_FREE_TIER_DAILY_LIMIT` en
+  // `summarize-article`; comparte el mismo contador diario que
+  // `aiUsageDailySummaryLimit`, no es un cupo aparte.
+  static const int aiUsageFreeTierDailyLimit = 2;
   static const String settingsThemeModeKey = 'theme_mode';
   // Gatea la migración de una sola vez desde el formato binario previo
   // (solo 'light'/'dark') al de tres opciones (se agrega 'system'). Es una

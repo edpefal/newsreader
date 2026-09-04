@@ -37,7 +37,14 @@
       }
     }
   },
-  "articleSummaryLimitReachedTitle": "Tu as utilisé tes 25 résumés du jour",
+  "articleSummaryLimitReachedTitle": "Tu as utilisé tes {limit} résumés du jour",
+  "@articleSummaryLimitReachedTitle": {
+    "placeholders": {
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
   "articleSummaryLimitReachedSubtitle": "Ils reviennent demain à 00h00.",
 
   "favoritesEmptyTitle": "Aucun favori pour l'instant",
