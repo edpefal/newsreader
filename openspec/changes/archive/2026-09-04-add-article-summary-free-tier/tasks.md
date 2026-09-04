@@ -43,4 +43,4 @@
 
 - [x] 7.1 Confirmado con el usuario: desplegar a ambos proyectos (`reevo` prod y `reevo-dev` dev).
 - [x] 7.2 `summarize-article` y `enrich-mentions` desplegadas en ambos proyectos. Sin migración (no hubo cambios de schema en este change).
-- [ ] 7.3 Correr `flutter analyze` y `flutter test` localmente antes de subir la rama (hecho, ambos en verde); abrir PR y esperar el check `analyze-and-test` en verde antes de mergear. Tras mergear, volver a `main`, actualizarla, y borrar la rama.
+- [x] 7.3 Correr `flutter analyze` y `flutter test` localmente antes de subir la rama (hecho, ambos en verde); abrir PR y esperar el check `analyze-and-test` en verde antes de mergear. Tras mergear, volver a `main`, actualizarla, y borrar la rama. PR #21 mergeado 2026-09-04; probado manualmente por el usuario en simulador (incluye los fixes de overflow del bottom sheet, PR #23 y #24, no parte de este change pero tocan el mismo widget).
