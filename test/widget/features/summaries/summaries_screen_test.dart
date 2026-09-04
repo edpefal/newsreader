@@ -291,7 +291,7 @@ void main() {
       expect(
         find.text(
           'Ya usaste tu resumen gratis de esta semana — se renueva el lunes, '
-          'o suscríbete para tener resúmenes ilimitados',
+          'o suscríbete para tener un resumen todos los días',
         ),
         findsOneWidget,
       );
@@ -315,7 +315,7 @@ void main() {
       expect(
         find.text(
           'Ya usaste tu resumen gratis de esta semana — se renueva el lunes, '
-          'o suscríbete para tener resúmenes ilimitados',
+          'o suscríbete para tener un resumen todos los días',
         ),
         findsNothing,
       );

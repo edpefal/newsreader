@@ -152,7 +152,7 @@
   "summariesCreateTodayButton": "Create today's summary",
   "summariesAlreadyGeneratedToday": "You already generated today's summary. Come back tomorrow for a new one.",
   "summariesFreeTierAvailable": "You have 1 free summary left this week",
-  "summariesFreeTierExhausted": "You already used your free summary this week — it renews on Monday, or subscribe for unlimited summaries",
+  "summariesFreeTierExhausted": "You already used your free summary this week — it renews on Monday, or subscribe to get a summary every day",
   "summariesEmptyTitle": "No summaries yet",
   "summariesEmptySubtitle": "Create today's summary to see what your news was about.",
   "summaryDetailTitle": "Summary for {date}",
