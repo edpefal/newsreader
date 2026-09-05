@@ -52,3 +52,16 @@ final class ArticleSummaryLimitReached extends ArticleSummaryState {
   @override
   List<Object?> get props => [dailyLimit];
 }
+
+/// Usuario sin suscripción activa que ya agotó su cupo diario gratis (2/día,
+/// ver capability `ai-usage-budget`) -- distinto de [ArticleSummaryLimitReached]:
+/// este estado se emite *antes* de intentar generar, sin llamar al backend
+/// ni a `AiUsageRepository`, y es exclusivo de usuarios sin suscripción (ver
+/// design.md). El bottom sheet lo renderiza con un botón que dispara el
+/// paywall.
+final class ArticleSummaryFreeTierExhausted extends ArticleSummaryState {
+  const ArticleSummaryFreeTierExhausted() : super(remainingToday: 0);
+
+  @override
+  List<Object?> get props => [];
+}

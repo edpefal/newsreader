@@ -56,6 +56,9 @@
     }
   },
   "articleSummaryLimitReachedSubtitle": "They're back tomorrow at 00:00.",
+  "articleSummaryFreeTierExhaustedTitle": "You've used today's free summary",
+  "articleSummaryFreeTierExhaustedSubtitle": "Get Premium for more summaries every day.",
+  "articleSummaryFreeTierExhaustedButton": "Get Premium",
 
   "favoritesEmptyTitle": "No favorites yet",
   "favoritesEmptySubtitle": "Open an article and tap the star to save it here.",

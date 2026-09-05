@@ -9,6 +9,7 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/article_summary.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
 import 'package:newsreader/features/article_summary/presentation/widgets/article_summary_bottom_sheet.dart';
 import 'package:newsreader/features/article_summary/presentation/widgets/mention_card.dart';
@@ -20,14 +21,33 @@ class MockArticleSummaryCubit extends MockCubit<ArticleSummaryState>
 
 class MockExternalLinkLauncher extends Mock implements ExternalLinkLauncher {}
 
+class MockSubscriptionStatusProvider extends Mock
+    implements SubscriptionStatusProvider {}
+
+final tArticle = Article(
+  id: 'a1',
+  sourceId: 's1',
+  sourceName: 'Newsletter A',
+  title: 'Un artículo',
+  publishedAt: DateTime(2024, 3, 15),
+  articleUrl: 'https://example.com/a1',
+);
+
 Widget _buildSubject(
   ArticleSummaryCubit cubit,
   ExternalLinkLauncher launcher, {
+  SubscriptionStatusProvider? subscriptionStatusProvider,
   double? maxHeight,
 }) {
   final content = BlocProvider<ArticleSummaryCubit>.value(
     value: cubit,
-    child: ArticleSummarySheetContent(externalLinkLauncher: launcher),
+    child: ArticleSummarySheetContent(
+      article: tArticle,
+      language: 'es',
+      externalLinkLauncher: launcher,
+      subscriptionStatusProvider:
+          subscriptionStatusProvider ?? MockSubscriptionStatusProvider(),
+    ),
   );
   return MaterialApp(
     locale: testLocale,
@@ -250,18 +270,92 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets(
+        'estado FreeTierExhausted muestra el mensaje y el botón de premium',
+        (tester) async {
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: const ArticleSummaryFreeTierExhausted(),
+      );
+
+      await tester.pumpWidget(_buildSubject(cubit, launcher));
+
+      expect(
+        find.text('Ya usaste tu resumen gratis de hoy'),
+        findsOneWidget,
+      );
+      expect(find.text('Obtener Premium'), findsOneWidget);
+    });
+
+    testWidgets(
+        'estado FreeTierExhausted, tocar el botón dispara el paywall',
+        (tester) async {
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: const ArticleSummaryFreeTierExhausted(),
+      );
+      final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
+      when(() => mockSubscriptionStatusProvider.isSubscribed)
+          .thenReturn(false);
+      when(
+        () => mockSubscriptionStatusProvider.showPaywall(
+          onSubscribed: any(named: 'onSubscribed'),
+        ),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(_buildSubject(
+        cubit,
+        launcher,
+        subscriptionStatusProvider: mockSubscriptionStatusProvider,
+      ));
+      await tester.tap(find.text('Obtener Premium'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => mockSubscriptionStatusProvider.showPaywall(
+          onSubscribed: any(named: 'onSubscribed'),
+        ),
+      ).called(1);
+    });
+
+    testWidgets(
+        'estado FreeTierExhausted, completar la compra dispara generate()',
+        (tester) async {
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: const ArticleSummaryFreeTierExhausted(),
+      );
+      when(() => cubit.generate(any(), any())).thenAnswer((_) async {});
+      final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
+      when(() => mockSubscriptionStatusProvider.isSubscribed)
+          .thenReturn(true);
+      when(
+        () => mockSubscriptionStatusProvider.showPaywall(
+          onSubscribed: any(named: 'onSubscribed'),
+        ),
+      ).thenAnswer((invocation) async {
+        final onSubscribed = invocation.namedArguments[#onSubscribed]
+            as Future<void> Function();
+        await onSubscribed();
+      });
+
+      await tester.pumpWidget(_buildSubject(
+        cubit,
+        launcher,
+        subscriptionStatusProvider: mockSubscriptionStatusProvider,
+      ));
+      await tester.tap(find.text('Obtener Premium'));
+      await tester.pumpAndSettle();
+
+      verify(() => cubit.generate(tArticle, 'es')).called(1);
+    });
   });
 
   group('showArticleSummarySheet', () {
-    final tArticle = Article(
-      id: 'a1',
-      sourceId: 's1',
-      sourceName: 'Newsletter A',
-      title: 'Un artículo',
-      publishedAt: DateTime(2024, 3, 15),
-      articleUrl: 'https://example.com/a1',
-    );
-
     testWidgets(
         'el sheet nunca tapa el status bar, ni con un resumen muy largo '
         '(regresión del fix de REEVO-PROD-8)', (tester) async {
@@ -299,6 +393,7 @@ void main() {
                 article: tArticle,
                 createCubit: () => cubit,
                 externalLinkLauncher: launcher,
+                subscriptionStatusProvider: MockSubscriptionStatusProvider(),
               ),
               child: const Text('Abrir'),
             ),

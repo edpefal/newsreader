@@ -380,16 +380,12 @@ void main() {
     });
 
     testWidgets(
-        'sin suscripción y sin cupo gratis, tap en resumen muestra el '
-        'paywall sin abrir el sheet', (tester) async {
+        'sin suscripción y sin cupo gratis, tap en resumen abre el sheet '
+        'con el estado de cupo agotado, sin mostrar el paywall automático',
+        (tester) async {
       final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
       when(() => mockSubscriptionStatusProvider.isSubscribed)
           .thenReturn(false);
-      when(
-        () => mockSubscriptionStatusProvider.showPaywall(
-          onSubscribed: any(named: 'onSubscribed'),
-        ),
-      ).thenAnswer((_) async {});
       final mockAiUsageRepository = MockAiUsageRepository();
       when(() => mockAiUsageRepository.getStatus()).thenAnswer(
         (_) async => const AiUsageStatus(summariesUsedToday: 2, dailyLimit: 2),
@@ -407,12 +403,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      verify(
+      verifyNever(
         () => mockSubscriptionStatusProvider.showPaywall(
           onSubscribed: any(named: 'onSubscribed'),
         ),
-      ).called(1);
-      expect(find.byType(BottomSheet), findsNothing);
+      );
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(
+        find.text('Ya usaste tu resumen gratis de hoy'),
+        findsOneWidget,
+      );
     });
 
     testWidgets(

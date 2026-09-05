@@ -46,6 +46,9 @@
     }
   },
   "articleSummaryLimitReachedSubtitle": "Vuelven mañana a las 00:00.",
+  "articleSummaryFreeTierExhaustedTitle": "Ya usaste tu resumen gratis de hoy",
+  "articleSummaryFreeTierExhaustedSubtitle": "Obtén Premium para tener más resúmenes cada día.",
+  "articleSummaryFreeTierExhaustedButton": "Obtener Premium",
 
   "favoritesEmptyTitle": "Sin favoritos aún",
   "favoritesEmptySubtitle": "Abre un artículo y toca la estrella para guardarlo aquí.",

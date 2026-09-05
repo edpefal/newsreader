@@ -61,4 +61,13 @@ class ArticleSummaryCubit extends Cubit<ArticleSummaryState> {
 
   Future<int> _remainingToday() async =>
       (await _aiUsageRepository.getStatus()).remaining;
+
+  /// Arranque alternativo a [generate], para cuando el sheet se abre ya
+  /// sabiendo que el usuario no tiene suscripción activa ni cupo gratis
+  /// disponible (chequeo hecho antes, en `ReaderScreen._onSummaryPressed`).
+  /// No invoca el use case de generación ni consulta `AiUsageRepository` --
+  /// el estado resultante ya sabe que no queda cupo.
+  void showFreeTierExhausted() {
+    emit(const ArticleSummaryFreeTierExhausted());
+  }
 }

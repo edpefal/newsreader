@@ -262,6 +262,24 @@ abstract class AppLocalizations {
   /// **'They\'re back tomorrow at 00:00.'**
   String get articleSummaryLimitReachedSubtitle;
 
+  /// No description provided for @articleSummaryFreeTierExhaustedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve used today\'s free summary'**
+  String get articleSummaryFreeTierExhaustedTitle;
+
+  /// No description provided for @articleSummaryFreeTierExhaustedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Premium for more summaries every day.'**
+  String get articleSummaryFreeTierExhaustedSubtitle;
+
+  /// No description provided for @articleSummaryFreeTierExhaustedButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Premium'**
+  String get articleSummaryFreeTierExhaustedButton;
+
   /// No description provided for @favoritesEmptyTitle.
   ///
   /// In en, this message translates to:

@@ -180,5 +180,19 @@ void main() {
         const ArticleSummaryLimitReached(dailyLimit: 2),
       ],
     );
+
+    blocTest<ArticleSummaryCubit, ArticleSummaryState>(
+      'showFreeTierExhausted() emite FreeTierExhausted sin llamar a la generación ni al repositorio de uso',
+      build: buildCubit,
+      act: (cubit) => cubit.showFreeTierExhausted(),
+      expect: () => [const ArticleSummaryFreeTierExhausted()],
+      verify: (_) {
+        verifyNever(() => mockGenerateArticleSummary.execute(
+              any(),
+              language: any(named: 'language'),
+            ));
+        verifyNever(() => mockAiUsageRepository.getStatus());
+      },
+    );
   });
 }
