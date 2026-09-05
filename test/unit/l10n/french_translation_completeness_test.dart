@@ -22,6 +22,8 @@ void main() {
       'navInbox', // se mantiene igual en los 3 idiomas
       'navSources', // "Sources" se escribe igual en francés
       'summaryListArticleCount', // "article"/"articles" es igual en francés
+      'settingsAccountTierFree', // "Free" se usa igual como nombre de tier
+      'settingsAccountTierPremium', // "Premium" se usa igual como nombre de tier
     };
 
     final untranslated = <String>[];
