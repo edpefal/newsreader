@@ -212,11 +212,14 @@
   "navSettings": "Settings",
 
   "settingsScreenTitle": "Settings",
+  "settingsAccountTierSectionTitle": "Your account",
+  "settingsAccountTierFree": "Free",
+  "settingsAccountTierPremium": "Premium",
+  "settingsAccountTierUpgradeButton": "Get Premium",
   "settingsThemeSectionTitle": "Appearance",
   "settingsThemeSystem": "System",
   "settingsThemeLight": "Light",
   "settingsThemeDark": "Dark",
-  "settingsAccountSectionTitle": "Account",
 
   "commonDaysAgoShort": "{count}d",
   "@commonDaysAgoShort": {

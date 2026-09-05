@@ -718,6 +718,30 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsScreenTitle;
 
+  /// No description provided for @settingsAccountTierSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account'**
+  String get settingsAccountTierSectionTitle;
+
+  /// No description provided for @settingsAccountTierFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Free'**
+  String get settingsAccountTierFree;
+
+  /// No description provided for @settingsAccountTierPremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get settingsAccountTierPremium;
+
+  /// No description provided for @settingsAccountTierUpgradeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Premium'**
+  String get settingsAccountTierUpgradeButton;
+
   /// No description provided for @settingsThemeSectionTitle.
   ///
   /// In en, this message translates to:
@@ -741,12 +765,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dark'**
   String get settingsThemeDark;
-
-  /// No description provided for @settingsAccountSectionTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Account'**
-  String get settingsAccountSectionTitle;
 
   /// No description provided for @commonDaysAgoShort.
   ///

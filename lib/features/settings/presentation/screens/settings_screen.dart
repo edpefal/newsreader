@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
 import 'package:newsreader/features/account/presentation/widgets/delete_account_dialog.dart';
@@ -21,6 +22,7 @@ class SettingsScreen extends StatefulWidget {
   final DeleteAccount deleteAccount;
   final ClearLocalUserData clearLocalUserData;
   final AuthClient authClient;
+  final SubscriptionStatusProvider subscriptionStatusProvider;
 
   const SettingsScreen({
     super.key,
@@ -28,6 +30,7 @@ class SettingsScreen extends StatefulWidget {
     required this.deleteAccount,
     required this.clearLocalUserData,
     required this.authClient,
+    required this.subscriptionStatusProvider,
   });
 
   @override
@@ -49,6 +52,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  l10n.settingsAccountTierSectionTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                if (widget.authClient.currentUserEmail case final email?) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    email,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Text(
+                      widget.subscriptionStatusProvider.isSubscribed
+                          ? l10n.settingsAccountTierPremium
+                          : l10n.settingsAccountTierFree,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    if (!widget.subscriptionStatusProvider.isSubscribed) ...[
+                      const SizedBox(width: 12),
+                      OutlinedButton(
+                        onPressed: () => _upgradeToPremium(context),
+                        child: Text(l10n.settingsAccountTierUpgradeButton),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.ios_share),
+                  title: Text(l10n.navExportData),
+                  onTap: () => _exportUserData(context),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    Icons.delete_forever,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  title: Text(
+                    l10n.accountDeleteDialogTitle,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  onTap: () => _confirmDeleteAccount(context),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.logout),
+                  title: Text(l10n.navSignOut),
+                  onTap: () => _signOut(context),
+                ),
+                const SizedBox(height: 24),
                 Text(
                   l10n.settingsThemeSectionTitle,
                   style: Theme.of(context).textTheme.titleMedium,
@@ -78,42 +140,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  l10n.settingsAccountSectionTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.ios_share),
-                  title: Text(l10n.navExportData),
-                  onTap: () => _exportUserData(context),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    Icons.delete_forever,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  title: Text(
-                    l10n.accountDeleteDialogTitle,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                  onTap: () => _confirmDeleteAccount(context),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.logout),
-                  title: Text(l10n.navSignOut),
-                  onTap: () => _signOut(context),
-                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _upgradeToPremium(BuildContext context) async {
+    await widget.subscriptionStatusProvider.showPaywall(
+      onSubscribed: () async {
+        if (mounted) setState(() {});
+      },
     );
   }
 

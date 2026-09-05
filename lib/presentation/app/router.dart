@@ -244,6 +244,7 @@ final appRouter = GoRouter(
         deleteAccount: getIt<DeleteAccount>(),
         clearLocalUserData: getIt<ClearLocalUserData>(),
         authClient: getIt<AuthClient>(),
+        subscriptionStatusProvider: getIt<SubscriptionStatusProvider>(),
       ),
     ),
     GoRoute(

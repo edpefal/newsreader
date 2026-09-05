@@ -135,11 +135,14 @@
   "navSettings": "Paramètres",
 
   "settingsScreenTitle": "Paramètres",
+  "settingsAccountTierSectionTitle": "Votre compte",
+  "settingsAccountTierFree": "Free",
+  "settingsAccountTierPremium": "Premium",
+  "settingsAccountTierUpgradeButton": "Passer à Premium",
   "settingsThemeSectionTitle": "Apparence",
   "settingsThemeSystem": "Système",
   "settingsThemeLight": "Clair",
   "settingsThemeDark": "Sombre",
-  "settingsAccountSectionTitle": "Compte",
 
   "commonDaysAgoShort": "{count} j",
   "commonNoSearchResults": "Aucun résultat",

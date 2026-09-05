@@ -5,6 +5,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/auth/auth_client.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
 import 'package:newsreader/features/settings/presentation/screens/settings_screen.dart';
@@ -21,6 +22,9 @@ class MockClearLocalUserData extends Mock implements ClearLocalUserData {}
 
 class MockAuthClient extends Mock implements AuthClient {}
 
+class MockSubscriptionStatusProvider extends Mock
+    implements SubscriptionStatusProvider {}
+
 class MockSettingsBox extends Mock implements Box<dynamic> {}
 
 Widget _buildSubject({
@@ -28,6 +32,7 @@ Widget _buildSubject({
   required DeleteAccount deleteAccount,
   required ClearLocalUserData clearLocalUserData,
   required AuthClient authClient,
+  required SubscriptionStatusProvider subscriptionStatusProvider,
 }) {
   final settingsBox = MockSettingsBox();
   when(() => settingsBox.get(any(), defaultValue: any(named: 'defaultValue')))
@@ -45,6 +50,7 @@ Widget _buildSubject({
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
         authClient: authClient,
+        subscriptionStatusProvider: subscriptionStatusProvider,
       ),
     ),
   );
@@ -56,14 +62,19 @@ void main() {
     late MockDeleteAccount deleteAccount;
     late MockClearLocalUserData clearLocalUserData;
     late MockAuthClient authClient;
+    late MockSubscriptionStatusProvider subscriptionStatusProvider;
 
     setUp(() {
       exportUserData = MockExportUserData();
       deleteAccount = MockDeleteAccount();
       clearLocalUserData = MockClearLocalUserData();
       authClient = MockAuthClient();
+      subscriptionStatusProvider = MockSubscriptionStatusProvider();
       when(() => clearLocalUserData.execute()).thenAnswer((_) async {});
       when(() => authClient.signOut()).thenAnswer((_) async {});
+      when(() => authClient.currentUserEmail)
+          .thenReturn('lector@example.com');
+      when(() => subscriptionStatusProvider.isSubscribed).thenReturn(false);
     });
 
     testWidgets('muestra la opción de cerrar sesión', (tester) async {
@@ -72,6 +83,7 @@ void main() {
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
         authClient: authClient,
+        subscriptionStatusProvider: subscriptionStatusProvider,
       ));
 
       expect(find.text('Cerrar sesión'), findsOneWidget);
@@ -85,6 +97,7 @@ void main() {
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
         authClient: authClient,
+        subscriptionStatusProvider: subscriptionStatusProvider,
       ));
 
       await tester.tap(find.text('Cerrar sesión'));
@@ -92,6 +105,18 @@ void main() {
 
       verify(() => clearLocalUserData.execute()).called(1);
       verify(() => authClient.signOut()).called(1);
+    });
+
+    testWidgets('muestra el email de la cuenta autenticada', (tester) async {
+      await tester.pumpWidget(_buildSubject(
+        exportUserData: exportUserData,
+        deleteAccount: deleteAccount,
+        clearLocalUserData: clearLocalUserData,
+        authClient: authClient,
+        subscriptionStatusProvider: subscriptionStatusProvider,
+      ));
+
+      expect(find.text('lector@example.com'), findsOneWidget);
     });
 
     testWidgets(
@@ -107,6 +132,7 @@ void main() {
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
         authClient: authClient,
+        subscriptionStatusProvider: subscriptionStatusProvider,
       ));
 
       final size = tester.getSize(
@@ -117,6 +143,93 @@ void main() {
         ),
       );
       expect(size.width, kSettingsMaxContentWidth);
+    });
+
+    testWidgets(
+        'cuenta Free muestra "Free" y el botón de upgrade como primera sección',
+        (tester) async {
+      when(() => subscriptionStatusProvider.isSubscribed).thenReturn(false);
+
+      await tester.pumpWidget(_buildSubject(
+        exportUserData: exportUserData,
+        deleteAccount: deleteAccount,
+        clearLocalUserData: clearLocalUserData,
+        authClient: authClient,
+        subscriptionStatusProvider: subscriptionStatusProvider,
+      ));
+
+      expect(find.text('Free'), findsOneWidget);
+      expect(find.text('Obtener Premium'), findsOneWidget);
+    });
+
+    testWidgets('cuenta Premium muestra "Premium" sin botón de upgrade',
+        (tester) async {
+      when(() => subscriptionStatusProvider.isSubscribed).thenReturn(true);
+
+      await tester.pumpWidget(_buildSubject(
+        exportUserData: exportUserData,
+        deleteAccount: deleteAccount,
+        clearLocalUserData: clearLocalUserData,
+        authClient: authClient,
+        subscriptionStatusProvider: subscriptionStatusProvider,
+      ));
+
+      expect(find.text('Premium'), findsOneWidget);
+      expect(find.text('Obtener Premium'), findsNothing);
+    });
+
+    testWidgets('tocar "Obtener Premium" dispara el paywall', (tester) async {
+      when(() => subscriptionStatusProvider.isSubscribed).thenReturn(false);
+      when(
+        () => subscriptionStatusProvider.showPaywall(
+          onSubscribed: any(named: 'onSubscribed'),
+        ),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(_buildSubject(
+        exportUserData: exportUserData,
+        deleteAccount: deleteAccount,
+        clearLocalUserData: clearLocalUserData,
+        authClient: authClient,
+        subscriptionStatusProvider: subscriptionStatusProvider,
+      ));
+      await tester.tap(find.text('Obtener Premium'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => subscriptionStatusProvider.showPaywall(
+          onSubscribed: any(named: 'onSubscribed'),
+        ),
+      ).called(1);
+    });
+
+    testWidgets(
+        'completar la compra desde el paywall actualiza la sección a Premium',
+        (tester) async {
+      when(() => subscriptionStatusProvider.isSubscribed).thenReturn(false);
+      when(
+        () => subscriptionStatusProvider.showPaywall(
+          onSubscribed: any(named: 'onSubscribed'),
+        ),
+      ).thenAnswer((invocation) async {
+        when(() => subscriptionStatusProvider.isSubscribed).thenReturn(true);
+        final onSubscribed = invocation.namedArguments[#onSubscribed]
+            as Future<void> Function();
+        await onSubscribed();
+      });
+
+      await tester.pumpWidget(_buildSubject(
+        exportUserData: exportUserData,
+        deleteAccount: deleteAccount,
+        clearLocalUserData: clearLocalUserData,
+        authClient: authClient,
+        subscriptionStatusProvider: subscriptionStatusProvider,
+      ));
+      await tester.tap(find.text('Obtener Premium'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Premium'), findsOneWidget);
+      expect(find.text('Obtener Premium'), findsNothing);
     });
   });
 }

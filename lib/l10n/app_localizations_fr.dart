@@ -409,6 +409,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsScreenTitle => 'Paramètres';
 
   @override
+  String get settingsAccountTierSectionTitle => 'Votre compte';
+
+  @override
+  String get settingsAccountTierFree => 'Free';
+
+  @override
+  String get settingsAccountTierPremium => 'Premium';
+
+  @override
+  String get settingsAccountTierUpgradeButton => 'Passer à Premium';
+
+  @override
   String get settingsThemeSectionTitle => 'Apparence';
 
   @override
@@ -419,9 +431,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsThemeDark => 'Sombre';
-
-  @override
-  String get settingsAccountSectionTitle => 'Compte';
 
   @override
   String commonDaysAgoShort(int count) {
