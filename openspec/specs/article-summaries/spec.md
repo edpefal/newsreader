@@ -14,9 +14,9 @@ El resumen SHALL tener entre 1 y 4 párrafos: el sistema SHALL usar un único p�
 
 La solicitud SHALL autenticarse con el access token de la sesión activa del usuario, bajo las mismas reglas que `daily-summaries`: el backend SHALL rechazar solicitudes sin sesión de usuario autenticada.
 
-Generar un resumen de artículo SHALL requerir, alternativamente: (a) una suscripción activa (capability `subscription-entitlements`), o (b) cupo disponible del límite diario gratis de `ai-usage-budget` (2 resúmenes de artículo por día de servidor sin suscripción activa, ver capability `ai-usage-budget`, requirement "Límite diario de resúmenes de artículo por usuario"). El sistema SHALL verificarlo en el siguiente orden, tanto en la UI como en el backend: si hay suscripción activa, abrir el bottom sheet/generar directo sin consultar el cupo gratis; si no hay suscripción activa pero hay cupo diario gratis disponible, abrir el bottom sheet/generar igual que con suscripción; si no se cumple ninguna de las dos, la UI SHALL mostrar el paywall en vez de abrir el bottom sheet, y el backend SHALL rechazar la solicitud sin invocar a la API de IA. Ante el cierre del paywall sin comprar, el sistema NO SHALL disparar la generación (mismo comportamiento que `daily-summaries`); ante la compra completada desde el paywall, la generación SHALL dispararse automáticamente a continuación.
+Generar un resumen de artículo SHALL requerir, alternativamente: (a) una suscripción activa (capability `subscription-entitlements`), o (b) cupo disponible del límite diario gratis de `ai-usage-budget` (2 resúmenes de artículo por día de servidor sin suscripción activa, ver capability `ai-usage-budget`, requirement "Límite diario de resúmenes de artículo por usuario"). El sistema SHALL verificarlo en el siguiente orden, tanto en la UI como en el backend: si hay suscripción activa, abrir el bottom sheet/generar directo sin consultar el cupo gratis; si no hay suscripción activa pero hay cupo diario gratis disponible, abrir el bottom sheet/generar igual que con suscripción; si no se cumple ninguna de las dos, la UI SHALL abrir igualmente el bottom sheet, mostrando el estado de cupo gratis agotado en vez de generar (ver Requirement: Estado de cupo gratis agotado en el bottom sheet), y el backend SHALL rechazar la solicitud sin invocar a la API de IA si de todas formas llega una. El paywall de Superwall ya no se muestra automáticamente en este caso: solo se dispara si el usuario toca el botón correspondiente dentro de ese estado. Ante el cierre del paywall sin comprar, el sistema NO SHALL disparar la generación (mismo comportamiento que `daily-summaries`); ante la compra completada desde el paywall, la generación SHALL dispararse automáticamente a continuación.
 
-La generación SHALL estar sujeta al límite diario vigente (25 con suscripción activa, 2 sin ella) y al techo de longitud por artículo de `ai-usage-budget`: si generar excedería el límite diario disponible, o si el contenido del artículo supera el techo de longitud, el backend SHALL rechazar la solicitud sin invocar a la API de IA, y el sistema SHALL mostrar un estado de error distinguible para cada uno de esos dos casos. El estado de error por límite diario alcanzado SHALL ser el mismo sin importar si el usuario tiene o no suscripción activa (no hay un estado ni mensaje separado para "cupo gratis agotado").
+La generación SHALL estar sujeta al límite diario vigente (25 con suscripción activa, 2 sin ella) y al techo de longitud por artículo de `ai-usage-budget`: si generar excedería el límite diario disponible, o si el contenido del artículo supera el techo de longitud, el backend SHALL rechazar la solicitud sin invocar a la API de IA, y el sistema SHALL mostrar un estado de error distinguible para cada uno de esos dos casos. El estado de error por límite diario alcanzado tras un rechazo del backend SHALL ser el mismo sin importar si el usuario tiene o no suscripción activa (no hay un estado ni mensaje separado para "cupo gratis agotado" en ese caso) -- esto es distinto del estado de cupo gratis agotado mostrado antes de intentar generar, que sí es exclusivo de usuarios sin suscripción activa (ver Requirement: Estado de cupo gratis agotado en el bottom sheet).
 
 #### Scenario: Generar resumen de un artículo abierto
 
@@ -33,10 +33,10 @@ La generación SHALL estar sujeta al límite diario vigente (25 con suscripción
 - **WHEN** el usuario genera el resumen de un artículo que cubre varios temas o ideas separables y un solo párrafo no alcanza para cubrirlos con la voz editorial esperada
 - **THEN** el resumen generado usa más de un párrafo, hasta un máximo de 4, manteniendo la voz editorial en cada uno
 
-#### Scenario: Usuario sin suscripción y sin cupo gratis ve el paywall
+#### Scenario: Usuario sin suscripción y sin cupo gratis ve el bottom sheet con el cupo agotado
 
 - **WHEN** el usuario sin suscripción activa y sin cupo diario gratis disponible toca el botón de resumen de un artículo
-- **THEN** el sistema muestra el paywall de Superwall en vez de abrir el bottom sheet
+- **THEN** el sistema abre el bottom sheet mostrando el estado de cupo gratis agotado, sin invocar la API de IA ni mostrar el paywall automáticamente
 
 #### Scenario: Usuario sin suscripción pero con cupo gratis abre el sheet sin ver el paywall
 
@@ -50,12 +50,12 @@ La generación SHALL estar sujeta al límite diario vigente (25 con suscripción
 
 #### Scenario: Cerrar el paywall sin comprar no dispara la generación
 
-- **WHEN** el usuario sin suscripción activa y sin cupo gratis toca el botón de resumen, se muestra el paywall, y lo cierra sin completar ninguna compra
-- **THEN** el sistema no dispara la generación ni envía ninguna solicitud al backend
+- **WHEN** el usuario sin suscripción activa y sin cupo gratis toca el botón de resumen, ve el estado de cupo agotado, toca el botón de premium, se muestra el paywall, y lo cierra sin completar ninguna compra
+- **THEN** el sistema no dispara la generación ni envía ninguna solicitud al backend, y el bottom sheet sigue mostrando el estado de cupo agotado
 
 #### Scenario: Completar la compra desde el paywall dispara la generación
 
-- **WHEN** el usuario sin suscripción activa toca el botón de resumen, se muestra el paywall, y completa la compra
+- **WHEN** el usuario sin suscripción activa toca el botón de resumen, ve el estado de cupo agotado, toca el botón de premium, se muestra el paywall, y completa la compra
 - **THEN** el sistema, con la suscripción ya activa, dispara la generación automáticamente a continuación
 
 #### Scenario: Solicitud sin sesión de usuario activa
@@ -108,6 +108,25 @@ El sistema SHALL mostrar siempre, en el bottom sheet de resumen del `ReaderScree
 #### Scenario: El texto del límite alcanzado muestra el número correcto sin suscripción
 - **WHEN** un usuario sin suscripción activa alcanza su límite diario gratis de 2 resúmenes
 - **THEN** el texto mostrado indica "2", no "25"
+
+### Requirement: Estado de cupo gratis agotado en el bottom sheet
+
+Cuando el usuario sin suscripción activa y sin cupo diario gratis disponible toca el botón de resumen de un artículo, el sistema SHALL abrir el bottom sheet mostrando un estado propio, distinguible del bloque de error genérico y del estado neutro de "límite diario alcanzado" (ver Requirement: Indicador de uso restante en el bottom sheet), que indica al usuario que consumió su resumen gratis de hoy. Ese estado SHALL incluir un botón visible que, al tocarlo, dispara el paywall de Superwall (mismo paywall y mismo flujo post-compra que el resto de la app: al completar la compra, la generación se dispara automáticamente; al cerrar sin comprar, no se dispara ninguna generación y el bottom sheet permanece en este mismo estado). Este estado SHALL aplicar únicamente antes de intentar generar (sin invocar al backend) y solo a usuarios sin suscripción activa.
+
+#### Scenario: Abrir el sheet sin cupo gratis muestra el estado de cupo agotado
+
+- **WHEN** el usuario sin suscripción activa y sin cupo diario gratis disponible toca el botón de resumen de un artículo
+- **THEN** el bottom sheet muestra un mensaje indicando que ya usó su resumen gratis de hoy, junto con un botón para acceder a la versión premium
+
+#### Scenario: Tocar el botón de premium dispara el paywall
+
+- **WHEN** el usuario ve el estado de cupo gratis agotado en el bottom sheet y toca el botón de premium
+- **THEN** el sistema muestra el paywall de Superwall
+
+#### Scenario: El estado de cupo agotado no invoca a la API de IA
+
+- **WHEN** el sistema muestra el estado de cupo gratis agotado en el bottom sheet
+- **THEN** el sistema no envía ninguna solicitud de generación al backend hasta que el usuario complete una compra desde el paywall
 
 ### Requirement: Persistencia del resumen por artículo, sin regenerar
 
