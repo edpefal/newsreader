@@ -107,6 +107,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'They\'re back tomorrow at 00:00.';
 
   @override
+  String get articleSummaryFreeTierExhaustedTitle =>
+      'You\'ve used today\'s free summary';
+
+  @override
+  String get articleSummaryFreeTierExhaustedSubtitle =>
+      'Get Premium for more summaries every day.';
+
+  @override
+  String get articleSummaryFreeTierExhaustedButton => 'Get Premium';
+
+  @override
   String get favoritesEmptyTitle => 'No favorites yet';
 
   @override

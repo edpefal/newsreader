@@ -132,9 +132,9 @@ class _ReaderScreenState extends State<ReaderScreen>
   /// suscripción activa, abre el sheet directo; sin suscripción, primero
   /// chequea el cupo diario gratis (2/día, ver capability
   /// `ai-usage-budget`) -- con cupo disponible abre el sheet igual que con
-  /// suscripción, sin cupo muestra el paywall. Tras cerrar el paywall,
-  /// vuelve a chequear `isSubscribed` en vez de confiar únicamente en que
-  /// Superwall haya invocado el callback de compra completada.
+  /// suscripción, sin cupo abre igual el sheet pero con el estado de cupo
+  /// agotado (el paywall ya no se muestra automático, ver capability
+  /// `article-summaries`).
   Future<void> _onSummaryPressed(BuildContext context) async {
     if (widget.subscriptionStatusProvider.isSubscribed) {
       _openSummarySheet(context);
@@ -142,27 +142,21 @@ class _ReaderScreenState extends State<ReaderScreen>
     }
 
     final freeStatus = await widget.aiUsageRepository.getStatus();
-    if (!freeStatus.limitReached) {
-      if (!context.mounted) return;
-      _openSummarySheet(context);
-      return;
-    }
-
-    await widget.subscriptionStatusProvider.showPaywall(
-      onSubscribed: () async {
-        if (!widget.subscriptionStatusProvider.isSubscribed) return;
-        if (!mounted) return;
-        _openSummarySheet(context);
-      },
-    );
+    if (!context.mounted) return;
+    _openSummarySheet(context, openFreeTierExhausted: freeStatus.limitReached);
   }
 
-  void _openSummarySheet(BuildContext context) {
+  void _openSummarySheet(
+    BuildContext context, {
+    bool openFreeTierExhausted = false,
+  }) {
     showArticleSummarySheet(
       context,
       article: widget.article,
       createCubit: widget.createArticleSummaryCubit,
       externalLinkLauncher: widget.externalLinkLauncher,
+      subscriptionStatusProvider: widget.subscriptionStatusProvider,
+      openFreeTierExhausted: openFreeTierExhausted,
     );
   }
 

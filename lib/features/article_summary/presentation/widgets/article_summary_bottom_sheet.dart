@@ -4,19 +4,27 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
+import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
 import 'package:newsreader/features/article_summary/presentation/widgets/mention_card.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 
 /// Abre el bottom sheet de resumen+menciones de [article], generándolo (o
 /// mostrando el ya persistido) apenas se abre -- ver capability
-/// `article-summaries`. El chequeo de suscripción/paywall ya se resolvió
-/// antes de llamar a esta función (ver `ReaderScreen`).
+/// `article-summaries`. El chequeo de suscripción/cupo gratis ya se
+/// resolvió antes de llamar a esta función (ver `ReaderScreen`).
+///
+/// Cuando [openFreeTierExhausted] es `true` (usuario sin suscripción activa
+/// y sin cupo diario gratis disponible), el sheet arranca directo en el
+/// estado de cupo agotado en vez de intentar generar -- ver
+/// `ArticleSummaryCubit.showFreeTierExhausted`.
 void showArticleSummarySheet(
   BuildContext context, {
   required Article article,
   required ArticleSummaryCubit Function() createCubit,
   required ExternalLinkLauncher externalLinkLauncher,
+  required SubscriptionStatusProvider subscriptionStatusProvider,
+  bool openFreeTierExhausted = false,
 }) {
   final language = Localizations.localeOf(context).languageCode;
   // Tope de alto explícito: sin esto, un resumen largo dentro del
@@ -34,9 +42,20 @@ void showArticleSummarySheet(
     isScrollControlled: true,
     constraints: BoxConstraints(maxHeight: maxHeight),
     builder: (sheetContext) => BlocProvider<ArticleSummaryCubit>(
-      create: (_) => createCubit()..generate(article, language),
+      create: (_) {
+        final cubit = createCubit();
+        if (openFreeTierExhausted) {
+          cubit.showFreeTierExhausted();
+        } else {
+          cubit.generate(article, language);
+        }
+        return cubit;
+      },
       child: ArticleSummarySheetContent(
+        article: article,
+        language: language,
         externalLinkLauncher: externalLinkLauncher,
+        subscriptionStatusProvider: subscriptionStatusProvider,
       ),
     ),
   );
@@ -46,11 +65,17 @@ void showArticleSummarySheet(
 /// privado) para poder testearlo directo con un `ArticleSummaryCubit` ya
 /// sembrado en un estado dado, sin pasar por `showModalBottomSheet`.
 class ArticleSummarySheetContent extends StatelessWidget {
+  final Article article;
+  final String language;
   final ExternalLinkLauncher externalLinkLauncher;
+  final SubscriptionStatusProvider subscriptionStatusProvider;
 
   const ArticleSummarySheetContent({
     super.key,
+    required this.article,
+    required this.language,
     required this.externalLinkLauncher,
+    required this.subscriptionStatusProvider,
   });
 
   @override
@@ -75,6 +100,12 @@ class ArticleSummarySheetContent extends StatelessWidget {
                 ),
                 ArticleSummaryLimitReached(:final dailyLimit) =>
                   _LimitReachedContent(l10n: l10n, dailyLimit: dailyLimit),
+                ArticleSummaryFreeTierExhausted() => _FreeTierExhaustedContent(
+                  l10n: l10n,
+                  article: article,
+                  language: language,
+                  subscriptionStatusProvider: subscriptionStatusProvider,
+                ),
                 ArticleSummaryError(:final code) => SizedBox(
                   height: 120,
                   child: Center(
@@ -202,6 +233,67 @@ class _LimitReachedContent extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurface.withValues(alpha: 0.7),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Estado propio para el usuario sin suscripción activa que ya agotó su
+/// cupo diario gratis -- mismo criterio de superficie/tono neutro que
+/// `_LimitReachedContent` (ver ArticleSummaryFreeTierExhausted), con un
+/// botón que dispara el paywall en vez de mostrarlo automáticamente.
+class _FreeTierExhaustedContent extends StatelessWidget {
+  final AppLocalizations l10n;
+  final Article article;
+  final String language;
+  final SubscriptionStatusProvider subscriptionStatusProvider;
+
+  const _FreeTierExhaustedContent({
+    required this.l10n,
+    required this.article,
+    required this.language,
+    required this.subscriptionStatusProvider,
+  });
+
+  Future<void> _onUpgradePressed(BuildContext context) async {
+    final cubit = context.read<ArticleSummaryCubit>();
+    await subscriptionStatusProvider.showPaywall(
+      onSubscribed: () async {
+        if (!subscriptionStatusProvider.isSubscribed) return;
+        cubit.generate(article, language);
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: 160,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.articleSummaryFreeTierExhaustedTitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              l10n.articleSummaryFreeTierExhaustedSubtitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () => _onUpgradePressed(context),
+              child: Text(l10n.articleSummaryFreeTierExhaustedButton),
             ),
           ],
         ),
