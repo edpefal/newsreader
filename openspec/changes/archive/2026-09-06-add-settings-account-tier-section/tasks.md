@@ -23,5 +23,5 @@
 
 ## 5. Cierre
 
-- [ ] 5.1 Verificar manualmente en simulador (lo hace el usuario, no automatizar) que la sección aparece primero en Ajustes y el flujo de upgrade funciona de punta a punta.
-- [ ] 5.2 Seguir el flujo de git de CLAUDE.md: rama nueva, PR contra `main`, esperar CI en verde, mergear, y solo después archivar este change (`/opsx:archive`) en el mismo PR final que cierra `tasks.md`.
+- [x] 5.1 Verificar manualmente en simulador (lo hace el usuario, no automatizar) que la sección aparece primero en Ajustes y el flujo de upgrade funciona de punta a punta.
+- [x] 5.2 Seguir el flujo de git de CLAUDE.md: rama nueva, PR contra `main`, esperar CI en verde, mergear, y solo después archivar este change (`/opsx:archive`) en el mismo PR final que cierra `tasks.md`.
