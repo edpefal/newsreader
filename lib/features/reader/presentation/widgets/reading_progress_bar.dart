@@ -22,41 +22,51 @@ class ReadingProgressBar extends StatelessWidget {
     final theme = Theme.of(context);
     final accentColor =
         theme.extension<ReevoAccent>()?.unreadFavoriteAmber ??
-            theme.colorScheme.primary;
+        theme.colorScheme.primary;
     final trackColor = theme.colorScheme.surfaceContainerHighest;
 
-    return ValueListenableBuilder<bool>(
-      valueListenable: visible,
-      builder: (context, isVisible, child) {
-        if (!isVisible) return const SizedBox.shrink();
-        return child!;
-      },
-      child: Positioned(
-        top: 0,
-        bottom: 0,
-        right: 0,
-        width: _width,
-        child: ValueListenableBuilder<double>(
-          valueListenable: progress,
-          builder: (context, value, _) {
-            return Column(
-              children: List.generate(_segmentCount, (index) {
-                final segmentFraction = (index + 1) / _segmentCount;
-                final isFilled = value.clamp(0.0, 1.0) >= segmentFraction;
-                final isLast = index == _segmentCount - 1;
-                return Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: isLast ? 0 : _gap),
+    // Se arma con `Stack`/`Positioned` en vez de `Column`/`Expanded`: en
+    // pruebas manuales en simulador de iOS (Impeller) un `Column` con
+    // `Expanded` anidado dentro de este `Positioned` no llegaba a pintar
+    // ningún color -- ni con contenido de alto fijo ni flexible --,
+    // mientras que `Stack`/`Positioned` con `ColoredBox` pintó de forma
+    // consistente en cada prueba. `LayoutBuilder` reemplaza el rol de
+    // `Expanded` para repartir el alto disponible entre los segmentos.
+    return AnimatedBuilder(
+      animation: Listenable.merge([progress, visible]),
+      builder: (context, _) {
+        if (!visible.value) return const SizedBox.shrink();
+        return Positioned(
+          top: 0,
+          bottom: 0,
+          right: 0,
+          width: _width,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final totalGap = _gap * (_segmentCount - 1);
+              final segmentHeight =
+                  (constraints.maxHeight - totalGap) / _segmentCount;
+              final value = progress.value.clamp(0.0, 1.0);
+              return Stack(
+                children: List.generate(_segmentCount, (index) {
+                  final segmentFraction = (index + 1) / _segmentCount;
+                  final isFilled = value >= segmentFraction;
+                  final top = index * (segmentHeight + _gap);
+                  return Positioned(
+                    top: top,
+                    height: segmentHeight,
+                    left: 0,
+                    right: 0,
                     child: ColoredBox(
                       color: isFilled ? accentColor : trackColor,
                     ),
-                  ),
-                );
-              }),
-            );
-          },
-        ),
-      ),
+                  );
+                }),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
