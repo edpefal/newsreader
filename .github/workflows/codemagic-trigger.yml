@@ -1,0 +1,41 @@
+name: Codemagic Trigger
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Rama a buildear en Codemagic"
+        required: false
+        default: main
+
+jobs:
+  trigger-ios-testflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar build ios-testflight en Codemagic
+        env:
+          CODEMAGIC_API_TOKEN: ${{ secrets.CODEMAGIC_API_TOKEN }}
+          CODEMAGIC_APP_ID: "6a93d7e64dfa598798e17ef6"
+          CODEMAGIC_WORKFLOW_ID: "ios-testflight"
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          response=$(curl --silent --show-error --fail-with-body \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "x-auth-token: ${CODEMAGIC_API_TOKEN}" \
+            -d "{\"appId\":\"${CODEMAGIC_APP_ID}\",\"workflowId\":\"${CODEMAGIC_WORKFLOW_ID}\",\"branch\":\"${BRANCH}\"}" \
+            https://api.codemagic.io/builds) || {
+              echo "::error::La API de Codemagic rechazó la solicitud (revisar que CODEMAGIC_API_TOKEN sea válido)."
+              exit 1
+            }
+
+          build_id=$(echo "$response" | python3 -c "import json,sys; print(json.load(sys.stdin).get('buildId', ''))")
+
+          if [ -z "$build_id" ]; then
+            echo "::error::Codemagic respondió sin buildId. Respuesta: $response"
+            exit 1
+          fi
+
+          echo "Build de Codemagic disparado correctamente: $build_id"
+          echo "Rama: ${BRANCH}"
+          echo "Workflow: ${CODEMAGIC_WORKFLOW_ID}"
