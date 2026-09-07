@@ -483,5 +483,75 @@ void main() {
       verify(() => mockToggleFavorite.execute('a1')).called(1);
       expect(find.byIcon(Icons.star_outline), findsOneWidget);
     });
+
+    // --- Indicador de progreso de scroll (reader-scroll-indicator) ---
+
+    testWidgets(
+        'la barra de progreso aparece cuando el contenido pasa a exceder '
+        'el viewport sin que el usuario haga scroll', (tester) async {
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      // Viewport alto: el contenido cabe completo, la barra no se muestra.
+      tester.view.physicalSize = const Size(400, 20000);
+      await tester.pumpWidget(
+          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is Positioned && widget.width == 4,
+        ),
+        findsNothing,
+      );
+
+      // El viewport se achica (equivalente, para el `Scrollable`, a que el
+      // contenido crezca): dispara `ScrollMetricsNotification` sin que el
+      // test haga ningún scroll manual.
+      tester.view.physicalSize = const Size(400, 400);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is Positioned && widget.width == 4,
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'la barra de progreso desaparece cuando el contenido deja de '
+        'exceder el viewport', (tester) async {
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      // Viewport chico: el contenido excede la pantalla, la barra se
+      // muestra.
+      tester.view.physicalSize = const Size(400, 400);
+      await tester.pumpWidget(
+          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is Positioned && widget.width == 4,
+        ),
+        findsOneWidget,
+      );
+
+      // El viewport crece hasta que el contenido ya cabe completo, sin
+      // ningún scroll manual del test.
+      tester.view.physicalSize = const Size(400, 20000);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is Positioned && widget.width == 4,
+        ),
+        findsNothing,
+      );
+    });
   });
 }

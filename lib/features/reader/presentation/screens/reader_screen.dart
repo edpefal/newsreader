@@ -90,7 +90,6 @@ class _ReaderScreenState extends State<ReaderScreen>
       TweenSequenceItem(tween: Tween(begin: 1.4, end: 1.0), weight: 55),
     ]).animate(CurvedAnimation(parent: _popController, curve: Curves.easeOut));
     _scrollController.addListener(_updateScrollProgress);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _updateScrollProgress());
   }
 
   @override
@@ -179,10 +178,7 @@ class _ReaderScreenState extends State<ReaderScreen>
               size: 24,
             ),
             Expanded(
-              child: Text(
-                article.sourceName,
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: Text(article.sourceName, overflow: TextOverflow.ellipsis),
             ),
           ],
         ),
@@ -224,44 +220,50 @@ class _ReaderScreenState extends State<ReaderScreen>
       body: PaperBackground(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _MaxWidthCentered(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          article.title,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
+            NotificationListener<ScrollMetricsNotification>(
+              onNotification: (notification) {
+                _updateScrollProgress();
+                return false;
+              },
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _MaxWidthCentered(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            article.title,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _buildMeta(context, article),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          const SizedBox(height: 8),
+                          Text(
+                            _buildMeta(context, article),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Divider(),
-                      ],
+                          const SizedBox(height: 20),
+                          const Divider(),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  // El contenido raw de email queda exento del ancho máximo
-                  // de lectura: se renderiza en un WebView aislado que ya
-                  // resuelve su propio layout (ver `looksLikeRawEmailHtml`).
-                  _isRawEmailArticle(article)
-                      ? _buildContent(context, article, theme)
-                      : _MaxWidthCentered(
-                          child: _buildContent(context, article, theme),
-                        ),
-                ],
+                    const SizedBox(height: 16),
+                    // El contenido raw de email queda exento del ancho máximo
+                    // de lectura: se renderiza en un WebView aislado que ya
+                    // resuelve su propio layout (ver `looksLikeRawEmailHtml`).
+                    _isRawEmailArticle(article)
+                        ? _buildContent(context, article, theme)
+                        : _MaxWidthCentered(
+                            child: _buildContent(context, article, theme),
+                          ),
+                  ],
+                ),
               ),
             ),
             ReadingProgressBar(
@@ -278,11 +280,13 @@ class _ReaderScreenState extends State<ReaderScreen>
     final children = <Widget>[];
 
     if (article.contentHtml != null) {
-      children.add(FwhHtmlContentRenderer(
-        htmlContent: article.contentHtml!,
-        articleUrl: article.articleUrl,
-        readerMode: true,
-      ));
+      children.add(
+        FwhHtmlContentRenderer(
+          htmlContent: article.contentHtml!,
+          articleUrl: article.articleUrl,
+          readerMode: true,
+        ),
+      );
     } else if (article.excerpt != null) {
       children.add(Text(article.excerpt!, style: theme.textTheme.bodyMedium));
     }
@@ -292,7 +296,10 @@ class _ReaderScreenState extends State<ReaderScreen>
       children.add(_buildTruncatedHint(context, article, theme));
     }
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: children);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
   }
 
   Widget _buildTruncatedHint(
