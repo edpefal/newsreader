@@ -8,10 +8,10 @@
 ## 2. Configuración manual (fuera del código)
 
 - [x] 2.1 Configurar el secret `CODEMAGIC_API_TOKEN` en GitHub (Settings → Secrets and variables → Actions) del repo, con el token de cuenta de Codemagic.
-- [ ] 2.2 Confirmar que quien configuró el secret rotó/regeneró el token de Codemagic si el valor usado había quedado expuesto previamente en texto plano.
+- [x] 2.2 Confirmar que quien configuró el secret rotó/regeneró el token de Codemagic si el valor usado había quedado expuesto previamente en texto plano.
 
 ## 3. Verificación
 
-- [ ] 3.1 Disparar el workflow manualmente desde la pestaña Actions de GitHub (o `gh workflow run codemagic-trigger.yml`) y confirmar que Codemagic recibe la solicitud (verificar en el dashboard de Codemagic o con el `buildId` devuelto).
-- [ ] 3.2 Revisar el log de la ejecución y confirmar que el valor del token no aparece en ningún paso.
-- [ ] 3.3 Confirmar que un `git push` a cualquier rama NO dispara este workflow (solo el `analyze-and-test` existente debe correr).
+- [x] 3.1 Disparar el workflow manualmente desde la pestaña Actions de GitHub (o `gh workflow run codemagic-trigger.yml`) y confirmar que Codemagic recibe la solicitud (verificar en el dashboard de Codemagic o con el `buildId` devuelto). Ejecución exitosa: `buildId 6a9f3e042cc027985060945b`.
+- [x] 3.2 Revisar el log de la ejecución y confirmar que el valor del token no aparece en ningún paso. Confirmado: el log muestra `CODEMAGIC_API_TOKEN: ***` (enmascarado automáticamente por GitHub Actions).
+- [x] 3.3 Confirmar que un `git push` a cualquier rama NO dispara este workflow (solo el `analyze-and-test` existente debe correr). Confirmado por definición: el workflow solo declara `on: workflow_dispatch`.
