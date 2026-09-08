@@ -84,7 +84,7 @@ void main() {
     );
 
     final icon = tester.widget<Icon>(find.byIcon(Icons.star));
-    expect(icon.color, AppTheme.light.extension<ReevoAccent>()!.unreadFavoriteAmber);
+    expect(icon.color, AppTheme.light.extension<ReevoAccent>()!.unreadFavoriteAccent);
   });
 
   testWidgets('no muestra ícono de favorito cuando el artículo no está marcado', (

@@ -100,15 +100,20 @@ flutter_launcher_icons:
   remove_alpha_ios: true
 
 flutter_native_splash:
-  color: "#FFFFFF"
-  image: assets/reevo_logo_splash_light.png
-  color_dark: "#121212"
+  # Fondo óxido en ambos temas (mismo valor, sin variante oscura separada --
+  # es la primera impresión antes de que el tema del dispositivo determine
+  # nada). El glifo blanco (splash_dark, antes solo para el fondo oscuro)
+  # se usa también para el fondo claro: sobre óxido, el glifo negro pierde
+  # contraste.
+  color: "#C1401F"
+  image: assets/reevo_logo_splash_dark.png
+  color_dark: "#C1401F"
   image_dark: assets/reevo_logo_splash_dark.png
   android_12:
-    image: assets/reevo_logo_splash_light.png
-    icon_background_color: "#FFFFFF"
+    image: assets/reevo_logo_splash_dark.png
+    icon_background_color: "#C1401F"
     image_dark: assets/reevo_logo_splash_dark.png
-    icon_background_color_dark: "#121212"
+    icon_background_color_dark: "#C1401F"
 
 dependency_overrides:
   # webfeed_plus ^1.1.2 restringe intl a ^0.19.0, pero flutter_localizations

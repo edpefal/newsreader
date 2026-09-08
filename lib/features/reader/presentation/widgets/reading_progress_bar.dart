@@ -21,7 +21,7 @@ class ReadingProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accentColor =
-        theme.extension<ReevoAccent>()?.unreadFavoriteAmber ??
+        theme.extension<ReevoAccent>()?.unreadFavoriteAccent ??
         theme.colorScheme.primary;
     final trackColor = theme.colorScheme.surfaceContainerHighest;
 
