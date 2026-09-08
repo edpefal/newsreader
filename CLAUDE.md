@@ -208,7 +208,7 @@ Todos los features se implementan por medio de OpenSpec (`/opsx:propose` → `/o
 2. Implementar en esa rama (`/opsx:apply`), corriendo `flutter analyze` y `flutter test` localmente antes de subir.
 3. Una vez que las pruebas locales pasan, pushear la rama y abrir un PR contra `main`.
 4. Esperar a que el check de CI (`analyze-and-test` en GitHub Actions) pase en el PR — `main` tiene branch protection que exige ese check en verde antes de habilitar el merge.
-5. Recién ahí mergear el PR.
+5. Apenas ese check esté en verde, mergear el PR sin pedir confirmación adicional — el usuario ya autorizó esto de forma permanente (2026-09-08). Esta autorización cubre solo el merge en sí; push, apertura de PR, y cualquier acción fuera de este flujo siguen requiriendo confirmación como de costumbre.
 6. Una vez verificado el flujo completo (todas las tareas de `tasks.md` confirmadas, no solo implementadas), archivar el change de OpenSpec (`/opsx:archive`) — el archive también se sube por PR, no directo a `main`.
 7. Tras mergear el PR (de implementación, de archive, o cualquier PR suelto), volver a `main`, actualizarla, y borrar la rama ya mergeada (local y remota) — no dejar ramas viejas acumulándose. Un feature no queda "terminado" hasta este paso.
 
