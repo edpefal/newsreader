@@ -42,7 +42,7 @@
 
 ## 7. Flujo de PR
 
-- [ ] 7.1 Rama nueva (`add-rebrand-icon-accent-oxide` o similar), commit(s) siguiendo Conventional Commits.
+- [x] 7.1 Rama `add-rebrand-icon-accent-oxide`, commit siguiendo Conventional Commits.
 - [ ] 7.2 PR contra `main`, esperar CI (`analyze-and-test`) en verde.
 - [ ] 7.3 Mergear, actualizar `main`, borrar la rama.
-- [ ] 7.4 Cerrar tareas y archivar este change en el mismo PR final (ver flujo de trabajo en CLAUDE.md).
+- [x] 7.4 Cerrar tareas y archivar este change en el mismo PR final (ver flujo de trabajo en CLAUDE.md).
