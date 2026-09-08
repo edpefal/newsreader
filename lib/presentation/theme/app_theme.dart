@@ -1,41 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Acento ámbar reservado exclusivamente para dos usos funcionales:
-/// el indicador de artículo no leído y el estado de favorito. Vive fuera
-/// de [ColorScheme] (en vez de `tertiary`/`secondary`) para que ningún
-/// widget Material lo use implícitamente.
-@immutable
-class ReevoAccent extends ThemeExtension<ReevoAccent> {
-  final Color unreadFavoriteAmber;
+import 'package:newsreader/core/theme/reevo_accent.dart';
 
-  const ReevoAccent({required this.unreadFavoriteAmber});
-
-  static const ReevoAccent light = ReevoAccent(
-    unreadFavoriteAmber: Color(0xFFD9A441),
-  );
-
-  // Ámbar más claro y saturado que el de light: el mismo #D9A441 se
-  // calibró contra el fondo _paper claro y pierde contraste sobre el
-  // fondo oscuro de _darkSurface.
-  static const ReevoAccent dark = ReevoAccent(
-    unreadFavoriteAmber: Color(0xFFF4BB55),
-  );
-
-  @override
-  ReevoAccent copyWith({Color? unreadFavoriteAmber}) => ReevoAccent(
-        unreadFavoriteAmber: unreadFavoriteAmber ?? this.unreadFavoriteAmber,
-      );
-
-  @override
-  ReevoAccent lerp(ThemeExtension<ReevoAccent>? other, double t) {
-    if (other is! ReevoAccent) return this;
-    return ReevoAccent(
-      unreadFavoriteAmber:
-          Color.lerp(unreadFavoriteAmber, other.unreadFavoriteAmber, t)!,
-    );
-  }
-}
+export 'package:newsreader/core/theme/reevo_accent.dart' show ReevoAccent;
 
 class AppTheme {
   AppTheme._();
@@ -86,6 +54,16 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: ReevoAccent.light.unreadFavoriteAccent,
+          foregroundColor: _paper,
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: ReevoAccent.light.unreadFavoriteAccent,
+        foregroundColor: _paper,
+      ),
     );
   }
 
@@ -121,6 +99,16 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: ReevoAccent.dark.unreadFavoriteAccent,
+          foregroundColor: _darkSurface,
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: ReevoAccent.dark.unreadFavoriteAccent,
+        foregroundColor: _darkSurface,
       ),
     );
   }

@@ -58,7 +58,7 @@ class ArticleInboxTile extends StatelessWidget {
           subtitle: Row(
             children: [
               if (!article.isRead && accent != null) ...[
-                _UnreadChamfer(color: accent.unreadFavoriteAmber),
+                _UnreadChamfer(color: accent.unreadFavoriteAccent),
                 const SizedBox(width: 6),
               ],
               Flexible(
@@ -83,7 +83,7 @@ class ArticleInboxTile extends StatelessWidget {
 
     if (article.imageUrl == null) {
       return isFavoriteVisible
-          ? Icon(Icons.star, size: 18, color: accent.unreadFavoriteAmber)
+          ? Icon(Icons.star, size: 18, color: accent.unreadFavoriteAccent)
           : null;
     }
 
@@ -104,7 +104,7 @@ class ArticleInboxTile extends StatelessWidget {
             child: Icon(
               Icons.star,
               size: 18,
-              color: accent.unreadFavoriteAmber,
+              color: accent.unreadFavoriteAccent,
               shadows: const [
                 Shadow(blurRadius: 3, color: Colors.black45),
               ],

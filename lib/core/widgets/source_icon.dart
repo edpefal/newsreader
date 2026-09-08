@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:newsreader/core/theme/reevo_accent.dart';
 import 'package:newsreader/core/widgets/cached_network_image_widget.dart';
 import 'package:newsreader/core/widgets/chamfered_box.dart';
 
@@ -21,7 +22,14 @@ class SourceIcon extends StatelessWidget {
     final theme = Theme.of(context);
 
     Widget buildPlaceholder(BuildContext _) => ColoredBox(
-          color: theme.colorScheme.primary,
+          // Óxido (mismo token que ReevoAccent), no colorScheme.primary --
+          // una fuente sin ícono propio es un elemento de marca visible en
+          // toda la app, no un botón, así que comparte el acento en vez del
+          // ink/paper neutro. Fallback a colorScheme.primary cuando no hay
+          // ReevoAccent registrado (mismo patrón que reading_progress_bar.dart
+          // -- MaterialApp por defecto en tests widget que no usan AppTheme).
+          color: theme.extension<ReevoAccent>()?.unreadFavoriteAccent ??
+              theme.colorScheme.primary,
           child: Center(
             child: Text(
               initial,

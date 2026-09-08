@@ -195,7 +195,7 @@ class _ReaderScreenState extends State<ReaderScreen>
                 child: IconButton(
                   icon: Icon(
                     _isFavorite ? Icons.star : Icons.star_outline,
-                    color: _isFavorite ? accent?.unreadFavoriteAmber : null,
+                    color: _isFavorite ? accent?.unreadFavoriteAccent : null,
                   ),
                   tooltip: _isFavorite
                       ? l10n.readerRemoveFavoriteTooltip

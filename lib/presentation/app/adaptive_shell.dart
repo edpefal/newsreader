@@ -12,6 +12,7 @@ import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dar
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 import 'package:newsreader/presentation/app/branch_root_paths.dart';
+import 'package:newsreader/presentation/theme/app_theme.dart';
 
 /// Índices de tabs cuyo contenido soporta búsqueda: Inbox, Favoritos y
 /// Leídos (capability `article-search`), y Fuentes (capability
@@ -210,12 +211,22 @@ class _AdaptiveNavigationRail extends StatelessWidget {
                           ? state.articles.length
                           : 0;
                       if (count == 0) return Text(l10n.navInbox);
+                      final theme = Theme.of(context);
                       return Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(l10n.navInbox),
                           const SizedBox(width: 4),
-                          Badge.count(count: count),
+                          Badge.count(
+                            count: count,
+                            // Óxido de marca, no el rojo de error por
+                            // default de Badge -- este contador no es un
+                            // estado de error.
+                            backgroundColor:
+                                theme.extension<ReevoAccent>()?.unreadFavoriteAccent ??
+                                    theme.colorScheme.primary,
+                            textColor: theme.colorScheme.onPrimary,
+                          ),
                         ],
                       );
                     },
@@ -301,12 +312,21 @@ class _AppNavigationDrawer extends StatelessWidget {
             builder: (context, state) {
               final count = state is InboxLoaded ? state.articles.length : 0;
               if (count == 0) return Text(l10n.navInbox);
+              final theme = Theme.of(context);
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(l10n.navInbox),
                   const SizedBox(width: 8),
-                  Badge.count(count: count),
+                  Badge.count(
+                    count: count,
+                    // Óxido de marca, no el rojo de error por default de
+                    // Badge -- este contador no es un estado de error.
+                    backgroundColor:
+                        theme.extension<ReevoAccent>()?.unreadFavoriteAccent ??
+                            theme.colorScheme.primary,
+                    textColor: theme.colorScheme.onPrimary,
+                  ),
                 ],
               );
             },

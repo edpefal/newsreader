@@ -20,7 +20,7 @@ import 'package:newsreader/presentation/theme/app_theme.dart';
 import '../../../support/pump_localized_app.dart';
 
 int _filledSegmentCount(WidgetTester tester) {
-  final accentColor = AppTheme.light.extension<ReevoAccent>()!.unreadFavoriteAmber;
+  final accentColor = AppTheme.light.extension<ReevoAccent>()!.unreadFavoriteAccent;
   return tester
       .widgetList<ColoredBox>(
         find.descendant(
