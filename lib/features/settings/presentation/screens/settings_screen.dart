@@ -56,7 +56,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final accent =
         Theme.of(context).extension<ReevoAccent>()!.unreadFavoriteAccent;
     final errorColor = Theme.of(context).colorScheme.error;
-    final dividerColor = Theme.of(context).colorScheme.outline;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsScreenTitle)),
       body: Align(
@@ -155,14 +154,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: Text(l10n.navExportData, style: _rowTextStyle(context)),
                   onTap: () => _exportUserData(context),
                 ),
-                Divider(height: 1, thickness: 1, color: dividerColor),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.logout),
                   title: Text(l10n.navSignOut, style: _rowTextStyle(context)),
                   onTap: () => _signOut(context),
                 ),
-                Divider(height: 1, thickness: 1, color: dividerColor),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(Icons.delete_forever, color: errorColor),
