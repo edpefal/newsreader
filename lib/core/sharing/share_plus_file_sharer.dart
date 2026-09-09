@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:share_plus/share_plus.dart';
 
@@ -8,11 +9,13 @@ class SharePlusFileSharer implements FileSharer {
   @override
   Future<void> shareFiles(List<SharableFile> files) async {
     final xFiles = files
-        .map((f) => XFile.fromData(
-              utf8.encode(f.content),
-              name: f.name,
-              mimeType: f.mimeType,
-            ))
+        .map(
+          (f) => XFile.fromData(
+            utf8.encode(f.content),
+            name: f.name,
+            mimeType: f.mimeType,
+          ),
+        )
         .toList();
     // `XFile.fromData` ignora `name` en todas las plataformas salvo web
     // (ver doc de `Share.shareXFiles`), así que hay que pasar los nombres
@@ -20,6 +23,9 @@ class SharePlusFileSharer implements FileSharer {
     await Share.shareXFiles(
       xFiles,
       fileNameOverrides: files.map((f) => f.name).toList(),
+      // iOS 26 exige un origen no vacío también en iPhone, además de iPad.
+      // Usamos un punto de anclaje dentro de la vista nativa.
+      sharePositionOrigin: const Rect.fromLTWH(0, 0, 1, 1),
     );
   }
 }
