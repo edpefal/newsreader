@@ -21,10 +21,10 @@
 
 - [x] 3.1 Correr `flutter analyze` sin warnings nuevos
 - [x] 3.2 Correr `flutter test` (incluye `test/unit/l10n/neutral_spanish_test.dart`) y confirmar que sigue en verde
-- [ ] 3.3 Revisar manualmente en el simulador (a cargo del usuario) que la pantalla se ve correctamente en modo claro y oscuro, y que exportar/cerrar sesión/eliminar cuenta siguen funcionando igual que antes
+- [ ] 3.3 Revisar manualmente en el simulador (a cargo del usuario) que la pantalla se ve correctamente en modo claro y oscuro, y que exportar/cerrar sesión/eliminar cuenta siguen funcionando igual que antes — **FALLÓ**: "Exportar mis datos" no reacciona al tocarlo en simulador de iPhone (no pasó nada visible). Se confirmó con un test de widget que el tap sí llega a `ExportUserData.execute()` — no es una regresión de layout de este change; la causa está más abajo en el pipeline (`ExportSourcesOpml`/`ExportFavoritesJson`/`SharePlusFileSharer`) o es preexistente. Falta el log de consola del simulador para aislar la causa raíz; queda para un change de fix aparte, no bloquea el cierre de este change de diseño.
 
 ## 4. Cierre
 
 - [x] 4.1 Confirmar que `openspec validate --change improve-settings-screen-design --strict` pasa
-- [ ] 4.2 Abrir PR contra `main` y esperar el check `analyze-and-test` en verde
-- [ ] 4.3 Mergear el PR (autorización permanente con CI en verde) y archivar el change en el mismo PR final
+- [x] 4.2 Abrir PR contra `main` y esperar el check `analyze-and-test` en verde (PR #36, verde)
+- [x] 4.3 Mergear el PR (autorización permanente con CI en verde) y archivar el change en el mismo PR final (PR #36 mergeado a `main`)
