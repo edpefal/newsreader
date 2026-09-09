@@ -420,6 +420,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsAccountTierUpgradeButton => 'Obtener Premium';
 
   @override
+  String get settingsDataAndSessionSectionTitle => 'Datos y sesión';
+
+  @override
   String get settingsThemeSectionTitle => 'Apariencia';
 
   @override
