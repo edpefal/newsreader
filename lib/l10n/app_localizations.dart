@@ -742,6 +742,12 @@ abstract class AppLocalizations {
   /// **'Get Premium'**
   String get settingsAccountTierUpgradeButton;
 
+  /// No description provided for @settingsDataAndSessionSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Data and session'**
+  String get settingsDataAndSessionSectionTitle;
+
   /// No description provided for @settingsThemeSectionTitle.
   ///
   /// In en, this message translates to:

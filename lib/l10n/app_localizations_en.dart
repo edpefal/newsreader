@@ -419,6 +419,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccountTierUpgradeButton => 'Get Premium';
 
   @override
+  String get settingsDataAndSessionSectionTitle => 'Data and session';
+
+  @override
   String get settingsThemeSectionTitle => 'Appearance';
 
   @override

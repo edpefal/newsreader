@@ -5,6 +5,7 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
+import 'package:newsreader/core/theme/reevo_accent.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
 import 'package:newsreader/features/account/presentation/widgets/delete_account_dialog.dart';
@@ -38,9 +39,24 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  TextStyle? _sectionHeaderStyle(BuildContext context) =>
+      Theme.of(context).textTheme.titleMedium;
+
+  TextStyle? _rowTextStyle(BuildContext context) =>
+      Theme.of(context).textTheme.bodyLarge;
+
+  TextStyle? _secondaryTextStyle(BuildContext context) =>
+      Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          );
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final accent =
+        Theme.of(context).extension<ReevoAccent>()!.unreadFavoriteAccent;
+    final errorColor = Theme.of(context).colorScheme.error;
+    final dividerColor = Theme.of(context).colorScheme.outline;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsScreenTitle)),
       body: Align(
@@ -54,66 +70,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   l10n.settingsAccountTierSectionTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: _sectionHeaderStyle(context),
                 ),
                 if (widget.authClient.currentUserEmail case final email?) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    email,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
+                  Text(email, style: _secondaryTextStyle(context)),
                 ],
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Text(
-                      widget.subscriptionStatusProvider.isSubscribed
-                          ? l10n.settingsAccountTierPremium
-                          : l10n.settingsAccountTierFree,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
+                    if (widget.subscriptionStatusProvider.isSubscribed)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: accent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          l10n.settingsAccountTierPremium.toUpperCase(),
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                        ),
+                      )
+                    else
+                      Text(l10n.settingsAccountTierFree, style: _rowTextStyle(context)),
                     if (!widget.subscriptionStatusProvider.isSubscribed) ...[
                       const SizedBox(width: 12),
                       OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: accent,
+                          side: BorderSide(color: accent),
+                        ),
                         onPressed: () => _upgradeToPremium(context),
                         child: Text(l10n.settingsAccountTierUpgradeButton),
                       ),
                     ],
                   ],
                 ),
-                const SizedBox(height: 12),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.ios_share),
-                  title: Text(l10n.navExportData),
-                  onTap: () => _exportUserData(context),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    Icons.delete_forever,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  title: Text(
-                    l10n.accountDeleteDialogTitle,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                  onTap: () => _confirmDeleteAccount(context),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.logout),
-                  title: Text(l10n.navSignOut),
-                  onTap: () => _signOut(context),
-                ),
                 const SizedBox(height: 24),
                 Text(
                   l10n.settingsThemeSectionTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: _sectionHeaderStyle(context),
                 ),
                 const SizedBox(height: 12),
                 BlocBuilder<ThemeCubit, ThemeMode>(
@@ -139,6 +142,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           .setThemeMode(selection.first),
                     );
                   },
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  l10n.settingsDataAndSessionSectionTitle,
+                  style: _sectionHeaderStyle(context),
+                ),
+                const SizedBox(height: 4),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.ios_share),
+                  title: Text(l10n.navExportData, style: _rowTextStyle(context)),
+                  onTap: () => _exportUserData(context),
+                ),
+                Divider(height: 1, thickness: 1, color: dividerColor),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.logout),
+                  title: Text(l10n.navSignOut, style: _rowTextStyle(context)),
+                  onTap: () => _signOut(context),
+                ),
+                Divider(height: 1, thickness: 1, color: dividerColor),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.delete_forever, color: errorColor),
+                  title: Text(
+                    l10n.accountDeleteDialogTitle,
+                    style: _rowTextStyle(context)?.copyWith(color: errorColor),
+                  ),
+                  onTap: () => _confirmDeleteAccount(context),
                 ),
               ],
             ),

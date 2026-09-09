@@ -10,6 +10,7 @@ import 'package:newsreader/features/account/domain/usecases/delete_account.dart'
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
 import 'package:newsreader/features/settings/presentation/screens/settings_screen.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
+import 'package:newsreader/presentation/theme/app_theme.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
 
 import '../../../support/pump_localized_app.dart';
@@ -40,6 +41,7 @@ Widget _buildSubject({
   when(() => settingsBox.put(any(), any())).thenAnswer((_) async {});
 
   return MaterialApp(
+    theme: AppTheme.light,
     locale: testLocale,
     localizationsDelegates: testLocalizationsDelegates,
     supportedLocales: testSupportedLocales,
@@ -174,7 +176,7 @@ void main() {
         subscriptionStatusProvider: subscriptionStatusProvider,
       ));
 
-      expect(find.text('Premium'), findsOneWidget);
+      expect(find.text('PREMIUM'), findsOneWidget);
       expect(find.text('Obtener Premium'), findsNothing);
     });
 
@@ -228,7 +230,7 @@ void main() {
       await tester.tap(find.text('Obtener Premium'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Premium'), findsOneWidget);
+      expect(find.text('PREMIUM'), findsOneWidget);
       expect(find.text('Obtener Premium'), findsNothing);
     });
   });

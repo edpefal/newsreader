@@ -216,6 +216,7 @@
   "settingsAccountTierFree": "Free",
   "settingsAccountTierPremium": "Premium",
   "settingsAccountTierUpgradeButton": "Get Premium",
+  "settingsDataAndSessionSectionTitle": "Data and session",
   "settingsThemeSectionTitle": "Appearance",
   "settingsThemeSystem": "System",
   "settingsThemeLight": "Light",
