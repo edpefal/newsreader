@@ -49,4 +49,3 @@ El sistema SHALL, tras generar los archivos de exportación, ofrecer compartirlo
 #### Scenario: Presentación en dispositivos iOS que requieren un origen
 - **WHEN** el usuario exporta sus datos en iPhone con iOS 26 o en iPad
 - **THEN** se presenta el menú nativo con los archivos OPML y JSON
-
