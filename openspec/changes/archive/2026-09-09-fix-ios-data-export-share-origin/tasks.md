@@ -6,4 +6,4 @@
 ## 2. Verificación
 
 - [x] 2.1 Ejecutar flutter analyze, flutter test y validación estricta de OpenSpec. Sin issues; 582 pruebas pasan; change válido.
-- [ ] 2.2 Verificar manualmente en iPhone con iOS 26 e iPad que se abre el menú y permite guardar ambos archivos (a cargo del usuario).
+- [x] 2.2 Verificar manualmente la exportación (a cargo del usuario). El usuario confirmó que validó el flujo y funcionó; no especificó los dispositivos utilizados.
