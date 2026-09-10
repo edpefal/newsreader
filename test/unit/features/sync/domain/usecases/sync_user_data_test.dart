@@ -413,6 +413,118 @@ void main() {
     });
   });
 
+  group('daily_summaries: sourceBlocks', () {
+    final blocksAsMaps = [
+      {
+        'sourceId': 's1',
+        'sourceName': 'Fuente 1',
+        'articleIds': ['a1', 'a2'],
+      },
+    ];
+
+    test('sube sourceBlocks en la fila de daily_summaries', () async {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(null);
+      when(() => mockSourceLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockArticleLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(null)).thenAnswer(
+        (_) async => [
+          DailySummaryModel(
+            id: 'summary-1',
+            date: DateTime(2026, 9, 9),
+            content: 'contenido',
+            articleCount: 2,
+            createdAt: DateTime(2026, 9, 9),
+            sourceBlocks: blocksAsMaps,
+          ),
+        ],
+      );
+      when(() => mockCloudSyncClient.upsert(any(), any()))
+          .thenAnswer((_) async {});
+      when(() => mockCloudSyncClient.fetchChangedSince(any(), null))
+          .thenAnswer((_) async => []);
+
+      await sut.execute();
+
+      final captured = verify(
+        () => mockCloudSyncClient.upsert('daily_summaries', captureAny()),
+      ).captured.single as List<Map<String, dynamic>>;
+      expect(captured.single['source_blocks'], blocksAsMaps);
+    });
+
+    test(
+        'una fila remota con source_blocks reconstruye sourceBlocks al bajar (subida y bajada en el mismo ciclo)',
+        () async {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(null);
+      when(() => mockSourceLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockArticleLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('sources', null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('articles', null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('daily_summaries', null))
+          .thenAnswer((_) async => [
+                {
+                  'id': 'summary-1',
+                  'date': DateTime(2026, 9, 9).toIso8601String(),
+                  'content': 'contenido',
+                  'article_count': 2,
+                  'created_at': DateTime(2026, 9, 9).toIso8601String(),
+                  'updated_at': DateTime(2026, 9, 9, 10).toIso8601String(),
+                  'source_blocks': blocksAsMaps,
+                },
+              ]);
+
+      await sut.execute();
+
+      final applied = verify(() => mockSummaryLocal.applyRemote(captureAny()))
+          .captured
+          .single as DailySummaryModel;
+      expect(applied.sourceBlocks, blocksAsMaps);
+    });
+
+    test('una fila remota sin source_blocks reconstruye sourceBlocks null',
+        () async {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(null);
+      when(() => mockSourceLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockArticleLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('sources', null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('articles', null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('daily_summaries', null))
+          .thenAnswer((_) async => [
+                {
+                  'id': 'summary-1',
+                  'date': DateTime(2026, 9, 9).toIso8601String(),
+                  'content': 'contenido',
+                  'article_count': 2,
+                  'created_at': DateTime(2026, 9, 9).toIso8601String(),
+                  'updated_at': DateTime(2026, 9, 9, 10).toIso8601String(),
+                },
+              ]);
+
+      await sut.execute();
+
+      final applied = verify(() => mockSummaryLocal.applyRemote(captureAny()))
+          .captured
+          .single as DailySummaryModel;
+      expect(applied.sourceBlocks, isNull);
+    });
+  });
+
   group('ai_usage_daily (solo lectura)', () {
     test('aplica localmente lo que devuelve el servidor, sin subir nada',
         () async {
