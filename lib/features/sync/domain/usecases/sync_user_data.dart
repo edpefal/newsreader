@@ -261,6 +261,7 @@ class SyncUserData {
         'article_count': m.articleCount,
         'created_at': _toUtcIsoRequired(m.createdAt),
         'updated_at': _toUtcIsoRequired(m.updatedAt ?? DateTime.now()),
+        'source_blocks': m.sourceBlocks,
       };
 
   DailySummaryModel _summaryFromRow(Map<String, dynamic> row) =>
@@ -271,7 +272,15 @@ class SyncUserData {
         articleCount: row['article_count'] as int,
         createdAt: DateTime.parse(row['created_at'] as String),
         updatedAt: DateTime.parse(row['updated_at'] as String),
+        sourceBlocks: _sourceBlocksFromRow(row['source_blocks']),
       );
+
+  List<Map<dynamic, dynamic>>? _sourceBlocksFromRow(dynamic value) {
+    if (value == null) return null;
+    return (value as List)
+        .map((e) => Map<dynamic, dynamic>.from(e as Map))
+        .toList();
+  }
 
   // --- AI usage (solo lectura -- el cliente nunca sube esta tabla) ---
 
