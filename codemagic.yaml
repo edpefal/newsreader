@@ -26,8 +26,7 @@ workflows:
             --type IOS_APP_STORE \
             --create
           keychain add-certificates
-          xcode-project use-profiles \
-            --custom-export-options='{"testFlightInternalTestingOnly": true}'
+          xcode-project use-profiles
 
       - name: Resolver siguiente build number
         script: |
