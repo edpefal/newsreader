@@ -243,6 +243,7 @@ final appRouter = GoRouter(
         exportUserData: getIt<ExportUserData>(),
         deleteAccount: getIt<DeleteAccount>(),
         clearLocalUserData: getIt<ClearLocalUserData>(),
+        syncUserData: getIt<SyncUserData>(),
         authClient: getIt<AuthClient>(),
         subscriptionStatusProvider: getIt<SubscriptionStatusProvider>(),
       ),

@@ -9,7 +9,9 @@ import 'package:newsreader/core/theme/reevo_accent.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
 import 'package:newsreader/features/account/presentation/widgets/delete_account_dialog.dart';
+import 'package:newsreader/features/settings/presentation/widgets/sign_out_unsynced_changes_dialog.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
+import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
 
@@ -22,6 +24,7 @@ class SettingsScreen extends StatefulWidget {
   final ExportUserData exportUserData;
   final DeleteAccount deleteAccount;
   final ClearLocalUserData clearLocalUserData;
+  final SyncUserData syncUserData;
   final AuthClient authClient;
   final SubscriptionStatusProvider subscriptionStatusProvider;
 
@@ -30,6 +33,7 @@ class SettingsScreen extends StatefulWidget {
     required this.exportUserData,
     required this.deleteAccount,
     required this.clearLocalUserData,
+    required this.syncUserData,
     required this.authClient,
     required this.subscriptionStatusProvider,
   });
@@ -186,6 +190,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _signOut(BuildContext context) async {
+    // Se intenta subir cualquier cambio local pendiente antes de limpiar
+    // los datos: si falla (sin red, Supabase caído), se le pregunta al
+    // usuario si quiere continuar de todos modos, para que la pérdida de
+    // esos cambios sea una decisión informada y no una sorpresa silenciosa.
+    try {
+      await widget.syncUserData.execute();
+    } catch (_) {
+      if (!context.mounted) return;
+      final continueAnyway = await showDialog<bool>(
+        context: context,
+        builder: (_) => const SignOutUnsyncedChangesDialog(),
+      );
+      if (continueAnyway != true) return;
+    }
+
     // Se limpian los datos locales antes de cerrar sesión para que la
     // próxima cuenta que inicie sesión en este dispositivo arranque sin
     // datos de la cuenta anterior (evita colisiones de `id` entre cuentas
