@@ -67,7 +67,7 @@ lib/
 │   │   ├── domain/usecases/       # AddSource, DeleteSource, GetSources, UpdateSourceName
 │   │   └── presentation/          # SourcesScreen + Bloc/Cubit + widgets propios
 │   ├── inbox/                     # Épica 2: inbox y sincronización
-│   │   ├── domain/usecases/       # SyncSources, GetInboxArticles, MarkArticleAsRead
+│   │   ├── domain/usecases/       # GetInboxArticles, MarkArticleAsRead
 │   │   └── presentation/          # InboxScreen + InboxBloc + widgets propios
 │   ├── reader/                    # Épica 3: experiencia de lectura
 │   │   ├── domain/usecases/       # ToggleFavorite
@@ -78,8 +78,10 @@ lib/
 │   ├── archive/                   # Épica 4b: archivo
 │   │   ├── domain/usecases/       # GetArchive
 │   │   └── presentation/          # ArchiveScreen + ArchiveCubit
-│   └── maintenance/               # Épica 5: limpieza automática
-│       └── domain/usecases/       # RunMaintenance
+│   ├── maintenance/               # Épica 5: limpieza automática
+│   │   └── domain/usecases/       # RunMaintenance
+│   └── sync/                      # sincronización con Supabase (todos los features)
+│       └── domain/usecases/       # SyncUserData, ClearLocalUserData
 └── presentation/                  # elementos a nivel de app (no de feature)
     ├── app/                       # App widget + go_router config
     └── theme/                     # AppTheme + ThemeCubit
@@ -196,7 +198,8 @@ La app soporta inglés, español (neutro) y francés, vía el mecanismo oficial 
 - No hay archivado ni borrado automático por antigüedad: los artículos no leídos permanecen en el inbox indefinidamente, y los leídos permanecen en "Leídos" indefinidamente (ver `openspec/specs/article-lifecycle/spec.md`).
 - Favoritos nunca se eliminan automáticamente.
 - Contenido truncado: `contentHtml == null || contentHtml.length < 500`.
-- Timeout por feed durante sync: 10 segundos. Un fallo no interrumpe las demás fuentes.
+- El parseo de RSS/Atom no vive en el cliente: lo hace la Edge Function `sync-feeds` (`supabase/functions/sync-feeds/`), disparada por `FeedSyncTrigger`/`SupabaseFeedSyncTrigger` (`core/feed/`) desde el cliente. El cliente solo pide el fetch y espera la respuesta; no existe un `SyncSources` del lado del cliente. Timeout por feed del lado del servidor: 10 segundos (`FEED_FETCH_TIMEOUT_MS`). Un fallo no interrumpe las demás fuentes.
+- La sincronización con la nube (subir/bajar fuentes, artículos y resúmenes) vive en `features/sync/domain/usecases/SyncUserData`, independiente del fetch de feeds — ver capability `openspec/specs/cloud-sync/spec.md`.
 
 ## Flujo de trabajo
 

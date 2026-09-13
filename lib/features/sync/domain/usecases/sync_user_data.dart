@@ -40,7 +40,7 @@ class SyncUserData {
   final AuthClient _authClient;
   final Box<dynamic> _settingsBox;
 
-  const SyncUserData(
+  SyncUserData(
     this._sourceLocalDataSource,
     this._articleLocalDataSource,
     this._summaryLocalDataSource,
@@ -51,7 +51,24 @@ class SyncUserData {
     this._settingsBox,
   );
 
-  Future<void> execute() async {
+  /// Invocación de `_execute()` en curso, si hay una. `SyncUserData` es un
+  /// singleton (get_it) con múltiples entry points automáticos (arranque,
+  /// resume de la app, login, pull-to-refresh); sin este guard, dos
+  /// invocaciones solapadas hacen trabajo redundante contra la nube y
+  /// pueden pisarse el cursor de sincronización entre sí -- la que termina
+  /// primero puede escribir un cursor más viejo que el que ya dejó la otra.
+  Future<void>? _inFlight;
+
+  Future<void> execute() {
+    final existing = _inFlight;
+    if (existing != null) return existing;
+    final future = _execute();
+    _inFlight = future;
+    future.whenComplete(() => _inFlight = null).ignore();
+    return future;
+  }
+
+  Future<void> _execute() async {
     final userId = _authClient.currentUserId;
     if (userId == null) return;
 

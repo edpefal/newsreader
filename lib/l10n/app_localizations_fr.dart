@@ -424,6 +424,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsDataAndSessionSectionTitle => 'Données et session';
 
   @override
+  String get settingsSignOutUnsyncedTitle =>
+      'Tu as peut-être des changements non synchronisés';
+
+  @override
+  String get settingsSignOutUnsyncedBody =>
+      'Nous n\'avons pas pu synchroniser tes derniers changements avec le serveur. Si tu te déconnectes maintenant, tu pourrais les perdre.';
+
+  @override
+  String get settingsSignOutUnsyncedConfirm => 'Se déconnecter quand même';
+
+  @override
   String get settingsThemeSectionTitle => 'Apparence';
 
   @override
@@ -522,6 +533,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errorArticleTooLongToSummarize =>
       'Cet article est trop long pour être résumé automatiquement.';
+
+  @override
+  String get errorCloudSyncFailed =>
+      'Nous n\'avons pas pu synchroniser avec le serveur. Réessaie.';
 
   @override
   String get errorUnknown => 'Une erreur inattendue s\'est produite';

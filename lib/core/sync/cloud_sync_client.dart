@@ -1,3 +1,5 @@
+export 'package:newsreader/core/errors/app_exception.dart' show CloudSyncException;
+
 /// Cliente genérico para sincronizar filas con las tablas de usuario en
 /// Postgres (`sources`, `articles`, `daily_summaries`). Trabaja con mapas
 /// JSON (columnas snake_case) en vez de tipos fuertes por tabla, para no
@@ -23,13 +25,4 @@ abstract class CloudSyncClient {
     String table,
     DateTime? since,
   );
-}
-
-class CloudSyncException implements Exception {
-  final String message;
-
-  const CloudSyncException(this.message);
-
-  @override
-  String toString() => 'CloudSyncException: $message';
 }

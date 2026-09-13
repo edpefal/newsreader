@@ -32,3 +32,18 @@ class FeedDiscoveryException extends AppException {
 class AccountDeletionException extends AppException {
   const AccountDeletionException(super.code);
 }
+
+/// Error al sincronizar con la nube (Supabase/Postgrest). [code] clasifica
+/// la falla (`network`, `timeout`, o `cloudSyncFailed` para cualquier otra)
+/// -- ver `SupabaseCloudSyncClient` para la clasificación real.
+class CloudSyncException extends AppException {
+  final String message;
+
+  const CloudSyncException(
+    this.message, [
+    AppErrorCode code = AppErrorCode.cloudSyncFailed,
+  ]) : super(code);
+
+  @override
+  String toString() => 'CloudSyncException: $message';
+}

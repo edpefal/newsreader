@@ -8,8 +8,11 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
+import 'package:newsreader/core/sync/cloud_sync_client.dart';
 import 'package:newsreader/features/settings/presentation/screens/settings_screen.dart';
+import 'package:newsreader/features/settings/presentation/widgets/sign_out_unsynced_changes_dialog.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
+import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 import 'package:newsreader/presentation/theme/app_theme.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
 
@@ -20,6 +23,8 @@ class MockExportUserData extends Mock implements ExportUserData {}
 class MockDeleteAccount extends Mock implements DeleteAccount {}
 
 class MockClearLocalUserData extends Mock implements ClearLocalUserData {}
+
+class MockSyncUserData extends Mock implements SyncUserData {}
 
 class MockAuthClient extends Mock implements AuthClient {}
 
@@ -32,6 +37,7 @@ Widget _buildSubject({
   required ExportUserData exportUserData,
   required DeleteAccount deleteAccount,
   required ClearLocalUserData clearLocalUserData,
+  required SyncUserData syncUserData,
   required AuthClient authClient,
   required SubscriptionStatusProvider subscriptionStatusProvider,
 }) {
@@ -51,6 +57,7 @@ Widget _buildSubject({
         exportUserData: exportUserData,
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
+        syncUserData: syncUserData,
         authClient: authClient,
         subscriptionStatusProvider: subscriptionStatusProvider,
       ),
@@ -63,6 +70,7 @@ void main() {
     late MockExportUserData exportUserData;
     late MockDeleteAccount deleteAccount;
     late MockClearLocalUserData clearLocalUserData;
+    late MockSyncUserData syncUserData;
     late MockAuthClient authClient;
     late MockSubscriptionStatusProvider subscriptionStatusProvider;
 
@@ -70,9 +78,11 @@ void main() {
       exportUserData = MockExportUserData();
       deleteAccount = MockDeleteAccount();
       clearLocalUserData = MockClearLocalUserData();
+      syncUserData = MockSyncUserData();
       authClient = MockAuthClient();
       subscriptionStatusProvider = MockSubscriptionStatusProvider();
       when(() => clearLocalUserData.execute()).thenAnswer((_) async {});
+      when(() => syncUserData.execute()).thenAnswer((_) async {});
       when(() => authClient.signOut()).thenAnswer((_) async {});
       when(() => authClient.currentUserEmail)
           .thenReturn('lector@example.com');
@@ -84,6 +94,7 @@ void main() {
         exportUserData: exportUserData,
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
+        syncUserData: syncUserData,
         authClient: authClient,
         subscriptionStatusProvider: subscriptionStatusProvider,
       ));
@@ -98,11 +109,64 @@ void main() {
         exportUserData: exportUserData,
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
+        syncUserData: syncUserData,
         authClient: authClient,
         subscriptionStatusProvider: subscriptionStatusProvider,
       ));
 
       await tester.tap(find.text('Cerrar sesión'));
+      await tester.pumpAndSettle();
+
+      verify(() => syncUserData.execute()).called(1);
+      verify(() => clearLocalUserData.execute()).called(1);
+      verify(() => authClient.signOut()).called(1);
+    });
+
+    testWidgets(
+        'si el flush falla y el usuario cancela, no cierra sesión',
+        (tester) async {
+      when(() => syncUserData.execute())
+          .thenThrow(const CloudSyncException('sin conexión'));
+
+      await tester.pumpWidget(_buildSubject(
+        exportUserData: exportUserData,
+        deleteAccount: deleteAccount,
+        clearLocalUserData: clearLocalUserData,
+        syncUserData: syncUserData,
+        authClient: authClient,
+        subscriptionStatusProvider: subscriptionStatusProvider,
+      ));
+
+      await tester.tap(find.text('Cerrar sesión'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SignOutUnsyncedChangesDialog), findsOneWidget);
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => clearLocalUserData.execute());
+      verifyNever(() => authClient.signOut());
+    });
+
+    testWidgets(
+        'si el flush falla y el usuario confirma, cierra sesión de todos modos',
+        (tester) async {
+      when(() => syncUserData.execute())
+          .thenThrow(const CloudSyncException('sin conexión'));
+
+      await tester.pumpWidget(_buildSubject(
+        exportUserData: exportUserData,
+        deleteAccount: deleteAccount,
+        clearLocalUserData: clearLocalUserData,
+        syncUserData: syncUserData,
+        authClient: authClient,
+        subscriptionStatusProvider: subscriptionStatusProvider,
+      ));
+
+      await tester.tap(find.text('Cerrar sesión'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Cerrar sesión de todos modos'));
       await tester.pumpAndSettle();
 
       verify(() => clearLocalUserData.execute()).called(1);
@@ -114,6 +178,7 @@ void main() {
         exportUserData: exportUserData,
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
+        syncUserData: syncUserData,
         authClient: authClient,
         subscriptionStatusProvider: subscriptionStatusProvider,
       ));
@@ -133,6 +198,7 @@ void main() {
         exportUserData: exportUserData,
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
+        syncUserData: syncUserData,
         authClient: authClient,
         subscriptionStatusProvider: subscriptionStatusProvider,
       ));
@@ -156,6 +222,7 @@ void main() {
         exportUserData: exportUserData,
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
+        syncUserData: syncUserData,
         authClient: authClient,
         subscriptionStatusProvider: subscriptionStatusProvider,
       ));
@@ -172,6 +239,7 @@ void main() {
         exportUserData: exportUserData,
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
+        syncUserData: syncUserData,
         authClient: authClient,
         subscriptionStatusProvider: subscriptionStatusProvider,
       ));
@@ -192,6 +260,7 @@ void main() {
         exportUserData: exportUserData,
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
+        syncUserData: syncUserData,
         authClient: authClient,
         subscriptionStatusProvider: subscriptionStatusProvider,
       ));
@@ -224,6 +293,7 @@ void main() {
         exportUserData: exportUserData,
         deleteAccount: deleteAccount,
         clearLocalUserData: clearLocalUserData,
+        syncUserData: syncUserData,
         authClient: authClient,
         subscriptionStatusProvider: subscriptionStatusProvider,
       ));

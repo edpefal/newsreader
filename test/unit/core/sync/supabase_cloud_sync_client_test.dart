@@ -1,8 +1,61 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
+
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/sync/supabase_cloud_sync_client.dart';
 
 void main() {
+  group('classifyCloudSyncError', () {
+    test('un TimeoutException se clasifica como timeout', () {
+      expect(
+        classifyCloudSyncError(TimeoutException('tardó demasiado')),
+        AppErrorCode.timeout,
+      );
+    });
+
+    test('un SocketException se clasifica como network', () {
+      expect(
+        classifyCloudSyncError(const SocketException('sin conexión')),
+        AppErrorCode.network,
+      );
+    });
+
+    test('cualquier otro error se clasifica como cloudSyncFailed', () {
+      expect(
+        classifyCloudSyncError(Exception('error del servidor')),
+        AppErrorCode.cloudSyncFailed,
+      );
+    });
+
+    test(
+        'un PostgrestException con código 502/503/504 (gateway) se '
+        'clasifica como timeout, aunque no sea un TimeoutException real',
+        () {
+      for (final code in ['502', '503', '504']) {
+        expect(
+          classifyCloudSyncError(
+            PostgrestException(message: 'Gateway Timeout', code: code),
+          ),
+          AppErrorCode.timeout,
+          reason: 'código $code',
+        );
+      }
+    });
+
+    test('un PostgrestException con otro código se clasifica como cloudSyncFailed',
+        () {
+      expect(
+        classifyCloudSyncError(
+          PostgrestException(message: 'constraint violation', code: '23505'),
+        ),
+        AppErrorCode.cloudSyncFailed,
+      );
+    });
+  });
+
   group('groupRowsByPayload', () {
     test('agrupa en un solo grupo filas con el mismo payload', () {
       final rows = [

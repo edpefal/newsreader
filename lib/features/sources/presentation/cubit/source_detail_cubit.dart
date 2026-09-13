@@ -45,14 +45,26 @@ class SourceDetailCubit extends Cubit<SourceDetailState> {
   /// evidencia de que esté mal.
   Future<void> syncAndLoadArticles(String sourceId) async {
     emit(const SourceDetailLoading());
-    await _syncUserData.execute();
+    try {
+      await _syncUserData.execute();
+    } catch (e, st) {
+      // Silencioso a propósito: ver el comentario del método. Si este push
+      // falla (sin red, Supabase caído), la fuente sigue sin conocerse del
+      // lado del servidor -- el fetch de abajo simplemente no la va a
+      // encontrar, no hace falta abortar el resto del método por esto.
+      _observabilityClient.captureException(e, st);
+    }
     try {
       await _feedSyncTrigger.execute();
     } catch (e, st) {
       // Silencioso a propósito: ver el comentario del método.
       _observabilityClient.captureException(e, st);
     }
-    await _syncUserData.execute();
+    try {
+      await _syncUserData.execute();
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
+    }
     final articles = await _getSourceArticles.execute(sourceId);
     emit(SourceDetailLoaded(articles));
   }

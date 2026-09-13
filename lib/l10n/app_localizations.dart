@@ -748,6 +748,24 @@ abstract class AppLocalizations {
   /// **'Data and session'**
   String get settingsDataAndSessionSectionTitle;
 
+  /// No description provided for @settingsSignOutUnsyncedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You may have unsynced changes'**
+  String get settingsSignOutUnsyncedTitle;
+
+  /// No description provided for @settingsSignOutUnsyncedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t sync your latest changes with the server. If you sign out now, they might be lost.'**
+  String get settingsSignOutUnsyncedBody;
+
+  /// No description provided for @settingsSignOutUnsyncedConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out anyway'**
+  String get settingsSignOutUnsyncedConfirm;
+
   /// No description provided for @settingsThemeSectionTitle.
   ///
   /// In en, this message translates to:
@@ -915,6 +933,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This article is too long to summarize automatically.'**
   String get errorArticleTooLongToSummarize;
+
+  /// No description provided for @errorCloudSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t sync with the server. Please try again.'**
+  String get errorCloudSyncFailed;
 
   /// No description provided for @errorUnknown.
   ///
