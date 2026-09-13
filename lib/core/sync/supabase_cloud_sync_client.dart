@@ -7,6 +7,13 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
 
+/// Códigos de error de un `PostgrestException` que en la práctica son un
+/// timeout, aunque no lancen el `TimeoutException` de `dart:async`: la
+/// petición sí volvió, pero desde el gateway/proxy delante de Postgrest en
+/// vez de desde Postgres mismo (visto en producción: `504 Gateway Timeout`
+/// tras una resincronización grande).
+const _gatewayTimeoutCodes = {'502', '503', '504'};
+
 /// Cuánto esperar una llamada Postgrest antes de darla por perdida. Más
 /// corto que el timeout de `sync-feeds` (90s, en `SupabaseFeedSyncTrigger`)
 /// porque esto es solo lectura/escritura de Postgres, no fetch de RSS
@@ -51,6 +58,9 @@ List<RowUpdateGroup> groupRowsByPayload(List<Map<String, dynamic>> rows) {
 AppErrorCode classifyCloudSyncError(Object e) {
   if (e is TimeoutException) return AppErrorCode.timeout;
   if (e is SocketException) return AppErrorCode.network;
+  if (e is sb.PostgrestException && _gatewayTimeoutCodes.contains(e.code)) {
+    return AppErrorCode.timeout;
+  }
   return AppErrorCode.cloudSyncFailed;
 }
 
