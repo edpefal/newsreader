@@ -137,6 +137,55 @@ void main() {
     );
   });
 
+  group('guard de concurrencia', () {
+    test(
+        'dos invocaciones concurrentes de execute() reusan la misma pasada '
+        'en vez de disparar dos independientes', () async {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(null);
+      var callCount = 0;
+      when(() => mockSourceLocal.getChangedSince(null)).thenAnswer((_) async {
+        callCount++;
+        // Simula trabajo real para que la segunda invocación llegue
+        // mientras la primera sigue en curso.
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        return [];
+      });
+      when(() => mockArticleLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince(any(), null))
+          .thenAnswer((_) async => []);
+
+      await Future.wait([sut.execute(), sut.execute()]);
+
+      expect(callCount, 1);
+    });
+
+    test('una invocación posterior a que la anterior termine sí dispara una pasada nueva',
+        () async {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(null);
+      var callCount = 0;
+      when(() => mockSourceLocal.getChangedSince(null)).thenAnswer((_) async {
+        callCount++;
+        return [];
+      });
+      when(() => mockArticleLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince(any(), null))
+          .thenAnswer((_) async => []);
+
+      await sut.execute();
+      await sut.execute();
+
+      expect(callCount, 2);
+    });
+  });
+
   group('sin sesión activa', () {
     test('no hace nada si no hay usuario logueado', () async {
       when(() => mockAuthClient.currentUserId).thenReturn(null);
