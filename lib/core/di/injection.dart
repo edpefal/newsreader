@@ -197,8 +197,12 @@ Future<void> setupDependencies() async {
     () => AddSource(getIt(), getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerLazySingleton(() => GenerateEmailFeed(getIt()));
-  getIt.registerLazySingleton(() => DeleteSource(getIt(), getIt()));
-  getIt.registerLazySingleton(() => UpdateSourceName(getIt()));
+  getIt.registerLazySingleton(
+    () => DeleteSource(getIt(), getIt(), getIt(), getIt(), getIt()),
+  );
+  getIt.registerLazySingleton(
+    () => UpdateSourceName(getIt(), getIt(), getIt(), getIt()),
+  );
   getIt.registerLazySingleton(() => GetSources(getIt()));
   getIt.registerLazySingleton(() => GetSourceArticles(getIt()));
   getIt.registerLazySingleton(
