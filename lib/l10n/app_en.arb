@@ -217,6 +217,9 @@
   "settingsAccountTierPremium": "Premium",
   "settingsAccountTierUpgradeButton": "Get Premium",
   "settingsDataAndSessionSectionTitle": "Data and session",
+  "settingsSignOutUnsyncedTitle": "You may have unsynced changes",
+  "settingsSignOutUnsyncedBody": "We couldn't sync your latest changes with the server. If you sign out now, they might be lost.",
+  "settingsSignOutUnsyncedConfirm": "Sign out anyway",
   "settingsThemeSectionTitle": "Appearance",
   "settingsThemeSystem": "System",
   "settingsThemeLight": "Light",
@@ -255,5 +258,6 @@
   "errorSubscriptionRequired": "This requires an active subscription.",
   "errorDailySummaryAlreadyGenerated": "You already generated today's summary. Come back tomorrow for a new one.",
   "errorArticleTooLongToSummarize": "This article is too long to summarize automatically.",
+  "errorCloudSyncFailed": "We couldn't sync with the server. Please try again.",
   "errorUnknown": "Something unexpected happened"
 }

@@ -140,6 +140,9 @@
   "settingsAccountTierPremium": "Premium",
   "settingsAccountTierUpgradeButton": "Passer à Premium",
   "settingsDataAndSessionSectionTitle": "Données et session",
+  "settingsSignOutUnsyncedTitle": "Tu as peut-être des changements non synchronisés",
+  "settingsSignOutUnsyncedBody": "Nous n'avons pas pu synchroniser tes derniers changements avec le serveur. Si tu te déconnectes maintenant, tu pourrais les perdre.",
+  "settingsSignOutUnsyncedConfirm": "Se déconnecter quand même",
   "settingsThemeSectionTitle": "Apparence",
   "settingsThemeSystem": "Système",
   "settingsThemeLight": "Clair",
@@ -171,5 +174,6 @@
   "errorSubscriptionRequired": "Cela nécessite un abonnement actif.",
   "errorDailySummaryAlreadyGenerated": "Tu as déjà généré le résumé du jour. Reviens demain pour en créer un nouveau.",
   "errorArticleTooLongToSummarize": "Cet article est trop long pour être résumé automatiquement.",
+  "errorCloudSyncFailed": "Nous n'avons pas pu synchroniser avec le serveur. Réessaie.",
   "errorUnknown": "Une erreur inattendue s'est produite"
 }

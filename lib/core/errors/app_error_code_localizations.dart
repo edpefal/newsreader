@@ -54,6 +54,8 @@ extension AppErrorCodeL10n on AppErrorCode {
         return l10n.errorDailySummaryAlreadyGenerated;
       case AppErrorCode.articleTooLongToSummarize:
         return l10n.errorArticleTooLongToSummarize;
+      case AppErrorCode.cloudSyncFailed:
+        return l10n.errorCloudSyncFailed;
       case AppErrorCode.unknown:
         return l10n.errorUnknown;
     }

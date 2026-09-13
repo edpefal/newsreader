@@ -84,6 +84,11 @@ enum AppErrorCode {
   /// límite diario de resúmenes.
   articleTooLongToSummarize,
 
+  /// Fallo al sincronizar con la nube (Supabase/Postgrest) que no es de
+  /// conectividad ni de timeout -- ej. un error del propio servidor. Ver
+  /// capability `cloud-sync`.
+  cloudSyncFailed,
+
   /// Cualquier error no anticipado por los demás códigos.
   unknown,
 }

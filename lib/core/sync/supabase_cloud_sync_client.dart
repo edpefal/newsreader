@@ -1,8 +1,18 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
+
+/// Cuánto esperar una llamada Postgrest antes de darla por perdida. Más
+/// corto que el timeout de `sync-feeds` (90s, en `SupabaseFeedSyncTrigger`)
+/// porque esto es solo lectura/escritura de Postgres, no fetch de RSS
+/// externo -- pero lo bastante largo para una resincronización grande que
+/// pagina varias tandas de 1000 filas (ver `_pageSize`).
+const _cloudSyncTimeout = Duration(seconds: 30);
 
 /// Un grupo de filas que comparten el mismo payload de update (todo salvo
 /// `id`), listas para actualizarse con un solo UPDATE ... WHERE id IN (...).
@@ -34,6 +44,16 @@ List<RowUpdateGroup> groupRowsByPayload(List<Map<String, dynamic>> rows) {
   return order.map((key) => groups[key]!).toList();
 }
 
+/// Clasifica [e] con el `AppErrorCode` correspondiente. Función pura, sin
+/// dependencia del cliente de Supabase, para poder testear la clasificación
+/// sin mockear la cadena fluida de `postgrest` (mismo criterio que
+/// `groupRowsByPayload`).
+AppErrorCode classifyCloudSyncError(Object e) {
+  if (e is TimeoutException) return AppErrorCode.timeout;
+  if (e is SocketException) return AppErrorCode.network;
+  return AppErrorCode.cloudSyncFailed;
+}
+
 class SupabaseCloudSyncClient implements CloudSyncClient {
   final sb.SupabaseClient _supabase;
 
@@ -51,9 +71,9 @@ class SupabaseCloudSyncClient implements CloudSyncClient {
   Future<void> upsert(String table, List<Map<String, dynamic>> rows) async {
     if (rows.isEmpty) return;
     try {
-      await _supabase.from(table).upsert(rows);
+      await _supabase.from(table).upsert(rows).timeout(_cloudSyncTimeout);
     } catch (e) {
-      throw CloudSyncException(e.toString());
+      _throwClassified(e);
     }
   }
 
@@ -74,10 +94,11 @@ class SupabaseCloudSyncClient implements CloudSyncClient {
         await _supabase
             .from(table)
             .update(group.payload)
-            .inFilter('id', group.ids);
+            .inFilter('id', group.ids)
+            .timeout(_cloudSyncTimeout);
       }
     } catch (e) {
-      throw CloudSyncException(e.toString());
+      _throwClassified(e);
     }
   }
 
@@ -96,7 +117,8 @@ class SupabaseCloudSyncClient implements CloudSyncClient {
             : query.gt('updated_at', since.toIso8601String());
         final page = await filtered
             .order('updated_at', ascending: true)
-            .range(offset, offset + _pageSize - 1);
+            .range(offset, offset + _pageSize - 1)
+            .timeout(_cloudSyncTimeout);
         final rows = List<Map<String, dynamic>>.from(page as List);
         all.addAll(rows);
         if (rows.length < _pageSize) break;
@@ -104,7 +126,15 @@ class SupabaseCloudSyncClient implements CloudSyncClient {
       }
       return all;
     } catch (e) {
-      throw CloudSyncException(e.toString());
+      _throwClassified(e);
     }
+  }
+
+  /// Relanza [e] como `CloudSyncException` con su `AppErrorCode`
+  /// correspondiente -- así los callers pueden tratar un fallo de
+  /// sincronización con la nube igual que cualquier otro error de red de la
+  /// app (`isNetworkError`, snackbars localizados, etc.).
+  Never _throwClassified(Object e) {
+    throw CloudSyncException(e.toString(), classifyCloudSyncError(e));
   }
 }

@@ -1,8 +1,35 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/sync/supabase_cloud_sync_client.dart';
 
 void main() {
+  group('classifyCloudSyncError', () {
+    test('un TimeoutException se clasifica como timeout', () {
+      expect(
+        classifyCloudSyncError(TimeoutException('tardó demasiado')),
+        AppErrorCode.timeout,
+      );
+    });
+
+    test('un SocketException se clasifica como network', () {
+      expect(
+        classifyCloudSyncError(const SocketException('sin conexión')),
+        AppErrorCode.network,
+      );
+    });
+
+    test('cualquier otro error se clasifica como cloudSyncFailed', () {
+      expect(
+        classifyCloudSyncError(Exception('error del servidor')),
+        AppErrorCode.cloudSyncFailed,
+      );
+    });
+  });
+
   group('groupRowsByPayload', () {
     test('agrupa en un solo grupo filas con el mismo payload', () {
       final rows = [
