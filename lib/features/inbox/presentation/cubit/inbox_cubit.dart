@@ -50,7 +50,13 @@ class InboxCubit extends Cubit<InboxState> {
   /// que tarda `SyncUserData`, dando la impresión de que no hay fuentes.
   Future<void> syncAfterSignIn() async {
     emit(const InboxLoading(isSyncing: true));
-    await _syncUserData.execute();
+    try {
+      await _syncUserData.execute();
+    } catch (e, st) {
+      // No dejar la pantalla en `InboxLoading` para siempre si falla (sin
+      // red, Supabase caído): se sigue con lo que ya haya local.
+      _observabilityClient.captureException(e, st);
+    }
     await _reload();
     unawaited(_silentFeedRefresh());
   }
@@ -60,8 +66,9 @@ class InboxCubit extends Cubit<InboxState> {
   /// (ver `syncAfterSignIn()`), y esto lo pone al día por si nadie hizo
   /// pull-to-refresh en varios días. A diferencia de `syncAndReload()`, es
   /// silencioso -- no propaga errores ni fuentes fallidas a la UI (ni
-  /// siquiera una excepción inesperada de `_feedSyncTrigger`), porque es una
-  /// mejora automática, no una acción pedida explícitamente por el usuario.
+  /// siquiera una excepción inesperada de `_feedSyncTrigger` o
+  /// `_syncUserData`), porque es una mejora automática, no una acción
+  /// pedida explícitamente por el usuario.
   Future<void> _silentFeedRefresh() async {
     final current = state;
     if (current is InboxLoaded) {
@@ -75,13 +82,27 @@ class InboxCubit extends Cubit<InboxState> {
         ),
       );
     }
+    // Subir el estado local pendiente (incl. borrados de fuentes) ANTES del
+    // fetch, igual que `syncAndReload()`: si se dispara el fetch primero,
+    // `sync-feeds` todavía ve en Postgres una fuente que el usuario acaba
+    // de borrar localmente y le crea artículos nuevos, que el `_reload()`
+    // final resucita en el Inbox.
+    try {
+      await _syncUserData.execute();
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
+    }
     try {
       await _triggerFeedSync();
     } catch (e, st) {
       // Silencioso a propósito: ver el comentario del método.
       _observabilityClient.captureException(e, st);
     }
-    await _syncUserData.execute();
+    try {
+      await _syncUserData.execute();
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
+    }
     await _reload();
   }
 
@@ -108,7 +129,13 @@ class InboxCubit extends Cubit<InboxState> {
         ),
       );
     }
-    await _syncUserData.execute();
+    try {
+      await _syncUserData.execute();
+    } catch (e, st) {
+      // No dejar el indicador de progreso colgado si falla (sin red,
+      // Supabase caído): se sigue con lo que ya haya local.
+      _observabilityClient.captureException(e, st);
+    }
     await _reload();
   }
 
@@ -181,9 +208,23 @@ class InboxCubit extends Cubit<InboxState> {
     // crea artículos nuevos, que después el pull de abajo resucita en el
     // Inbox. Se vuelve a llamar después del fetch para bajar esos artículos
     // nuevos en la misma pasada de refresh.
-    await _syncUserData.execute();
+    //
+    // Ambas llamadas van en try/catch: si fallan (sin red, Supabase caído),
+    // no deben propagarse sin capturar -- `_triggerFeedSync()` ya reporta
+    // el error de red de forma explícita vía `FeedSyncResult.isNetworkError`
+    // (que `_onRefresh()` sí muestra al usuario), así que un fallo acá no
+    // debe además romper el `RefreshIndicator` con una excepción sin manejar.
+    try {
+      await _syncUserData.execute();
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
+    }
     final result = await _triggerFeedSync();
-    await _syncUserData.execute();
+    try {
+      await _syncUserData.execute();
+    } catch (e, st) {
+      _observabilityClient.captureException(e, st);
+    }
     await _reload();
     return result;
   }

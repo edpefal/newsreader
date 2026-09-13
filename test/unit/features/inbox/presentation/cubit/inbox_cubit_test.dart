@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
+import 'package:newsreader/core/sync/cloud_sync_client.dart';
 import 'package:newsreader/features/inbox/domain/usecases/get_inbox_articles.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
@@ -180,7 +181,9 @@ void main() {
         InboxLoaded(tArticles, hasSources: true),
       ],
       verify: (_) {
-        verify(() => mockSyncUserData.execute()).called(2);
+        // Una del sync inicial de login (syncAfterSignIn) + dos de
+        // `_silentFeedRefresh()` (subida antes del fetch, bajada después).
+        verify(() => mockSyncUserData.execute()).called(3);
         verify(() => mockFeedSyncTrigger.execute()).called(1);
       },
     );
@@ -342,6 +345,99 @@ void main() {
 
       expect(result.isNetworkError, isTrue);
       expect(result.failedSourceIds, ['s1']);
+    });
+
+    blocTest<InboxCubit, InboxState>(
+      'syncAndReload() no se cuelga si el push previo al fetch falla',
+      build: () {
+        var callCount = 0;
+        when(() => mockSyncUserData.execute()).thenAnswer((_) {
+          callCount++;
+          if (callCount == 1) throw const CloudSyncException('sin conexión');
+          return Future<void>.value();
+        });
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer(
+          (_) async => const FeedSyncResult(synced: 1, failedSourceIds: []),
+        );
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () => const InboxLoaded([], hasSources: true),
+      act: (cubit) => cubit.syncAndReload(),
+      expect: () => [InboxLoaded(tArticles, hasSources: true)],
+      verify: (_) {
+        verify(() => mockFeedSyncTrigger.execute()).called(1);
+      },
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'syncInBackground() no se cuelga si SyncUserData falla',
+      build: () {
+        when(() => mockSyncUserData.execute())
+            .thenThrow(const CloudSyncException('sin conexión'));
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () => InboxLoaded(tArticles, hasSources: true),
+      act: (cubit) => cubit.syncInBackground(),
+      expect: () => [
+        InboxLoaded(tArticles, hasSources: true, isSyncingInBackground: true),
+        InboxLoaded(tArticles, hasSources: true),
+      ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'syncAfterSignIn() no se cuelga si el sync inicial falla',
+      build: () {
+        when(() => mockSyncUserData.execute())
+            .thenThrow(const CloudSyncException('sin conexión'));
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer(
+          (_) async => const FeedSyncResult(synced: 0, failedSourceIds: []),
+        );
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources);
+        return buildCubit();
+      },
+      seed: () => const InboxLoaded([], hasSources: false),
+      act: (cubit) => cubit.syncAfterSignIn(),
+      wait: const Duration(milliseconds: 10),
+      expect: () => [
+        const InboxLoading(isSyncing: true),
+        InboxLoaded(tArticles, hasSources: true),
+        InboxLoaded(tArticles, hasSources: true, isSyncingInBackground: true),
+        InboxLoaded(tArticles, hasSources: true),
+      ],
+      errors: () => [],
+    );
+
+    test(
+        '_silentFeedRefresh() (vía syncAfterSignIn) sube el estado local '
+        'antes de disparar el fetch, y vuelve a sincronizar después', () async {
+      when(() => mockFeedSyncTrigger.execute()).thenAnswer(
+        (_) async => const FeedSyncResult(synced: 1, failedSourceIds: []),
+      );
+      when(() => mockGetInboxArticles.execute())
+          .thenAnswer((_) async => tArticles);
+      when(() => mockGetSources.execute()).thenAnswer((_) async => tSources);
+
+      final cubit = buildCubit();
+      await cubit.syncAfterSignIn();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      verifyInOrder([
+        () => mockSyncUserData.execute(), // sync inicial de login
+        () => mockSyncUserData.execute(), // subida previa al fetch (_silentFeedRefresh)
+        () => mockFeedSyncTrigger.execute(),
+        () => mockSyncUserData.execute(), // bajada tras el fetch
+      ]);
     });
 
     test('syncAndReload() retorna FeedSyncResult con fallos parciales', () async {

@@ -127,5 +127,37 @@ void main() {
         verify(() => mockSyncUserData.execute()).called(2);
       },
     );
+
+    blocTest<SourceDetailCubit, SourceDetailState>(
+      'syncAndLoadArticles: si falla el push de la fuente recién agregada, no se queda cargando',
+      build: buildCubit,
+      setUp: () {
+        var callCount = 0;
+        when(() => mockSyncUserData.execute()).thenAnswer((_) {
+          callCount++;
+          // El primer llamado (push de la fuente recién agregada) falla;
+          // el segundo (bajar los artículos que el fetch generó) funciona.
+          if (callCount == 1) {
+            throw const CloudSyncException('sin conexión');
+          }
+          return Future<void>.value();
+        });
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer(
+          (_) async => const FeedSyncResult(synced: 0, failedSourceIds: []),
+        );
+        when(() => mockGetSourceArticles.execute('s1'))
+            .thenAnswer((_) async => tArticles);
+      },
+      act: (cubit) => cubit.syncAndLoadArticles('s1'),
+      expect: () => [
+        const SourceDetailLoading(),
+        SourceDetailLoaded(tArticles),
+      ],
+      verify: (_) {
+        // No se muestra ningún error, y sigue disparando el fetch de feeds
+        // aunque el primer push haya fallado.
+        verify(() => mockFeedSyncTrigger.execute()).called(1);
+      },
+    );
   });
 }
