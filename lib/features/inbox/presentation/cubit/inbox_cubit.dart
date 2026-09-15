@@ -29,6 +29,19 @@ class InboxCubit extends Cubit<InboxState> {
   /// ambas esperan y reusan la misma llamada en vuelo.
   Future<FeedSyncResult>? _inFlightFeedSync;
 
+  /// Tope de vueltas y de tiempo total para el loop de reintento de
+  /// `syncAndReload()` (pull-to-refresh manual, ver
+  /// `openspec/changes/fix-pull-to-refresh-partial-sync/design.md` -
+  /// Decisión 3). Con el tope de fuentes por invocación del servidor (20) y
+  /// la evidencia de producción citada ahí (~45-89 fuentes entre cuentas
+  /// reales), 5 vueltas cubren cómodamente los casos observados sin
+  /// arriesgar un gesto de refresh que tarde varios minutos; el presupuesto
+  /// de tiempo acota el peor caso (cada invocación individual ya tiene su
+  /// propio timeout HTTP de 90s) sin necesitar bajar el tope de vueltas para
+  /// el caso común, que es rápido.
+  static const int _maxSyncRounds = 5;
+  static const Duration _maxSyncDuration = Duration(seconds: 60);
+
   InboxCubit(
     this._getInboxArticles,
     this._getSources,
@@ -219,7 +232,7 @@ class InboxCubit extends Cubit<InboxState> {
     } catch (e, st) {
       _observabilityClient.captureException(e, st);
     }
-    final result = await _triggerFeedSync();
+    final result = await _syncFeedsUntilCovered();
     try {
       await _syncUserData.execute();
     } catch (e, st) {
@@ -227,6 +240,67 @@ class InboxCubit extends Cubit<InboxState> {
     }
     await _reload();
     return result;
+  }
+
+  /// Reintenta `_triggerFeedSync()` en loop, dentro del mismo gesto de
+  /// pull-to-refresh, hasta cubrir todas las fuentes del usuario o alcanzar
+  /// un tope explícito -- ver `openspec/changes/
+  /// fix-pull-to-refresh-partial-sync/design.md` (Decisiones 2, 3 y 4).
+  /// Exclusivo de `syncAndReload()`: `syncAfterSignIn()`/
+  /// `_silentFeedRefresh()` (login) y el fetch al agregar una fuente siguen
+  /// invocando `_triggerFeedSync()` una única vez, sin este mecanismo.
+  ///
+  /// La condición de parada (la primera que se cumpla, evaluada al final de
+  /// cada vuelta) es: ya se intentó, en conjunto, al menos tantas fuentes
+  /// como tiene el usuario; la vuelta actual no intentó ninguna fuente; la
+  /// vuelta actual falló por error de red; o se alcanzó el tope de vueltas
+  /// o de tiempo total. Nunca se corta una invocación en curso a mitad de
+  /// camino -- los topes solo deciden si se arranca una vuelta más.
+  Future<FeedSyncResult> _syncFeedsUntilCovered() async {
+    // Se dispara `_getSources.execute()` acá (sin `await` todavía) en vez de
+    // esperarlo antes de la primera vuelta: si se lo esperara primero, se
+    // introduciría un salto de microtask extra antes de la primera llamada a
+    // `_triggerFeedSync()` que puede hacer perder la deduplicación con una
+    // invocación de `_feedSyncTrigger.execute()` ya en curso (ver
+    // `_inFlightFeedSync`) disparada casi al mismo tiempo por
+    // `_silentFeedRefresh()` (login). Se resuelve recién cuando hace falta,
+    // después de la primera vuelta.
+    final sourceCountFuture = _getSources.execute().then((s) => s.length);
+    final stopwatch = Stopwatch()..start();
+
+    var synced = 0;
+    final failedSourceIds = <String>{};
+    var isNetworkError = false;
+    var attemptedTotal = 0;
+    var sourceCount = 0;
+    var sourceCountResolved = false;
+
+    for (var round = 0; round < _maxSyncRounds; round++) {
+      final result = await _triggerFeedSync();
+      synced += result.synced;
+      failedSourceIds.addAll(result.failedSourceIds);
+      final attemptedThisRound = result.synced + result.failedSourceIds.length;
+      attemptedTotal += attemptedThisRound;
+
+      if (!sourceCountResolved) {
+        sourceCount = await sourceCountFuture;
+        sourceCountResolved = true;
+      }
+
+      if (result.isNetworkError) {
+        isNetworkError = true;
+        break;
+      }
+      if (attemptedThisRound == 0) break;
+      if (attemptedTotal >= sourceCount) break;
+      if (stopwatch.elapsed >= _maxSyncDuration) break;
+    }
+
+    return FeedSyncResult(
+      synced: synced,
+      failedSourceIds: failedSourceIds.toList(),
+      isNetworkError: isNetworkError,
+    );
   }
 
   /// Dispara `_feedSyncTrigger.execute()`, o reusa la invocación ya en

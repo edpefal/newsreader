@@ -457,6 +457,170 @@ void main() {
       expect(result.failedSourceIds.length, 2);
     });
 
+    test(
+      'syncAndReload() reintenta FeedSyncTrigger hasta cubrir todas las '
+      'fuentes cuando una sola invocación no alcanza, agregando el synced '
+      'de todas las vueltas',
+      () async {
+        // 3 fuentes en total; cada vuelta solo cubre 1 -> hacen falta 3
+        // vueltas para llegar a attemptedTotal >= sourceCount (3).
+        final manySources = List.generate(
+          3,
+          (i) => NewsSource(
+            id: 's$i',
+            name: 'Fuente $i',
+            feedUrl: 'https://$i.com/feed',
+            addedAt: DateTime(2024),
+          ),
+        );
+        var callCount = 0;
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer((_) async {
+          callCount++;
+          return FeedSyncResult(synced: 1, failedSourceIds: const []);
+        });
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => manySources);
+
+        final cubit = buildCubit();
+        final result = await cubit.syncAndReload();
+
+        expect(callCount, 3);
+        expect(result.synced, 3);
+        verify(() => mockFeedSyncTrigger.execute()).called(3);
+      },
+    );
+
+    test(
+      'syncAndReload() invoca FeedSyncTrigger una sola vez cuando una '
+      'invocación ya cubre todas las fuentes del usuario',
+      () async {
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer(
+          (_) async => const FeedSyncResult(synced: 1, failedSourceIds: []),
+        );
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => tSources); // 1 sola fuente
+
+        final cubit = buildCubit();
+        await cubit.syncAndReload();
+
+        verify(() => mockFeedSyncTrigger.execute()).called(1);
+      },
+    );
+
+    test(
+      'syncAndReload() detiene el loop al alcanzar el tope de vueltas sin '
+      'cubrir todas las fuentes, y continúa el flujo de refresh normalmente',
+      () async {
+        // Muchas más fuentes que las que _maxSyncRounds (5) * 1 por vuelta
+        // pueden cubrir -> nunca se llega a attemptedTotal >= sourceCount.
+        final manySources = List.generate(
+          50,
+          (i) => NewsSource(
+            id: 's$i',
+            name: 'Fuente $i',
+            feedUrl: 'https://$i.com/feed',
+            addedAt: DateTime(2024),
+          ),
+        );
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer(
+          (_) async => const FeedSyncResult(synced: 1, failedSourceIds: []),
+        );
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute())
+            .thenAnswer((_) async => manySources);
+
+        final cubit = buildCubit();
+        final result = await cubit.syncAndReload();
+
+        // 5 vueltas (_maxSyncRounds), no se cuelga ni lanza excepción.
+        verify(() => mockFeedSyncTrigger.execute()).called(5);
+        expect(result.synced, 5);
+      },
+    );
+
+    test(
+      'syncAndReload() detiene el loop de inmediato si una vuelta '
+      'intermedia devuelve isNetworkError=true, sin reintentar de nuevo',
+      () async {
+        var callCount = 0;
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer((_) async {
+          callCount++;
+          if (callCount == 1) {
+            return const FeedSyncResult(synced: 1, failedSourceIds: []);
+          }
+          return const FeedSyncResult(
+            synced: 0,
+            failedSourceIds: [],
+            isNetworkError: true,
+          );
+        });
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        when(() => mockGetSources.execute()).thenAnswer(
+          (_) async => List.generate(
+            10,
+            (i) => NewsSource(
+              id: 's$i',
+              name: 'Fuente $i',
+              feedUrl: 'https://$i.com/feed',
+              addedAt: DateTime(2024),
+            ),
+          ),
+        );
+
+        final cubit = buildCubit();
+        final result = await cubit.syncAndReload();
+
+        expect(callCount, 2);
+        expect(result.isNetworkError, isTrue);
+        verify(() => mockFeedSyncTrigger.execute()).called(2);
+      },
+    );
+
+    test(
+      'syncAndReload() no reporta la misma fuente fallida dos veces cuando '
+      'aparece en más de una vuelta del reintento',
+      () async {
+        var callCount = 0;
+        when(() => mockFeedSyncTrigger.execute()).thenAnswer((_) async {
+          callCount++;
+          if (callCount == 1) {
+            return const FeedSyncResult(
+              synced: 0,
+              failedSourceIds: ['s1'],
+            );
+          }
+          return const FeedSyncResult(synced: 0, failedSourceIds: ['s1']);
+        });
+        when(() => mockGetInboxArticles.execute())
+            .thenAnswer((_) async => tArticles);
+        // 2 fuentes: como cada vuelta solo "intenta" 1 (s1, que falla),
+        // attemptedTotal nunca llega a sourceCount (2) antes del tope de
+        // vueltas, así que s1 se reintenta y vuelve a fallar.
+        when(() => mockGetSources.execute()).thenAnswer(
+          (_) async => [
+            tSources.first,
+            NewsSource(
+              id: 's2',
+              name: 'Fuente 2',
+              feedUrl: 'https://2.com/feed',
+              addedAt: DateTime(2024),
+            ),
+          ],
+        );
+
+        final cubit = buildCubit();
+        final result = await cubit.syncAndReload();
+
+        expect(result.failedSourceIds, ['s1']);
+      },
+    );
+
     blocTest<InboxCubit, InboxState>(
       'loadArticlesAfterReading() emite InboxLoaded con readArticleId sin Loading previo',
       build: () {
