@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import 'package:newsreader/core/navigation/external_link_launcher.dart';
 import 'package:newsreader/core/widgets/html_content_renderer.dart';
 
 final _styleAttrPattern = RegExp(
@@ -379,18 +380,22 @@ const _resizeObserverScript = '''
 /// bloques con imagen) en blanco. Cargar el HTML saneado directo en el
 /// documento del `WebView`, como siempre, evita ese problema.
 ///
-/// La navegación dentro del WebView se bloquea después de la carga inicial
-/// (`onNavigationRequest`): el contenido viene de un remitente no confiable
-/// y no hay una barra de navegación ni botón "atrás" en esta pantalla, así
-/// que un tap en un link (ej. "Unsubscribe") no debe secuestrar la pantalla
-/// navegando el WebView embebido a otra página.
+/// La navegación dentro del WebView se intercepta después de la carga
+/// inicial (`onNavigationRequest`): el contenido viene de un remitente no
+/// confiable y no hay una barra de navegación ni botón "atrás" en esta
+/// pantalla, así que un tap en un link (ej. un artículo referenciado, o
+/// "Unsubscribe") no debe secuestrar la pantalla navegando el WebView
+/// embebido a otra página -- en cambio, esa URL se abre en el navegador
+/// externo vía [ExternalLinkLauncher], para que el link siga siendo útil.
 class _RawEmailWebView extends StatefulWidget {
   final String htmlContent;
   final String articleUrl;
+  final ExternalLinkLauncher externalLinkLauncher;
 
   const _RawEmailWebView({
     required this.htmlContent,
     required this.articleUrl,
+    required this.externalLinkLauncher,
   });
 
   @override
@@ -422,9 +427,11 @@ class _RawEmailWebViewState extends State<_RawEmailWebView> {
             _initialLoadDone = true;
             _controller.runJavaScript(_resizeObserverScript);
           },
-          onNavigationRequest: (request) => _initialLoadDone
-              ? NavigationDecision.prevent
-              : NavigationDecision.navigate,
+          onNavigationRequest: (request) {
+            if (!_initialLoadDone) return NavigationDecision.navigate;
+            widget.externalLinkLauncher.open(request.url);
+            return NavigationDecision.prevent;
+          },
         ),
       )
       ..loadHtmlString(
@@ -468,13 +475,18 @@ class FwhHtmlContentRenderer extends HtmlContentRenderer {
     super.key,
     required super.htmlContent,
     required super.articleUrl,
+    required super.externalLinkLauncher,
     super.readerMode,
   });
 
   @override
   Widget build(BuildContext context) {
     if (looksLikeRawEmailHtml(htmlContent)) {
-      return _RawEmailWebView(htmlContent: htmlContent, articleUrl: articleUrl);
+      return _RawEmailWebView(
+        htmlContent: htmlContent,
+        articleUrl: articleUrl,
+        externalLinkLauncher: externalLinkLauncher,
+      );
     }
 
     final theme = Theme.of(context);
