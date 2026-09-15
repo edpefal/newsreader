@@ -3,10 +3,20 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 
+import 'package:newsreader/core/navigation/external_link_launcher.dart';
 import 'package:newsreader/core/widgets/fwh_html_content_renderer.dart';
+
+class MockExternalLinkLauncher extends Mock implements ExternalLinkLauncher {}
+
+// Referencia al último `_FakePlatformNavigationDelegate` creado, para que
+// los tests puedan disparar manualmente `onPageFinished`/`onNavigationRequest`
+// -- no hay otra forma de llegar a esos callbacks desde afuera, ya que
+// `_RawEmailWebViewState` los registra dentro de su propio `initState`.
+_FakePlatformNavigationDelegate? _lastNavigationDelegate;
 
 // `WebViewController`/`WebViewWidget` requieren un `WebViewPlatform.instance`
 // real (backed por un canal de plataforma nativo), que no existe en el
@@ -27,8 +37,11 @@ class _FakeWebViewPlatform extends WebViewPlatform {
   @override
   PlatformNavigationDelegate createPlatformNavigationDelegate(
     PlatformNavigationDelegateCreationParams params,
-  ) =>
-      _FakePlatformNavigationDelegate(params);
+  ) {
+    final delegate = _FakePlatformNavigationDelegate(params);
+    _lastNavigationDelegate = delegate;
+    return delegate;
+  }
 
   @override
   PlatformWebViewWidget createPlatformWebViewWidget(
@@ -55,18 +68,28 @@ class _FakePlatformWebViewController extends PlatformWebViewController {
 
   @override
   Future<void> loadHtmlString(String html, {String? baseUrl}) async {}
+
+  @override
+  Future<void> runJavaScript(String javaScript) async {}
 }
 
 class _FakePlatformNavigationDelegate extends PlatformNavigationDelegate {
   _FakePlatformNavigationDelegate(super.params) : super.implementation();
 
+  PageEventCallback? onPageFinished;
+  NavigationRequestCallback? onNavigationRequest;
+
   @override
-  Future<void> setOnPageFinished(PageEventCallback onPageFinished) async {}
+  Future<void> setOnPageFinished(PageEventCallback onPageFinished) async {
+    this.onPageFinished = onPageFinished;
+  }
 
   @override
   Future<void> setOnNavigationRequest(
     NavigationRequestCallback onNavigationRequest,
-  ) async {}
+  ) async {
+    this.onNavigationRequest = onNavigationRequest;
+  }
 }
 
 class _FakePlatformWebViewWidget extends PlatformWebViewWidget {
@@ -103,12 +126,18 @@ final _newsletterHtml = File(
   'test/fixtures/newsletter_nested_tables.html',
 ).readAsStringSync();
 
-Widget _buildSubject(String html) => MaterialApp(
+Widget _buildSubject(
+  String html, {
+  ExternalLinkLauncher? externalLinkLauncher,
+}) =>
+    MaterialApp(
       home: Scaffold(
         body: SingleChildScrollView(
           child: FwhHtmlContentRenderer(
             htmlContent: html,
             articleUrl: 'https://www.morningbrew.com',
+            externalLinkLauncher:
+                externalLinkLauncher ?? MockExternalLinkLauncher(),
           ),
         ),
       ),
@@ -117,6 +146,10 @@ Widget _buildSubject(String html) => MaterialApp(
 void main() {
   setUpAll(() {
     WebViewPlatform.instance = _FakeWebViewPlatform();
+  });
+
+  setUp(() {
+    _lastNavigationDelegate = null;
   });
 
   testWidgets(
@@ -156,6 +189,54 @@ void main() {
       expect(find.byType(HtmlWidget), findsOneWidget);
       expect(find.byType(WebViewWidget), findsNothing);
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'un link tocado después de la carga inicial se abre en el navegador '
+    'externo, sin navegar el WebView embebido',
+    (tester) async {
+      final launcher = MockExternalLinkLauncher();
+      when(() => launcher.open(any())).thenAnswer((_) async {});
+
+      await tester.pumpWidget(
+        _buildSubject(_newsletterHtml, externalLinkLauncher: launcher),
+      );
+      await tester.pump();
+
+      final delegate = _lastNavigationDelegate!;
+      delegate.onPageFinished!('https://www.morningbrew.com');
+
+      const linkedUrl = 'https://example.com/referenced-article';
+      final decision = await delegate.onNavigationRequest!(
+        const NavigationRequest(url: linkedUrl, isMainFrame: true),
+      );
+
+      verify(() => launcher.open(linkedUrl)).called(1);
+      expect(decision, NavigationDecision.prevent);
+    },
+  );
+
+  testWidgets(
+    'la carga inicial del HTML del email no se intercepta como un link',
+    (tester) async {
+      final launcher = MockExternalLinkLauncher();
+
+      await tester.pumpWidget(
+        _buildSubject(_newsletterHtml, externalLinkLauncher: launcher),
+      );
+      await tester.pump();
+
+      final delegate = _lastNavigationDelegate!;
+      final decision = await delegate.onNavigationRequest!(
+        const NavigationRequest(
+          url: 'https://www.morningbrew.com',
+          isMainFrame: true,
+        ),
+      );
+
+      verifyNever(() => launcher.open(any()));
+      expect(decision, NavigationDecision.navigate);
     },
   );
 }

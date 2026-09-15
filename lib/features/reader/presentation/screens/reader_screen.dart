@@ -284,6 +284,7 @@ class _ReaderScreenState extends State<ReaderScreen>
         FwhHtmlContentRenderer(
           htmlContent: article.contentHtml!,
           articleUrl: article.articleUrl,
+          externalLinkLauncher: widget.externalLinkLauncher,
           readerMode: true,
         ),
       );
