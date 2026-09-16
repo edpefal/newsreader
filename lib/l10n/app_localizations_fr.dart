@@ -300,29 +300,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sourcesEditNameFieldLabel => 'Nom';
 
   @override
-  String get summariesGenerating => 'Génération du résumé...';
-
-  @override
-  String get summariesCreateTodayButton => 'Créer le résumé du jour';
-
-  @override
-  String get summariesAlreadyGeneratedToday =>
-      'Tu as déjà généré le résumé du jour. Reviens demain pour en créer un nouveau.';
-
-  @override
-  String get summariesFreeTierAvailable =>
-      'Il te reste 1 résumé gratuit cette semaine';
-
-  @override
-  String get summariesFreeTierExhausted =>
-      'Tu as déjà utilisé ton résumé gratuit de la semaine — il se renouvelle lundi, ou abonne-toi pour avoir un résumé tous les jours';
-
-  @override
   String get summariesEmptyTitle => 'Aucun résumé pour l\'instant';
 
   @override
   String get summariesEmptySubtitle =>
-      'Crée le résumé du jour pour voir de quoi parlaient tes actualités.';
+      'Ton résumé quotidien apparaîtra ici automatiquement dès qu\'il y aura des actualités à résumer.';
 
   @override
   String summaryDetailTitle(String date) {
@@ -509,10 +491,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Aucun flux n\'a été trouvé dans ce fichier';
 
   @override
-  String get errorNoArticlesToday =>
-      'Il n\'y a pas de nouveaux articles aujourd\'hui à résumer';
-
-  @override
   String get errorGenerationFailed => 'Une erreur est survenue. Réessaie.';
 
   @override
@@ -525,10 +503,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorSubscriptionRequired => 'Cela nécessite un abonnement actif.';
-
-  @override
-  String get errorDailySummaryAlreadyGenerated =>
-      'Tu as déjà généré le résumé du jour. Reviens demain pour en créer un nouveau.';
 
   @override
   String get errorArticleTooLongToSummarize =>

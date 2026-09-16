@@ -1,36 +1,35 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'daily_summary_free_usage_model.dart';
+part of 'user_preferences_model.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class DailySummaryFreeUsageModelAdapter
-    extends TypeAdapter<DailySummaryFreeUsageModel> {
+class UserPreferencesModelAdapter extends TypeAdapter<UserPreferencesModel> {
   @override
-  final typeId = 5;
+  final typeId = 6;
 
   @override
-  DailySummaryFreeUsageModel read(BinaryReader reader) {
+  UserPreferencesModel read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return DailySummaryFreeUsageModel(
-      weekStart: fields[0] as DateTime,
-      used: fields[1] as bool,
+    return UserPreferencesModel(
+      locale: fields[0] as String,
+      utcOffsetMinutes: (fields[1] as num).toInt(),
     );
   }
 
   @override
-  void write(BinaryWriter writer, DailySummaryFreeUsageModel obj) {
+  void write(BinaryWriter writer, UserPreferencesModel obj) {
     writer
       ..writeByte(2)
       ..writeByte(0)
-      ..write(obj.weekStart)
+      ..write(obj.locale)
       ..writeByte(1)
-      ..write(obj.used);
+      ..write(obj.utcOffsetMinutes);
   }
 
   @override
@@ -39,7 +38,7 @@ class DailySummaryFreeUsageModelAdapter
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is DailySummaryFreeUsageModelAdapter &&
+      other is UserPreferencesModelAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

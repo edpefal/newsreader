@@ -127,8 +127,7 @@ class _ReaderScreenState extends State<ReaderScreen>
     await widget.toggleFavorite.execute(widget.article.id);
   }
 
-  /// Mismo patrón que `SummariesCubit.generateTodaySummary`: con
-  /// suscripción activa, abre el sheet directo; sin suscripción, primero
+  /// Con suscripción activa, abre el sheet directo; sin suscripción, primero
   /// chequea el cupo diario gratis (2/día, ver capability
   /// `ai-usage-budget`) -- con cupo disponible abre el sheet igual que con
   /// suscripción, sin cupo abre igual el sheet pero con el estado de cupo

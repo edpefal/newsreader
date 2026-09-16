@@ -51,9 +51,6 @@ enum AppErrorCode {
   /// Un feed individual dentro de un archivo OPML no pudo validarse.
   opmlFeedValidationFailed,
 
-  /// No hay artículos nuevos para generar el resumen del día.
-  noArticlesToday,
-
   /// Fallo genérico al completar una operación contra el backend
   /// (generación de resumen, generación de dirección de email).
   generationFailed,
@@ -73,11 +70,6 @@ enum AppErrorCode {
   /// pasar la solicitud, ej. una suscripción de sandbox que expira entre
   /// la verificación local y la del backend).
   subscriptionRequired,
-
-  /// Ya existe un `DailySummary` para el día de hoy (día de servidor); el
-  /// resumen diario permite como máximo una generación exitosa por día, sin
-  /// regenerar (ver capability `daily-summaries`).
-  dailySummaryAlreadyGenerated,
 
   /// El contenido del artículo supera el techo de longitud para resumir
   /// automáticamente (ver capability `ai-usage-budget`); no descuenta del

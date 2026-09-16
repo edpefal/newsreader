@@ -550,36 +550,6 @@ abstract class AppLocalizations {
   /// **'Name'**
   String get sourcesEditNameFieldLabel;
 
-  /// No description provided for @summariesGenerating.
-  ///
-  /// In en, this message translates to:
-  /// **'Generating summary...'**
-  String get summariesGenerating;
-
-  /// No description provided for @summariesCreateTodayButton.
-  ///
-  /// In en, this message translates to:
-  /// **'Create today\'s summary'**
-  String get summariesCreateTodayButton;
-
-  /// No description provided for @summariesAlreadyGeneratedToday.
-  ///
-  /// In en, this message translates to:
-  /// **'You already generated today\'s summary. Come back tomorrow for a new one.'**
-  String get summariesAlreadyGeneratedToday;
-
-  /// No description provided for @summariesFreeTierAvailable.
-  ///
-  /// In en, this message translates to:
-  /// **'You have 1 free summary left this week'**
-  String get summariesFreeTierAvailable;
-
-  /// No description provided for @summariesFreeTierExhausted.
-  ///
-  /// In en, this message translates to:
-  /// **'You already used your free summary this week — it renews on Monday, or subscribe to get a summary every day'**
-  String get summariesFreeTierExhausted;
-
   /// No description provided for @summariesEmptyTitle.
   ///
   /// In en, this message translates to:
@@ -589,7 +559,7 @@ abstract class AppLocalizations {
   /// No description provided for @summariesEmptySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Create today\'s summary to see what your news was about.'**
+  /// **'Your daily summary will show up here automatically once there\'s news to summarize.'**
   String get summariesEmptySubtitle;
 
   /// No description provided for @summaryDetailTitle.
@@ -892,12 +862,6 @@ abstract class AppLocalizations {
   /// **'No feeds were found in this file'**
   String get errorOpmlNoFeedsFound;
 
-  /// No description provided for @errorNoArticlesToday.
-  ///
-  /// In en, this message translates to:
-  /// **'There are no new articles today to summarize'**
-  String get errorNoArticlesToday;
-
   /// No description provided for @errorGenerationFailed.
   ///
   /// In en, this message translates to:
@@ -921,12 +885,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This requires an active subscription.'**
   String get errorSubscriptionRequired;
-
-  /// No description provided for @errorDailySummaryAlreadyGenerated.
-  ///
-  /// In en, this message translates to:
-  /// **'You already generated today\'s summary. Come back tomorrow for a new one.'**
-  String get errorDailySummaryAlreadyGenerated;
 
   /// No description provided for @errorArticleTooLongToSummarize.
   ///

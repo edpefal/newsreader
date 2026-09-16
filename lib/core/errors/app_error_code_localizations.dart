@@ -40,8 +40,6 @@ extension AppErrorCodeL10n on AppErrorCode {
         // Reusa la clave ya agregada en el Change 1 (mismo texto, ya
         // usado como fallback en `_ErrorFeedTile` para este caso).
         return l10n.sourcesFeedValidationFailed;
-      case AppErrorCode.noArticlesToday:
-        return l10n.errorNoArticlesToday;
       case AppErrorCode.generationFailed:
         return l10n.errorGenerationFailed;
       case AppErrorCode.aiUsageLimitReached:
@@ -50,8 +48,6 @@ extension AppErrorCodeL10n on AppErrorCode {
         return l10n.errorContentBlocked;
       case AppErrorCode.subscriptionRequired:
         return l10n.errorSubscriptionRequired;
-      case AppErrorCode.dailySummaryAlreadyGenerated:
-        return l10n.errorDailySummaryAlreadyGenerated;
       case AppErrorCode.articleTooLongToSummarize:
         return l10n.errorArticleTooLongToSummarize;
       case AppErrorCode.cloudSyncFailed:
