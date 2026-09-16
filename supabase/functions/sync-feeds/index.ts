@@ -8,6 +8,7 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import Parser from "npm:rss-parser@^3";
+import { isBackgroundInvocation } from "./background_mode.ts";
 import { isSafePublicUrl } from "./url_safety.ts";
 
 const FEED_FETCH_TIMEOUT_MS = 10_000;
@@ -179,34 +180,60 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "");
 
+  // El body puede venir vacío (`'{}'`, caso on-demand actual del cliente) o
+  // ausente -- solo el cron de background manda `{ "mode": "background" }`.
+  let requestedMode: unknown;
+  try {
+    const raw = await req.text();
+    requestedMode = raw ? (JSON.parse(raw) as { mode?: unknown }).mode : undefined;
+  } catch {
+    requestedMode = undefined;
+  }
+
   const admin = createClient(supabaseUrl, serviceRoleKey);
 
-  // Sin cron: la única forma de invocar esta función es on-demand, con el
-  // JWT del usuario (pull-to-refresh). Se valida el token y se procesan
-  // solo las fuentes de ese usuario.
-  const userClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  const { data, error } = await userClient.auth.getUser(token);
-  if (error || !data.user) {
-    return new Response(JSON.stringify({ error: "Token inválido" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
+  // Modo background (ver `background_mode.ts`): invocado únicamente por el
+  // cron del servidor con `service_role`, sin JWT de usuario -- procesa el
+  // lote globalmente menos recientemente sincronizado, de toda la tabla
+  // `sources`, no de un usuario en particular (ver design.md, Decisión 1).
+  const isBackground = isBackgroundInvocation(
+    token,
+    serviceRoleKey,
+    requestedMode,
+  );
+
+  let userId: string | null = null;
+  if (!isBackground) {
+    // Modo on-demand (pull-to-refresh, login, agregar fuente): se valida el
+    // JWT del usuario y se procesan solo sus propias fuentes.
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
     });
+    const { data, error } = await userClient.auth.getUser(token);
+    if (error || !data.user) {
+      return new Response(JSON.stringify({ error: "Token inválido" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    userId = data.user.id;
   }
-  const userId = data.user.id;
 
   // Tope duro de fuentes por invocación: procesar demasiadas en una sola
   // invocación agota el presupuesto de cómputo del Edge Function
   // (confirmado en despliegue: WORKER_RESOURCE_LIMIT ya con ~45 fuentes de
   // un solo usuario). Se prioriza lo menos sincronizado recientemente, así
-  // que un usuario con más fuentes que el tope se termina de poner al día
-  // en pull-to-refresh sucesivos en vez de fallar.
-  const { data: sources, error: sourcesError } = await admin
+  // que un usuario (o, en modo background, la base entera) con más fuentes
+  // que el tope se termina de poner al día en invocaciones sucesivas en vez
+  // de fallar.
+  let sourcesQuery = admin
     .from("sources")
     .select("id, user_id, feed_url, name, icon_url, author")
-    .eq("user_id", userId)
-    .is("deleted_at", null)
+    .is("deleted_at", null);
+  if (!isBackground) {
+    sourcesQuery = sourcesQuery.eq("user_id", userId!);
+  }
+  const { data: sources, error: sourcesError } = await sourcesQuery
     .order("last_synced_at", { ascending: true, nullsFirst: true })
     .limit(MAX_SOURCES_PER_INVOCATION);
   if (sourcesError) {
