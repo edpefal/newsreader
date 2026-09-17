@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:newsreader/core/domain/entities/daily_summary.dart';
-import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/widgets/summary_list_item.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
@@ -18,14 +16,8 @@ class SummariesScreen extends StatelessWidget {
 class SummariesView extends StatelessWidget {
   const SummariesView({super.key});
 
-  Future<void> _onGeneratePressed(BuildContext context) =>
-      context.read<SummariesCubit>().generateTodaySummary(
-            Localizations.localeOf(context).languageCode,
-          );
-
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: BlocBuilder<SummariesCubit, SummariesState>(
         builder: (context, state) {
@@ -33,140 +25,24 @@ class SummariesView extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final (
-            summaries,
-            canGenerateToday,
-            alreadyGeneratedToday,
-            isGenerating,
-            errorMessage,
-            isSubscribed,
-            freeTierAvailable,
-          ) = switch (state) {
-            SummariesLoaded(
-              :final summaries,
-              :final canGenerateToday,
-              :final alreadyGeneratedToday,
-              :final isSubscribed,
-              :final freeTierAvailable,
-            ) =>
-              (
-                summaries,
-                canGenerateToday,
-                alreadyGeneratedToday,
-                false,
-                null,
-                isSubscribed,
-                freeTierAvailable,
-              ),
-            SummaryGenerating(:final summaries) => (
-                summaries,
-                false,
-                false,
-                true,
-                null,
-                true,
-                true,
-              ),
-            SummaryGenerationError(
-              :final summaries,
-              :final canGenerateToday,
-              :final code,
-            ) =>
-              (
-                summaries,
-                canGenerateToday,
-                false,
-                false,
-                code.localize(l10n),
-                true,
-                true,
-              ),
-            SummariesLoading() => (
-                const <DailySummary>[],
-                false,
-                false,
-                false,
-                null,
-                true,
-                true,
-              ),
-          };
+          final summaries = (state as SummariesLoaded).summaries;
 
-          final canGenerate = !isGenerating && canGenerateToday;
+          if (summaries.isEmpty) {
+            return const _EmptySummariesState();
+          }
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (alreadyGeneratedToday) ...[
-                      Text(
-                        l10n.summariesAlreadyGeneratedToday,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                    ] else if (!isSubscribed) ...[
-                      Text(
-                        freeTierAvailable
-                            ? l10n.summariesFreeTierAvailable
-                            : l10n.summariesFreeTierExhausted,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    FilledButton.icon(
-                      onPressed: canGenerate
-                          ? () => _onGeneratePressed(context)
-                          : null,
-                      icon: isGenerating
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.auto_awesome),
-                      label: Text(
-                        isGenerating
-                            ? l10n.summariesGenerating
-                            : l10n.summariesCreateTodayButton,
-                      ),
-                    ),
-                    if (errorMessage != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        errorMessage,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ],
-                  ],
+          return ListView.builder(
+            itemCount: summaries.length,
+            itemBuilder: (context, index) {
+              final summary = summaries[index];
+              return SummaryListItem(
+                summary: summary,
+                onTap: () => context.push(
+                  '/summaries/${summary.id}',
+                  extra: summary,
                 ),
-              ),
-              Expanded(
-                child: summaries.isEmpty
-                    ? const _EmptySummariesState()
-                    : ListView.builder(
-                        itemCount: summaries.length,
-                        itemBuilder: (context, index) {
-                          final summary = summaries[index];
-                          return SummaryListItem(
-                            summary: summary,
-                            onTap: () => context.push(
-                              '/summaries/${summary.id}',
-                              extra: summary,
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
+              );
+            },
           );
         },
       ),

@@ -158,13 +158,8 @@
   "sourcesEditNameDialogTitle": "Edit name",
   "sourcesEditNameFieldLabel": "Name",
 
-  "summariesGenerating": "Generating summary...",
-  "summariesCreateTodayButton": "Create today's summary",
-  "summariesAlreadyGeneratedToday": "You already generated today's summary. Come back tomorrow for a new one.",
-  "summariesFreeTierAvailable": "You have 1 free summary left this week",
-  "summariesFreeTierExhausted": "You already used your free summary this week — it renews on Monday, or subscribe to get a summary every day",
   "summariesEmptyTitle": "No summaries yet",
-  "summariesEmptySubtitle": "Create today's summary to see what your news was about.",
+  "summariesEmptySubtitle": "Your daily summary will show up here automatically once there's news to summarize.",
   "summaryDetailTitle": "Summary for {date}",
   "@summaryDetailTitle": {
     "placeholders": {
@@ -251,12 +246,10 @@
   "errorAuthProviderError": "Something went wrong signing you in. Please try again.",
   "errorEmptyUrl": "Enter a valid URL",
   "errorOpmlNoFeedsFound": "No feeds were found in this file",
-  "errorNoArticlesToday": "There are no new articles today to summarize",
   "errorGenerationFailed": "Something went wrong. Please try again.",
   "errorAiUsageLimitReached": "You've reached today's AI usage limit. Try again tomorrow.",
   "errorContentBlocked": "We couldn't summarize this article because of the AI provider's content policy.",
   "errorSubscriptionRequired": "This requires an active subscription.",
-  "errorDailySummaryAlreadyGenerated": "You already generated today's summary. Come back tomorrow for a new one.",
   "errorArticleTooLongToSummarize": "This article is too long to summarize automatically.",
   "errorCloudSyncFailed": "We couldn't sync with the server. Please try again.",
   "errorUnknown": "Something unexpected happened"

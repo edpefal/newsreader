@@ -22,9 +22,10 @@ class GenerateArticleSummary {
     this._aiUsageRepository,
   );
 
-  /// Mismo criterio que `GenerateDailySummary` para elegir la fuente del
-  /// contenido (texto de `contentHtml` cuando el artículo no está
-  /// truncado, `excerpt` si lo está o está vacío), pero preservando los
+  /// Mismo criterio que usa `generate-daily-summaries` del lado del
+  /// servidor para elegir la fuente del contenido (texto de `contentHtml`
+  /// cuando el artículo no está truncado, `excerpt` si lo está o está
+  /// vacío), pero preservando los
   /// links del artículo como markdown (`HtmlToLinkedText`, no
   /// `HtmlToPlainText`) para que la API de IA pueda detectar menciones de
   /// tipo artículo -- ver capability `article-mentions`. `daily-summaries`

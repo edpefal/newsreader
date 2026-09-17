@@ -3,10 +3,8 @@ import 'package:hive_ce/hive.dart';
 
 import 'package:newsreader/core/ai/article_summary_generator.dart';
 import 'package:newsreader/core/ai/gemini_article_summary_generator.dart';
-import 'package:newsreader/core/ai/gemini_summary_generator.dart';
 import 'package:newsreader/core/ai/mention_enricher.dart';
 import 'package:newsreader/core/ai/remote_mention_enricher.dart';
-import 'package:newsreader/core/ai/summary_generator.dart';
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/auth/supabase_auth_client.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
@@ -30,31 +28,29 @@ import 'package:newsreader/core/utils/uuid_id_generator.dart';
 import 'package:newsreader/core/data/datasources/local/ai_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/article_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/article_summary_local_datasource.dart';
-import 'package:newsreader/core/data/datasources/local/daily_summary_free_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_ai_usage_datasource.dart';
-import 'package:newsreader/core/data/datasources/local/hive_daily_summary_free_usage_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_article_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_article_summary_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_source_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/hive_summary_datasource.dart';
+import 'package:newsreader/core/data/datasources/local/hive_user_preferences_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/source_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/summary_local_datasource.dart';
+import 'package:newsreader/core/data/datasources/local/user_preferences_local_datasource.dart';
 import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/article_summary_model.dart';
-import 'package:newsreader/core/data/models/daily_summary_free_usage_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
+import 'package:newsreader/core/data/models/user_preferences_model.dart';
 import 'package:newsreader/core/data/repositories/ai_usage_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/article_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/article_summary_repository_impl.dart';
-import 'package:newsreader/core/data/repositories/daily_summary_free_usage_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/source_repository_impl.dart';
 import 'package:newsreader/core/data/repositories/summary_repository_impl.dart';
 import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/domain/repositories/article_repository.dart';
 import 'package:newsreader/core/domain/repositories/article_summary_repository.dart';
-import 'package:newsreader/core/domain/repositories/daily_summary_free_usage_repository.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
 import 'package:newsreader/core/domain/repositories/summary_repository.dart';
 import 'package:newsreader/core/sharing/file_sharer.dart';
@@ -90,7 +86,6 @@ import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
 import 'package:newsreader/features/sources/domain/usecases/import_opml.dart';
 import 'package:newsreader/features/sources/domain/usecases/update_source_name.dart';
 import 'package:newsreader/features/sources/presentation/cubit/sources_cubit.dart';
-import 'package:newsreader/features/summaries/domain/usecases/generate_daily_summary.dart';
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
 import 'package:newsreader/features/summaries/domain/usecases/get_daily_summaries.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
@@ -118,9 +113,6 @@ Future<void> setupDependencies() async {
     () => const UrlLauncherExternalLinkLauncher(),
   );
   getIt.registerLazySingleton<OPMLParser>(() => const XmlOpmlParser());
-  getIt.registerLazySingleton<SummaryGenerator>(
-    () => GeminiSummaryGenerator(getIt(), getIt(), getIt()),
-  );
   getIt.registerLazySingleton<ArticleSummaryGenerator>(
     () => GeminiArticleSummaryGenerator(getIt(), getIt(), getIt()),
   );
@@ -164,11 +156,9 @@ Future<void> setupDependencies() async {
       Hive.box<AiUsageDailyModel>(AppConstants.hiveAiUsageBox),
     ),
   );
-  getIt.registerLazySingleton<DailySummaryFreeUsageLocalDataSource>(
-    () => HiveDailySummaryFreeUsageDatasource(
-      Hive.box<DailySummaryFreeUsageModel>(
-        AppConstants.hiveDailySummaryFreeUsageBox,
-      ),
+  getIt.registerLazySingleton<UserPreferencesLocalDataSource>(
+    () => HiveUserPreferencesDatasource(
+      Hive.box<UserPreferencesModel>(AppConstants.hiveUserPreferencesBox),
     ),
   );
 
@@ -187,9 +177,6 @@ Future<void> setupDependencies() async {
   );
   getIt.registerLazySingleton<AiUsageRepository>(
     () => AiUsageRepositoryImpl(getIt(), getIt()),
-  );
-  getIt.registerLazySingleton<DailySummaryFreeUsageRepository>(
-    () => DailySummaryFreeUsageRepositoryImpl(getIt()),
   );
 
   // Use cases — Sources
@@ -231,9 +218,6 @@ Future<void> setupDependencies() async {
 
   // Use cases — Summaries
   getIt.registerLazySingleton(() => GetDailySummaries(getIt()));
-  getIt.registerLazySingleton(
-    () => GenerateDailySummary(getIt(), getIt(), getIt(), getIt(), getIt()),
-  );
   getIt.registerLazySingleton(() => ResolveSummaryArticles(getIt()));
 
   // Use cases — Article summary
@@ -282,9 +266,7 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<SourcesCubit>(
     SourcesCubit(getIt(), getIt(), getIt(), getIt()),
   );
-  getIt.registerSingleton<SummariesCubit>(
-    SummariesCubit(getIt(), getIt(), getIt(), getIt(), getIt()),
-  );
+  getIt.registerSingleton<SummariesCubit>(SummariesCubit(getIt()));
   getIt.registerFactory<ArticleSummaryCubit>(
     () => ArticleSummaryCubit(getIt(), getIt(), getIt()),
   );

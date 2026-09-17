@@ -6,14 +6,14 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/data/datasources/local/ai_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/article_local_datasource.dart';
-import 'package:newsreader/core/data/datasources/local/daily_summary_free_usage_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/source_local_datasource.dart';
 import 'package:newsreader/core/data/datasources/local/summary_local_datasource.dart';
+import 'package:newsreader/core/data/datasources/local/user_preferences_local_datasource.dart';
 import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
-import 'package:newsreader/core/data/models/daily_summary_free_usage_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
+import 'package:newsreader/core/data/models/user_preferences_model.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 
@@ -26,8 +26,8 @@ class MockSummaryLocalDataSource extends Mock implements SummaryLocalDataSource 
 class MockAiUsageLocalDataSource extends Mock
     implements AiUsageLocalDataSource {}
 
-class MockDailySummaryFreeUsageLocalDataSource extends Mock
-    implements DailySummaryFreeUsageLocalDataSource {}
+class MockUserPreferencesLocalDataSource extends Mock
+    implements UserPreferencesLocalDataSource {}
 
 class MockCloudSyncClient extends Mock implements CloudSyncClient {}
 
@@ -64,7 +64,7 @@ void main() {
   late MockArticleLocalDataSource mockArticleLocal;
   late MockSummaryLocalDataSource mockSummaryLocal;
   late MockAiUsageLocalDataSource mockAiUsageLocal;
-  late MockDailySummaryFreeUsageLocalDataSource mockDailySummaryFreeUsageLocal;
+  late MockUserPreferencesLocalDataSource mockUserPreferencesLocal;
   late MockCloudSyncClient mockCloudSyncClient;
   late MockAuthClient mockAuthClient;
   late MockSettingsBox mockSettingsBox;
@@ -89,7 +89,7 @@ void main() {
       AiUsageDailyModel(day: DateTime(2026), summariesUsed: 0),
     );
     registerFallbackValue(
-      DailySummaryFreeUsageModel(weekStart: DateTime(2026), used: false),
+      UserPreferencesModel(locale: 'en', utcOffsetMinutes: 0),
     );
   });
 
@@ -98,7 +98,7 @@ void main() {
     mockArticleLocal = MockArticleLocalDataSource();
     mockSummaryLocal = MockSummaryLocalDataSource();
     mockAiUsageLocal = MockAiUsageLocalDataSource();
-    mockDailySummaryFreeUsageLocal = MockDailySummaryFreeUsageLocalDataSource();
+    mockUserPreferencesLocal = MockUserPreferencesLocalDataSource();
     mockCloudSyncClient = MockCloudSyncClient();
     mockAuthClient = MockAuthClient();
     mockSettingsBox = MockSettingsBox();
@@ -107,7 +107,7 @@ void main() {
       mockArticleLocal,
       mockSummaryLocal,
       mockAiUsageLocal,
-      mockDailySummaryFreeUsageLocal,
+      mockUserPreferencesLocal,
       mockCloudSyncClient,
       mockAuthClient,
       mockSettingsBox,
@@ -121,8 +121,7 @@ void main() {
     when(() => mockArticleLocal.applyRemote(any())).thenAnswer((_) async {});
     when(() => mockSummaryLocal.applyRemote(any())).thenAnswer((_) async {});
     when(() => mockAiUsageLocal.applyRemote(any())).thenAnswer((_) async {});
-    when(() => mockDailySummaryFreeUsageLocal.applyRemote(any()))
-        .thenAnswer((_) async {});
+    when(() => mockUserPreferencesLocal.save(any())).thenAnswer((_) async {});
     when(() => mockCloudSyncClient.updatePartial(any(), any()))
         .thenAnswer((_) async {});
     // Stub por defecto para la tabla nueva de solo lectura: la mayoría de
@@ -131,10 +130,11 @@ void main() {
     // pueden seguir registrando su propio `when` más específico.
     when(() => mockCloudSyncClient.fetchChangedSince('ai_usage_daily', any()))
         .thenAnswer((_) async => []);
-    when(() => mockCloudSyncClient
-        .fetchChangedSince('daily_summary_free_usage', any())).thenAnswer(
-      (_) async => [],
-    );
+    // `user_preferences` se sube incondicionalmente en cada ciclo (ver
+    // `_syncUserPreferences`) -- stub por defecto para que los tests que no
+    // le interesa esta tabla no fallen con un MissingStubError.
+    when(() => mockCloudSyncClient.upsert('user_preferences', any()))
+        .thenAnswer((_) async {});
   });
 
   group('guard de concurrencia', () {
@@ -240,7 +240,11 @@ void main() {
       verify(() => mockSourceLocal.getChangedSince(cursor)).called(1);
       verify(() => mockArticleLocal.getChangedSince(cursor)).called(1);
       verify(() => mockSummaryLocal.getChangedSince(cursor)).called(1);
-      verifyNever(() => mockCloudSyncClient.upsert(any(), any()));
+      // `user_preferences` se sube incondicionalmente todos los ciclos (ver
+      // `_syncUserPreferences`), sin depender del cursor -- la aserción es
+      // específica a las tablas que sí dependen de "changed since".
+      verifyNever(() => mockCloudSyncClient.upsert('sources', any()));
+      verifyNever(() => mockCloudSyncClient.upsert('daily_summaries', any()));
     });
 
     test('actualiza el cursor al finalizar, con el updated_at más reciente devuelto por el servidor', () async {
@@ -687,6 +691,56 @@ void main() {
           .captured
           .single as ArticleModel;
       expect(applied.imageUrl, isNull);
+    });
+  });
+
+  group('user_preferences', () {
+    test('sube el locale activo y el offset horario actual del dispositivo',
+        () async {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(null);
+      when(() => mockSourceLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockArticleLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince(any(), null))
+          .thenAnswer((_) async => []);
+
+      await sut.execute();
+
+      final captured = verify(
+        () => mockCloudSyncClient.upsert('user_preferences', captureAny()),
+      ).captured.single as List<Map<String, dynamic>>;
+      expect(captured.single['user_id'], 'user-1');
+      expect(captured.single['locale'], isA<String>());
+      expect(
+        captured.single['utc_offset_minutes'],
+        DateTime.now().timeZoneOffset.inMinutes,
+      );
+      verify(() => mockUserPreferencesLocal.save(any())).called(1);
+    });
+
+    test(
+        'se sube en cada ciclo sin importar el cursor guardado (no depende de "changed since")',
+        () async {
+      final cursor = DateTime(2026, 1, 1);
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(cursor.toIso8601String());
+      when(() => mockSourceLocal.getChangedSince(cursor))
+          .thenAnswer((_) async => []);
+      when(() => mockArticleLocal.getChangedSince(cursor))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(cursor))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince(any(), cursor))
+          .thenAnswer((_) async => []);
+
+      await sut.execute();
+
+      verify(() => mockCloudSyncClient.upsert('user_preferences', any()))
+          .called(1);
     });
   });
 }

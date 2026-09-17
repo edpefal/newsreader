@@ -5,7 +5,7 @@ abstract class SubscriptionStatusProvider {
   /// Estado local (cacheado por el SDK) de si el usuario tiene una
   /// suscripción activa. Prioriza velocidad/funcionar offline sobre ser la
   /// fuente de verdad — eso lo es la tabla `entitlements` del backend, que
-  /// `summarize-articles` consulta de forma independiente.
+  /// `generate-daily-summaries` consulta de forma independiente.
   bool get isSubscribed;
 
   /// Identifica al usuario ante el proveedor de suscripciones con el mismo

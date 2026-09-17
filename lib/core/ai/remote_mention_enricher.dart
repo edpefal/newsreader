@@ -10,8 +10,8 @@ import 'package:newsreader/core/observability/telemetry_client.dart';
 
 /// Enriquece menciones vía la Edge Function `enrich-mentions`, que proxea a
 /// Google Books/iTunes Search del lado del servidor (ver design.md). A
-/// diferencia de `GeminiSummaryGenerator`, esta llamada no consume
-/// presupuesto de IA -- no invoca a Gemini.
+/// diferencia de un generador de resumen vía Gemini, esta llamada no
+/// consume presupuesto de IA -- no invoca a Gemini.
 String get _enrichMentionsFunctionUrl =>
     '${AppConfig.supabaseUrl}/functions/v1/enrich-mentions';
 

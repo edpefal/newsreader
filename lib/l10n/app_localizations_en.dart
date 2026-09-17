@@ -299,29 +299,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourcesEditNameFieldLabel => 'Name';
 
   @override
-  String get summariesGenerating => 'Generating summary...';
-
-  @override
-  String get summariesCreateTodayButton => 'Create today\'s summary';
-
-  @override
-  String get summariesAlreadyGeneratedToday =>
-      'You already generated today\'s summary. Come back tomorrow for a new one.';
-
-  @override
-  String get summariesFreeTierAvailable =>
-      'You have 1 free summary left this week';
-
-  @override
-  String get summariesFreeTierExhausted =>
-      'You already used your free summary this week — it renews on Monday, or subscribe to get a summary every day';
-
-  @override
   String get summariesEmptyTitle => 'No summaries yet';
 
   @override
   String get summariesEmptySubtitle =>
-      'Create today\'s summary to see what your news was about.';
+      'Your daily summary will show up here automatically once there\'s news to summarize.';
 
   @override
   String summaryDetailTitle(String date) {
@@ -504,10 +486,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorOpmlNoFeedsFound => 'No feeds were found in this file';
 
   @override
-  String get errorNoArticlesToday =>
-      'There are no new articles today to summarize';
-
-  @override
   String get errorGenerationFailed => 'Something went wrong. Please try again.';
 
   @override
@@ -521,10 +499,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorSubscriptionRequired =>
       'This requires an active subscription.';
-
-  @override
-  String get errorDailySummaryAlreadyGenerated =>
-      'You already generated today\'s summary. Come back tomorrow for a new one.';
 
   @override
   String get errorArticleTooLongToSummarize =>
