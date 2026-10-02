@@ -1,5 +1,18 @@
 ## MODIFIED Requirements
 
+### Requirement: Un único resumen por día, sin regeneración
+El sistema SHALL mantener como máximo un `DailySummary` por fecha local por usuario, y SHALL permitir como máximo una generación exitosa por fecha local por usuario. Una vez generado el resumen de un día, ese `DailySummary` SHALL permanecer sin cambios hasta que el usuario elimine su fuente en cascada (ver capability `source-management`) — no existe ninguna acción, automática o de usuario, que lo modifique o regenere ese mismo día.
+
+#### Scenario: Nuevo día crea un nuevo resumen
+- **WHEN** el sistema genera un resumen para una fecha local distinta a la de cualquier `DailySummary` existente de ese usuario
+- **THEN** el sistema crea un nuevo `DailySummary` para esa fecha, dejando intactos los resúmenes de días anteriores
+
+#### Scenario: Un segundo intento el mismo día local no modifica el resumen existente
+- **WHEN** ya existe un `DailySummary` para la fecha local de hoy de un usuario, y el sistema vuelve a evaluar a ese usuario en una corrida posterior el mismo día
+- **THEN** el sistema no invoca la API de IA ni modifica el `DailySummary` existente de hoy
+
+## ADDED Requirements
+
 ### Requirement: Generación de resumen diario del inbox
 El sistema SHALL generar, mediante una API de IA en la nube, un resumen de texto agrupado por fuente a partir del título y el contenido de los artículos del inbox (no leídos, no archivados) cuyo `publishedAt` corresponde a la fecha actual **en la zona horaria local de ese usuario** (derivada de su offset horario persistido en la capability `user-preferences`). Para cada artículo, el contenido usado SHALL ser el texto plano extraído de `contentHtml` cuando el artículo tiene contenido completo (no truncado); si `contentHtml` está truncado o vacío, SHALL usarse `excerpt` como fallback. El texto generado por fuente SHALL tener una voz narrativa consistente (tono cercano y con personalidad, sin emojis), aplicada por igual sin importar el tono original de cada fuente, y SHALL generarse en el idioma persistido para ese usuario en `user-preferences`, de entre los idiomas que `AppLocalizations` soporta (inglés, español, francés). Si el locale persistido no está entre los soportados, o el usuario no tiene ninguna preferencia sincronizada todavía, el sistema SHALL usar inglés como default.
 
@@ -45,19 +58,6 @@ La generación SHALL estar limitada a una única generación exitosa por día lo
 - **WHEN** el sistema evalúa a un usuario que ya tiene un `DailySummary` para su día de hoy (local)
 - **THEN** el sistema no invoca la API de IA para ese usuario en esa corrida, ni modifica el `DailySummary` existente
 
-### Requirement: Un único resumen por día, sin regeneración
-El sistema SHALL mantener como máximo un `DailySummary` por fecha local por usuario, y SHALL permitir como máximo una generación exitosa por fecha local por usuario. Una vez generado el resumen de un día, ese `DailySummary` SHALL permanecer sin cambios hasta que el usuario elimine su fuente en cascada (ver capability `source-management`) — no existe ninguna acción, automática o de usuario, que lo modifique o regenere ese mismo día.
-
-#### Scenario: Nuevo día crea un nuevo resumen
-- **WHEN** el sistema genera un resumen para una fecha local distinta a la de cualquier `DailySummary` existente de ese usuario
-- **THEN** el sistema crea un nuevo `DailySummary` para esa fecha, dejando intactos los resúmenes de días anteriores
-
-#### Scenario: Un segundo intento el mismo día local no modifica el resumen existente
-- **WHEN** ya existe un `DailySummary` para la fecha local de hoy de un usuario, y el sistema vuelve a evaluar a ese usuario en una corrida posterior el mismo día
-- **THEN** el sistema no invoca la API de IA ni modifica el `DailySummary` existente de hoy
-
-## ADDED Requirements
-
 ### Requirement: Disparo automático de la generación, sin acción del usuario
 El sistema SHALL evaluar periódicamente, sin que ningún usuario dispare la acción, si corresponde generar el `DailySummary` de hoy (local) de cada usuario. El sistema SHALL considerar a un usuario listo para evaluación una vez que su hora local actual (derivada de su offset horario persistido en `user-preferences`) alcanza un umbral fijo razonablemente temprano en la mañana.
 
@@ -96,6 +96,10 @@ Si la generación automática de un usuario falla en una corrida (ver Requiremen
 - **THEN** el sistema no genera un `DailySummary` retroactivo para la fecha que falló; solo evalúa la generación de la nueva fecha local en curso
 
 ## REMOVED Requirements
+
+### Requirement: Generación de resumen diario del inbox
+**Reason**: La generación manual disparada por el usuario (botón "Crear resumen", autenticada con la sesión del dispositivo, gateada por suscripción activa/cupo gratis semanal/paywall de Superwall al momento de generar) se reemplaza por completo por una generación automática del lado del servidor (ver Requirement "Generación de resumen diario del inbox" en ADDED, y "Disparo automático de la generación, sin acción del usuario"). Ya no hay botón, sesión de usuario, ni paywall en el momento de generar — la elegibilidad pasa a resolverse como suscripción activa o lunes sin suscripción (ver Requirement "Elegibilidad: suscripción activa o lunes sin suscripción").
+**Migration**: Ninguna acción de usuario ni de datos requerida. El requirement con el mismo nombre se reintroduce en `ADDED Requirements` con la semántica automática; los escenarios de paywall, sesión de usuario y botón deshabilitado no tienen equivalente porque esas superficies de UI/backend se eliminaron (ver tareas 5.1-5.4 y 6.1 del change).
 
 ### Requirement: Indicador de cupo gratis antes de generar
 **Reason**: Ya no existe una acción manual de "generar" ni un cupo consumible a demanda — la elegibilidad gratis pasa a ser automática y fija (lunes), sin cupo que mostrar ni agotar (ver Requirement "Elegibilidad: suscripción activa o lunes sin suscripción").
