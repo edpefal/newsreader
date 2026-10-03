@@ -179,6 +179,17 @@ La app soporta inglés, español (neutro) y francés, vía el mecanismo oficial 
 - Un test no debe depender del estado de otro test (sin estado compartido entre tests).
 - Las pruebas manuales en simulador/dispositivo (correr la app, navegar, tomar screenshots) las hace el usuario. No lancees `flutter run` en un simulador ni automatices taps para verificar cambios de UI, salvo que el usuario lo pida explícitamente.
 
+## Compatibilidad con iPad
+
+Reevo soporta iPad con un layout adaptativo (`NavigationRail` permanente + master-detail de 2 paneles en anchos ≥840dp, breakpoint "expanded" de Material 3; por debajo se mantiene el `NavigationDrawer` modal y el push de pantalla completa) — ver capabilities `adaptive-navigation-rail` y `adaptive-master-detail`, introducidas por el change archivado `optimize-ipad-ux`.
+
+**Todo change que agregue o modifique una pantalla debe seguir siendo compatible con este layout, sin excepción:**
+
+- Ninguna screen de detalle nueva puede asumir que es la pantalla completa: debe poder embeberse dentro del panel derecho del master-detail (sin `Scaffold`/`AppBar` que dupliquen chrome ya provisto por el panel) y también funcionar con push de pantalla completa por debajo del breakpoint.
+- Toda screen de lista nueva que participe de una tab existente (o una tab nueva) debe exponer/consumir el estado de "ítem seleccionado" igual que Inbox/Favoritos/Archivo/Fuentes/Resúmenes, preservando la selección al cruzar el breakpoint (rotación o resize) sin perder scroll/progreso.
+- El ancho máximo de texto (~680pt, centrado) del lector aplica en cualquier ancho de pantalla; no reintroducir HTML/texto sin límite de ancho en una pantalla nueva de contenido largo.
+- Antes de dar un cambio de UI por terminado, confirmar (razonando sobre el ancho ≥840dp, no solo mobile) que no rompe el rail, el split view, ni la persistencia de selección — las pruebas manuales en iPad las corre el usuario (ver regla de simulador), pero el razonamiento sobre el layout adaptativo es responsabilidad de Claude al implementar.
+
 ## Rutas de navegación
 
 ```
