@@ -6,6 +6,7 @@ import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/domain/entities/summary_source_block.dart';
 import 'package:newsreader/core/navigation/route_path.dart';
 import 'package:newsreader/core/utils/localized_date_formatter.dart';
+import 'package:newsreader/features/summaries/domain/summary_block_title.dart';
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 
@@ -71,13 +72,45 @@ class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
     if (mounted) setState(() => _resolvedArticles = resolved);
   }
 
-  SummarySourceBlock? _matchingSourceBlock(String title) {
+  SummarySourceBlock? _findSourceBlock(String title) {
     final blocks = widget.summary.sourceBlocks;
     if (blocks == null) return null;
     for (final block in blocks) {
       if (block.sourceName.trim() == title) return block;
     }
     return null;
+  }
+
+  /// Empareja primero por igualdad exacta con el título crudo, así una
+  /// fuente cuyo nombre real empieza con `Fuente:`/`Source:` sigue
+  /// funcionando; solo si no hay match reintenta sin la etiqueta que el
+  /// modelo a veces copia al encabezado (ver `normalizeSummaryBlockTitle`).
+  /// Devuelve también el título a mostrar: el crudo si hubo match exacto, el
+  /// normalizado en cualquier otro caso.
+  ({String title, SummarySourceBlock? sourceBlock}) _resolveBlockTitle(
+    String rawTitle,
+  ) {
+    final exact = _findSourceBlock(rawTitle);
+    if (exact != null) return (title: rawTitle, sourceBlock: exact);
+    final normalized = normalizeSummaryBlockTitle(rawTitle);
+    return (title: normalized, sourceBlock: _findSourceBlock(normalized));
+  }
+
+  Widget _buildBlock(_ParsedBlock block) {
+    final rawTitle = block.title;
+    if (rawTitle == null) {
+      return _SummaryBlockView(
+        block: block,
+        sourceBlock: null,
+        resolvedArticles: _resolvedArticles,
+      );
+    }
+    final resolved = _resolveBlockTitle(rawTitle);
+    return _SummaryBlockView(
+      block: _ParsedBlock(title: resolved.title, text: block.text),
+      sourceBlock: resolved.sourceBlock,
+      resolvedArticles: _resolvedArticles,
+    );
   }
 
   @override
@@ -108,13 +141,7 @@ class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
             for (final block in blocks)
               Padding(
                 padding: const EdgeInsets.only(bottom: 20),
-                child: _SummaryBlockView(
-                  block: block,
-                  sourceBlock: block.title == null
-                      ? null
-                      : _matchingSourceBlock(block.title!),
-                  resolvedArticles: _resolvedArticles,
-                ),
+                child: _buildBlock(block),
               ),
           ],
         ),

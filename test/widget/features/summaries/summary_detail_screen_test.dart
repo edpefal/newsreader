@@ -205,4 +205,121 @@ void main() {
 
     expect(find.text('Artículo existente'), findsOneWidget);
   });
+
+  group('etiqueta de fuente copiada por el modelo en el encabezado', () {
+    testWidgets(
+        '"Fuente: X" se muestra sin la etiqueta y empareja los links de sus '
+        'artículos', (tester) async {
+      final a1 = _article(id: 'a1', title: 'Primer artículo');
+      final a2 = _article(id: 'a2', title: 'Segundo artículo');
+      final summary = DailySummary(
+        id: '2026-10-03',
+        date: DateTime(2026, 10, 3),
+        content: 'Fuente: Fuente A\nPárrafo de la fuente A.',
+        articleCount: 2,
+        createdAt: DateTime(2026, 10, 3),
+        sourceBlocks: const [
+          SummarySourceBlock(
+            sourceId: 's1',
+            sourceName: 'Fuente A',
+            articleIds: ['a1', 'a2'],
+          ),
+        ],
+      );
+      when(() => resolver.execute(['a1', 'a2']))
+          .thenAnswer((_) async => {'a1': a1, 'a2': a2});
+
+      await tester.pumpWidget(_buildSubject(summary, resolver));
+      await tester.pumpAndSettle();
+
+      final titleText = tester.widget<Text>(find.text('Fuente A'));
+      expect(titleText.style?.fontWeight, FontWeight.bold);
+      expect(find.text('Fuente: Fuente A'), findsNothing);
+      expect(find.text('Primer artículo'), findsOneWidget);
+      expect(find.text('Segundo artículo'), findsOneWidget);
+    });
+
+    testWidgets('"Source : X" (francés) también empareja el link',
+        (tester) async {
+      final a1 = _article(id: 'a1', title: 'Artículo único');
+      final summary = DailySummary(
+        id: '2026-10-03',
+        date: DateTime(2026, 10, 3),
+        content: 'Source : Fuente A\nPárrafo de la fuente A.',
+        articleCount: 1,
+        createdAt: DateTime(2026, 10, 3),
+        sourceBlocks: const [
+          SummarySourceBlock(
+            sourceId: 's1',
+            sourceName: 'Fuente A',
+            articleIds: ['a1'],
+          ),
+        ],
+      );
+      when(() => resolver.execute(['a1']))
+          .thenAnswer((_) async => {'a1': a1});
+
+      await tester.pumpWidget(_buildSubject(summary, resolver));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Source : Fuente A'), findsNothing);
+      expect(find.text('Fuente A'), findsOneWidget);
+      expect(find.text('Artículo único'), findsOneWidget);
+    });
+
+    testWidgets(
+        'una etiqueta cuyo resto no coincide con ninguna fuente muestra el '
+        'título sin la etiqueta y sin links', (tester) async {
+      final summary = DailySummary(
+        id: '2026-10-03',
+        date: DateTime(2026, 10, 3),
+        content: 'Fuente: Otra cosa\nPárrafo.',
+        articleCount: 1,
+        createdAt: DateTime(2026, 10, 3),
+        sourceBlocks: const [
+          SummarySourceBlock(
+            sourceId: 's1',
+            sourceName: 'Fuente A',
+            articleIds: ['a1'],
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(_buildSubject(summary, resolver));
+      await tester.pumpAndSettle();
+
+      final titleText = tester.widget<Text>(find.text('Otra cosa'));
+      expect(titleText.style?.fontWeight, FontWeight.bold);
+      expect(find.byType(ActionChip), findsNothing);
+      expect(find.byIcon(Icons.open_in_new), findsNothing);
+    });
+
+    testWidgets(
+        'una fuente cuyo nombre real empieza con la etiqueta sigue '
+        'emparejando por igualdad exacta', (tester) async {
+      final a1 = _article(id: 'a1', title: 'Artículo único');
+      final summary = DailySummary(
+        id: '2026-10-03',
+        date: DateTime(2026, 10, 3),
+        content: 'Fuente: Reporte\nPárrafo.',
+        articleCount: 1,
+        createdAt: DateTime(2026, 10, 3),
+        sourceBlocks: const [
+          SummarySourceBlock(
+            sourceId: 's1',
+            sourceName: 'Fuente: Reporte',
+            articleIds: ['a1'],
+          ),
+        ],
+      );
+      when(() => resolver.execute(['a1']))
+          .thenAnswer((_) async => {'a1': a1});
+
+      await tester.pumpWidget(_buildSubject(summary, resolver));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Fuente: Reporte'), findsOneWidget);
+      expect(find.text('Artículo único'), findsOneWidget);
+    });
+  });
 }
