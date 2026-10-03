@@ -14,6 +14,7 @@ import { resolveLanguage, type SupportedLanguage } from "./language.ts";
 import { localDayRange } from "./local_day_range.ts";
 import { buildPrompt } from "./prompt.ts";
 import { buildSourceBlocks } from "./source_blocks.ts";
+import { stripSourceLabels } from "./strip_source_label.ts";
 import { hasSummaryForToday, resolveUtcOffsetMinutes } from "./user_context.ts";
 
 const GEMINI_MODEL = "gemini-3.7-flash";
@@ -142,6 +143,13 @@ async function generateForUser(
   }
 
   const sourceBlocks = buildSourceBlocks(articles);
+  // El modelo a veces copia la etiqueta `Fuente:` del prompt al encabezado de
+  // cada bloque; se quita acá para que la primera línea coincida con
+  // `sourceName` y el cliente pueda emparejar los links de los artículos.
+  const content = stripSourceLabels(
+    summaryText.trim(),
+    sourceBlocks.map((b) => b.sourceName),
+  );
   const nowIso = now.toISOString();
   // El PK de `daily_summaries` es global (`id text primary key`), no
   // compuesto con `user_id`: a diferencia del cliente (que genera
@@ -154,7 +162,7 @@ async function generateForUser(
     id,
     user_id: userId,
     date: start.toISOString(),
-    content: summaryText.trim(),
+    content,
     article_count: articles.length,
     created_at: nowIso,
     updated_at: nowIso,
