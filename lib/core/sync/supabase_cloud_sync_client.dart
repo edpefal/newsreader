@@ -14,6 +14,9 @@ import 'package:newsreader/core/sync/cloud_sync_client.dart';
 /// tras una resincronización grande).
 const _gatewayTimeoutCodes = {'502', '503', '504'};
 
+/// Código SQLSTATE de `unique_violation`.
+const _uniqueViolationCode = '23505';
+
 /// Cuánto esperar una llamada Postgrest antes de darla por perdida. Más
 /// corto que el timeout de `sync-feeds` (90s, en `SupabaseFeedSyncTrigger`)
 /// porque esto es solo lectura/escritura de Postgres, no fetch de RSS
@@ -60,6 +63,14 @@ AppErrorCode classifyCloudSyncError(Object e) {
   if (e is SocketException) return AppErrorCode.network;
   if (e is sb.PostgrestException && _gatewayTimeoutCodes.contains(e.code)) {
     return AppErrorCode.timeout;
+  }
+  // Violación de unicidad: hoy solo puede provenir del índice único parcial
+  // de `sources (user_id, feed_url)` -- el resto de las tablas se sube por
+  // su PK y `articles` solo se actualiza (`updatePartial`), nunca se inserta
+  // desde el cliente. `SyncUserData` lo reconcilia en vez de tratarlo como
+  // un fallo de sincronización.
+  if (e is sb.PostgrestException && e.code == _uniqueViolationCode) {
+    return AppErrorCode.duplicateSource;
   }
   return AppErrorCode.cloudSyncFailed;
 }

@@ -4,6 +4,7 @@ import 'package:newsreader/core/feed/feed_parser.dart';
 import 'package:newsreader/core/feed/feed_url_resolver.dart';
 import 'package:newsreader/core/feed/html_feed_link_extractor.dart';
 import 'package:newsreader/core/network/http_client.dart';
+import 'package:newsreader/core/sync/remote_source_checker.dart';
 import 'package:newsreader/core/utils/id_generator.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/domain/repositories/source_repository.dart';
@@ -14,6 +15,7 @@ class AddSource {
   final FeedParser _feedParser;
   final IdGenerator _idGenerator;
   final FeedUrlResolver _feedUrlResolver;
+  final RemoteSourceChecker _remoteSourceChecker;
 
   const AddSource(
     this._sourceRepository,
@@ -21,6 +23,7 @@ class AddSource {
     this._feedParser,
     this._idGenerator,
     this._feedUrlResolver,
+    this._remoteSourceChecker,
   );
 
   /// [onHeuristicStageStarted], si se provee, se invoca cuando la URL
@@ -36,6 +39,13 @@ class AddSource {
     final resolved = await _resolveFeed(normalizedUrl, onHeuristicStageStarted);
 
     if (await _sourceRepository.sourceExists(resolved.feedUrl)) {
+      throw const DuplicateSourceException();
+    }
+
+    // La fuente puede existir en la cuenta del usuario sin haberse
+    // sincronizado todavía a este dispositivo (agregada desde otro); de
+    // mejor esfuerzo, nunca lanza ni impide agregar si no se puede consultar.
+    if (await _remoteSourceChecker.existsActive(resolved.feedUrl)) {
       throw const DuplicateSourceException();
     }
 

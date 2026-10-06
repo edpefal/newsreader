@@ -77,6 +77,8 @@ import 'package:newsreader/core/opml/opml_parser.dart';
 import 'package:newsreader/core/opml/xml_opml_parser.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
 import 'package:newsreader/core/sync/supabase_cloud_sync_client.dart';
+import 'package:newsreader/core/sync/remote_source_checker.dart';
+import 'package:newsreader/core/sync/supabase_remote_source_checker.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/delete_source.dart';
@@ -101,6 +103,9 @@ Future<void> setupDependencies() async {
     () => SupabaseAuthClient(observabilityClient: getIt()),
   );
   getIt.registerLazySingleton<CloudSyncClient>(() => SupabaseCloudSyncClient());
+  getIt.registerLazySingleton<RemoteSourceChecker>(
+    () => SupabaseRemoteSourceChecker(),
+  );
   getIt.registerLazySingleton<HttpClient>(() => HttpPackageClient());
   getIt.registerLazySingleton<FeedParser>(() => WebfeedFeedParser());
   getIt.registerLazySingleton<FeedUrlResolver>(() => FeedUrlResolver());
@@ -181,7 +186,7 @@ Future<void> setupDependencies() async {
 
   // Use cases — Sources
   getIt.registerLazySingleton(
-    () => AddSource(getIt(), getIt(), getIt(), getIt(), getIt()),
+    () => AddSource(getIt(), getIt(), getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerLazySingleton(() => GenerateEmailFeed(getIt()));
   getIt.registerLazySingleton(
