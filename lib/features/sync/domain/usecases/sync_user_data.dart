@@ -12,6 +12,7 @@ import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
 import 'package:newsreader/core/data/models/user_preferences_model.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/sync/article_state_row.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
 import 'package:newsreader/core/utils/active_locale_resolver.dart';
@@ -135,18 +136,33 @@ class SyncUserData {
 
   Future<DateTime?> _syncSources(String userId, DateTime? lastSyncedAt) async {
     final local = await _sourceLocalDataSource.getChangedSince(lastSyncedAt);
+    var needsFullPull = false;
     if (local.isNotEmpty) {
-      await _cloudSyncClient.upsert(
-        _sourcesTable,
-        local.map((m) => _sourceToRow(m, userId)).toList(),
-      );
+      // Las bajas van primero: borrar un feed y volver a agregarlo antes de
+      // sincronizar produce dos filas con la misma `feed_url`, y el índice
+      // único parcial del servidor (activas por `(user_id, feed_url)`) solo
+      // admite la nueva si la vieja ya quedó dada de baja.
+      final ordered = [
+        ...local.where((m) => m.deletedAt != null),
+        ...local.where((m) => m.deletedAt == null),
+      ];
+      final conflicting = await _uploadSources(ordered, userId);
       for (final model in local.where((m) => m.deletedAt != null)) {
         await _sourceLocalDataSource.purge(model.id);
       }
+      for (final model in conflicting) {
+        await _discardDuplicateLocalSource(model);
+      }
+      needsFullPull = conflicting.isNotEmpty;
     }
 
-    final remote =
-        await _cloudSyncClient.fetchChangedSince(_sourcesTable, lastSyncedAt);
+    // Tras descartar una fuente duplicada local hay que garantizar que la
+    // remota existente quede en el dispositivo: si su `updated_at` está por
+    // debajo del cursor, la bajada incremental no la traería.
+    final remote = await _cloudSyncClient.fetchChangedSince(
+      _sourcesTable,
+      needsFullPull ? null : lastSyncedAt,
+    );
     for (final row in remote) {
       if (row['deleted_at'] != null) {
         await _sourceLocalDataSource.purge(row['id'] as String);
@@ -155,6 +171,50 @@ class SyncUserData {
       }
     }
     return _maxUpdatedAt(remote);
+  }
+
+  /// Sube [sources] en un solo lote. Si el servidor rechaza el lote por la
+  /// unicidad de `(user_id, feed_url)` (ya existe una fuente activa del
+  /// usuario con esa URL y otro `id`), reintenta fuente por fuente para
+  /// subir las que no chocan y devuelve las que sí, en vez de abortar el
+  /// ciclo completo de sincronización. Cualquier otro error se propaga.
+  Future<List<NewsSourceModel>> _uploadSources(
+    List<NewsSourceModel> sources,
+    String userId,
+  ) async {
+    try {
+      await _cloudSyncClient.upsert(
+        _sourcesTable,
+        sources.map((m) => _sourceToRow(m, userId)).toList(),
+      );
+      return const [];
+    } on CloudSyncException catch (e) {
+      if (e.code != AppErrorCode.duplicateSource) rethrow;
+    }
+
+    final conflicting = <NewsSourceModel>[];
+    for (final model in sources) {
+      try {
+        await _cloudSyncClient.upsert(_sourcesTable, [_sourceToRow(model, userId)]);
+      } on CloudSyncException catch (e) {
+        if (e.code != AppErrorCode.duplicateSource) rethrow;
+        conflicting.add(model);
+      }
+    }
+    return conflicting;
+  }
+
+  /// Elimina del dispositivo una fuente que el servidor rechazó por
+  /// duplicada, junto con sus artículos. Es una purga física, sin tombstone:
+  /// esa fuente nunca llegó al servidor, así que no hay nada que propagar, y
+  /// sus artículos locales no pueden ser legítimos (nacen en el servidor a
+  /// partir de una fuente que sí existe allá).
+  Future<void> _discardDuplicateLocalSource(NewsSourceModel model) async {
+    final articles = await _articleLocalDataSource.getArticlesBySource(model.id);
+    for (final article in articles) {
+      await _articleLocalDataSource.purge(article.id);
+    }
+    await _sourceLocalDataSource.purge(model.id);
   }
 
   Map<String, dynamic> _sourceToRow(NewsSourceModel m, String userId) => {

@@ -14,6 +14,7 @@ import 'package:newsreader/core/data/models/article_model.dart';
 import 'package:newsreader/core/data/models/daily_summary_model.dart';
 import 'package:newsreader/core/data/models/news_source_model.dart';
 import 'package:newsreader/core/data/models/user_preferences_model.dart';
+import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 
@@ -37,13 +38,14 @@ class MockSettingsBox extends Mock implements Box<dynamic> {}
 
 NewsSourceModel _source({
   required String id,
+  String? feedUrl,
   DateTime? updatedAt,
   DateTime? deletedAt,
 }) =>
     NewsSourceModel(
       id: id,
       name: 'Source $id',
-      feedUrl: 'https://example.com/$id/feed',
+      feedUrl: feedUrl ?? 'https://example.com/$id/feed',
       addedAt: DateTime(2026),
       updatedAt: updatedAt,
       deletedAt: deletedAt,
@@ -741,6 +743,217 @@ void main() {
 
       verify(() => mockCloudSyncClient.upsert('user_preferences', any()))
           .called(1);
+    });
+  });
+
+  group('fuentes: orden de subida y conflicto de unicidad', () {
+    final cursor = DateTime.utc(2026, 1, 1);
+
+    Map<String, dynamic> remoteSourceRow(String id, String feedUrl) => {
+          'id': id,
+          'name': 'Remote $id',
+          'feed_url': feedUrl,
+          'added_at': '2026-01-01T00:00:00.000Z',
+          'updated_at': '2026-01-02T00:00:00.000Z',
+        };
+
+    void stubCycleDefaults() {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(cursor.toIso8601String());
+      when(() => mockArticleLocal.getChangedSince(any()))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(any()))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince(any(), any()))
+          .thenAnswer((_) async => []);
+      when(() => mockArticleLocal.getArticlesBySource(any()))
+          .thenAnswer((_) async => []);
+    }
+
+    List<String> idsOf(Invocation inv) => (inv.positionalArguments[1] as List)
+        .map((r) => (r as Map<String, dynamic>)['id'] as String)
+        .toList();
+
+    test('envía primero las fuentes borradas y después las activas', () async {
+      stubCycleDefaults();
+      when(() => mockSourceLocal.getChangedSince(any())).thenAnswer(
+        (_) async => [
+          _source(id: 'activa'),
+          _source(id: 'borrada', deletedAt: DateTime.utc(2026, 1, 3)),
+        ],
+      );
+      final uploaded = <List<String>>[];
+      when(() => mockCloudSyncClient.upsert('sources', any()))
+          .thenAnswer((inv) async => uploaded.add(idsOf(inv)));
+
+      await sut.execute();
+
+      expect(uploaded, [
+        ['borrada', 'activa'],
+      ]);
+    });
+
+    test(
+        'borrar un feed y volver a agregarlo antes de sincronizar envía la '
+        'baja antes que la fuente nueva con la misma URL', () async {
+      const url = 'https://example.com/mismo/feed';
+      stubCycleDefaults();
+      when(() => mockSourceLocal.getChangedSince(any())).thenAnswer(
+        (_) async => [
+          _source(id: 'nueva', feedUrl: url),
+          _source(
+            id: 'vieja',
+            feedUrl: url,
+            deletedAt: DateTime.utc(2026, 1, 3),
+          ),
+        ],
+      );
+      final uploaded = <List<String>>[];
+      when(() => mockCloudSyncClient.upsert('sources', any()))
+          .thenAnswer((inv) async => uploaded.add(idsOf(inv)));
+
+      await sut.execute();
+
+      expect(uploaded.single, ['vieja', 'nueva']);
+    });
+
+    test('sin conflicto sube el lote una sola vez, sin reintentos por fuente',
+        () async {
+      stubCycleDefaults();
+      when(() => mockSourceLocal.getChangedSince(any()))
+          .thenAnswer((_) async => [_source(id: 's1'), _source(id: 's2')]);
+      when(() => mockCloudSyncClient.upsert('sources', any()))
+          .thenAnswer((_) async {});
+
+      await sut.execute();
+
+      verify(() => mockCloudSyncClient.upsert('sources', any())).called(1);
+      verifyNever(() => mockSourceLocal.purge('s1'));
+      verifyNever(() => mockSourceLocal.purge('s2'));
+    });
+
+    test(
+        'un conflicto de unicidad en una fuente del lote: se suben las demás, '
+        'se descarta la conflictiva con sus artículos locales y se adopta la '
+        'remota', () async {
+      stubCycleDefaults();
+      when(() => mockSourceLocal.getChangedSince(any())).thenAnswer(
+        (_) async => [_source(id: 's1'), _source(id: 's2'), _source(id: 's3')],
+      );
+      final uploaded = <List<String>>[];
+      when(() => mockCloudSyncClient.upsert('sources', any()))
+          .thenAnswer((inv) async {
+        final ids = idsOf(inv);
+        uploaded.add(ids);
+        if (ids.contains('s2')) {
+          throw const CloudSyncException(
+            'duplicate key',
+            AppErrorCode.duplicateSource,
+          );
+        }
+      });
+      when(() => mockArticleLocal.getArticlesBySource('s2'))
+          .thenAnswer((_) async => [_article(id: 'a1')]);
+      when(() => mockCloudSyncClient.fetchChangedSince('sources', null))
+          .thenAnswer(
+        (_) async => [
+          remoteSourceRow('s-remota', 'https://example.com/s2/feed'),
+        ],
+      );
+
+      await sut.execute();
+
+      // Lote completo + un reintento aislado por fuente.
+      expect(uploaded, [
+        ['s1', 's2', 's3'],
+        ['s1'],
+        ['s2'],
+        ['s3'],
+      ]);
+      // Solo se descarta la conflictiva, con sus artículos locales.
+      verify(() => mockArticleLocal.purge('a1')).called(1);
+      verify(() => mockSourceLocal.purge('s2')).called(1);
+      verifyNever(() => mockSourceLocal.purge('s1'));
+      verifyNever(() => mockSourceLocal.purge('s3'));
+      // Bajada completa de fuentes y adopción de la remota.
+      verify(() => mockCloudSyncClient.fetchChangedSince('sources', null))
+          .called(1);
+      final adopted = verify(() => mockSourceLocal.applyRemote(captureAny()))
+          .captured
+          .cast<NewsSourceModel>();
+      expect(adopted.map((m) => m.id), contains('s-remota'));
+    });
+
+    test(
+        'tras reconciliar el conflicto el ciclo continúa con artículos y '
+        'preferencias, sin lanzar', () async {
+      stubCycleDefaults();
+      when(() => mockSourceLocal.getChangedSince(any()))
+          .thenAnswer((_) async => [_source(id: 's1')]);
+      when(() => mockCloudSyncClient.upsert('sources', any())).thenAnswer(
+        (_) async => throw const CloudSyncException(
+          'duplicate key',
+          AppErrorCode.duplicateSource,
+        ),
+      );
+      when(() => mockCloudSyncClient.fetchChangedSince('sources', null))
+          .thenAnswer((_) async => []);
+
+      await expectLater(sut.execute(), completes);
+
+      verify(() => mockCloudSyncClient.fetchChangedSince('articles', any()))
+          .called(1);
+      verify(() => mockUserPreferencesLocal.save(any())).called(1);
+    });
+
+    test(
+        'un error de subida que no es de unicidad se propaga y no purga '
+        'nada', () async {
+      stubCycleDefaults();
+      when(() => mockSourceLocal.getChangedSince(any()))
+          .thenAnswer((_) async => [_source(id: 's1')]);
+      when(() => mockCloudSyncClient.upsert('sources', any())).thenAnswer(
+        (_) async => throw const CloudSyncException(
+          'sin red',
+          AppErrorCode.network,
+        ),
+      );
+
+      await expectLater(
+        sut.execute(),
+        throwsA(
+          isA<CloudSyncException>()
+              .having((e) => e.code, 'code', AppErrorCode.network),
+        ),
+      );
+
+      verifyNever(() => mockSourceLocal.purge(any()));
+      verify(() => mockCloudSyncClient.upsert('sources', any())).called(1);
+    });
+
+    test(
+        'un error que no es de unicidad durante el reintento por fuente se '
+        'propaga', () async {
+      stubCycleDefaults();
+      when(() => mockSourceLocal.getChangedSince(any()))
+          .thenAnswer((_) async => [_source(id: 's1'), _source(id: 's2')]);
+      var calls = 0;
+      when(() => mockCloudSyncClient.upsert('sources', any()))
+          .thenAnswer((_) async {
+        calls++;
+        if (calls == 1) {
+          throw const CloudSyncException('dup', AppErrorCode.duplicateSource);
+        }
+        throw const CloudSyncException('sin red', AppErrorCode.network);
+      });
+
+      await expectLater(
+        sut.execute(),
+        throwsA(
+          isA<CloudSyncException>()
+              .having((e) => e.code, 'code', AppErrorCode.network),
+        ),
+      );
     });
   });
 }

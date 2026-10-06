@@ -9,6 +9,7 @@ import 'package:newsreader/core/feed/feed_data.dart';
 import 'package:newsreader/core/feed/feed_parser.dart';
 import 'package:newsreader/core/feed/feed_url_resolver.dart';
 import 'package:newsreader/core/network/http_client.dart';
+import 'package:newsreader/core/sync/remote_source_checker.dart';
 import 'package:newsreader/core/utils/id_generator.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 
@@ -17,6 +18,7 @@ class MockHttpClient extends Mock implements HttpClient {}
 class MockFeedParser extends Mock implements FeedParser {}
 class MockIdGenerator extends Mock implements IdGenerator {}
 class MockFeedUrlResolver extends Mock implements FeedUrlResolver {}
+class MockRemoteSourceChecker extends Mock implements RemoteSourceChecker {}
 
 final _tSource = NewsSource(
   id: 'new-id',
@@ -37,6 +39,7 @@ void main() {
   late MockFeedParser mockFeedParser;
   late MockIdGenerator mockId;
   late MockFeedUrlResolver mockResolver;
+  late MockRemoteSourceChecker mockRemoteChecker;
   late AddSource sut;
 
   setUp(() {
@@ -45,9 +48,22 @@ void main() {
     mockFeedParser = MockFeedParser();
     mockId = MockIdGenerator();
     mockResolver = MockFeedUrlResolver();
-    sut = AddSource(mockRepo, mockHttp, mockFeedParser, mockId, mockResolver);
+    mockRemoteChecker = MockRemoteSourceChecker();
+    sut = AddSource(
+      mockRepo,
+      mockHttp,
+      mockFeedParser,
+      mockId,
+      mockResolver,
+      mockRemoteChecker,
+    );
 
     when(() => mockId.generate()).thenReturn('new-id');
+    // Por defecto la nube no conoce la fuente (o no se pudo consultar): el
+    // contrato de `RemoteSourceChecker` es devolver `false` ante cualquier
+    // imposibilidad de consultar.
+    when(() => mockRemoteChecker.existsActive(any()))
+        .thenAnswer((_) async => false);
     when(() => mockRepo.addSource(any())).thenAnswer((_) async => _tSource);
   });
 
@@ -365,6 +381,86 @@ void main() {
         throwsA(isA<DuplicateSourceException>()),
       );
       verifyNever(() => mockRepo.sourceExists('https://autor.substack.com/p/x'));
+    });
+  });
+
+  group('verificación de duplicado contra la nube', () {
+    void stubValidFeed() {
+      when(() => mockResolver.candidatesFor('https://autor.substack.com/feed'))
+          .thenReturn(['https://autor.substack.com/feed']);
+      when(() => mockHttp.get('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => '<xml/>');
+      when(() => mockFeedParser.parse('<xml/>')).thenReturn(_tFeedData);
+      when(() => mockRepo.sourceExists('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => false);
+    }
+
+    test(
+        'si el feed existe solo en la nube (otro dispositivo) lanza '
+        'DuplicateSourceException y no crea la fuente', () async {
+      stubValidFeed();
+      when(() => mockRemoteChecker
+              .existsActive('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => true);
+
+      await expectLater(
+        sut.execute('https://autor.substack.com/feed'),
+        throwsA(isA<DuplicateSourceException>()),
+      );
+
+      verifyNever(() => mockRepo.addSource(any()));
+    });
+
+    test(
+        'si la nube no lo conoce (o no se pudo consultar, o solo está '
+        'borrado allá) agrega la fuente normalmente', () async {
+      stubValidFeed();
+      when(() => mockRemoteChecker
+              .existsActive('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => false);
+
+      final result = await sut.execute('https://autor.substack.com/feed');
+
+      expect(result.feedUrl, 'https://autor.substack.com/feed');
+      verify(() => mockRepo.addSource(any())).called(1);
+    });
+
+    test('un duplicado local gana sin consultar a la nube', () async {
+      stubValidFeed();
+      when(() => mockRepo.sourceExists('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => true);
+
+      await expectLater(
+        sut.execute('https://autor.substack.com/feed'),
+        throwsA(isA<DuplicateSourceException>()),
+      );
+
+      verifyNever(() => mockRemoteChecker.existsActive(any()));
+    });
+
+    test('consulta a la nube con la feed URL final resuelta, no la ingresada',
+        () async {
+      when(() => mockResolver.candidatesFor('https://autor.substack.com/p/x'))
+          .thenReturn([
+        'https://autor.substack.com/p/x',
+        'https://autor.substack.com/feed',
+      ]);
+      when(() => mockHttp.get('https://autor.substack.com/p/x'))
+          .thenAnswer((_) async => '<html></html>');
+      when(() => mockFeedParser.parse('<html></html>'))
+          .thenThrow(const ParseException(AppErrorCode.invalidFeedUrl));
+      when(() => mockHttp.get('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => '<xml/>');
+      when(() => mockFeedParser.parse('<xml/>')).thenReturn(_tFeedData);
+      when(() => mockRepo.sourceExists('https://autor.substack.com/feed'))
+          .thenAnswer((_) async => false);
+
+      await sut.execute('https://autor.substack.com/p/x');
+
+      verify(() => mockRemoteChecker
+          .existsActive('https://autor.substack.com/feed')).called(1);
+      verifyNever(() => mockRemoteChecker
+          .existsActive('https://autor.substack.com/p/x'));
     });
   });
 }

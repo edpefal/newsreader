@@ -47,11 +47,29 @@ void main() {
 
     test('un PostgrestException con otro código se clasifica como cloudSyncFailed',
         () {
+      for (final code in ['23503', '42501', 'PGRST205']) {
+        expect(
+          classifyCloudSyncError(
+            PostgrestException(message: 'error del servidor', code: code),
+          ),
+          AppErrorCode.cloudSyncFailed,
+          reason: 'código $code',
+        );
+      }
+    });
+
+    test(
+        'un PostgrestException 23505 (violación de unicidad) se clasifica '
+        'como duplicateSource', () {
       expect(
         classifyCloudSyncError(
-          PostgrestException(message: 'constraint violation', code: '23505'),
+          PostgrestException(
+            message:
+                'duplicate key value violates unique constraint "sources_user_id_feed_url_active_key"',
+            code: '23505',
+          ),
         ),
-        AppErrorCode.cloudSyncFailed,
+        AppErrorCode.duplicateSource,
       );
     });
   });
