@@ -38,6 +38,20 @@ Al desplegar una Edge Function (`supabase functions deploy <nombre>`), por defec
 
 Los proyectos `reevo` y `reevo-dev` usan cuentas de Google AI/Gemini **separadas** para el `GEMINI_API_KEY` de las Edge Functions que llaman a Gemini (`summarize-article`, `summarize-articles`). Solo la de **prod (`reevo`) tiene billing habilitado** — no está sujeta al límite del free tier de Gemini (20 requests/día). La de dev sigue en el free tier, así que features que dependan de una cuota alta de requests pueden funcionar en prod y toparse con el límite en dev. Al diseñar un feature de IA nuevo o pensar en un free tier para el usuario final, no asumir que el límite de 20/día del free tier de Gemini aplica en prod.
 
+### Orden de despliegue: servidor y clientes ya publicados
+
+Un recurso del servidor que consultan clientes ya publicados (tabla, columna, función RPC, Edge Function, endpoint) **no se elimina ni se cambia de forma incompatible** hasta que la versión de la app que ya no depende de él esté **disponible en la App Store y adoptada** — no basta con que esté en TestFlight. Una app instalada no se actualiza sola de inmediato, y los usuarios nuevos pueden recibir la versión anterior durante días tras publicar la nueva.
+
+Antes de aplicar una migración o desplegar una Edge Function que quite o cambie algo así:
+
+1. Confirmar en App Store Connect que la versión sin la dependencia está en `READY_FOR_DISTRIBUTION` (`app-store-connect apps app-store-versions <app-id>`).
+2. Revisar en PostHog (`$app_version` de `screen_view`) y en Sentry quién sigue en versiones anteriores y si tiene sesión iniciada.
+3. Si todavía hay clientes anteriores con sesión, mantener una compatibilidad temporal (por ejemplo, una tabla vacía) con criterio de retiro documentado, en vez de eliminar el recurso. Ver la capability `legacy-client-compatibility` (change `add-legacy-free-usage-table-shim`).
+
+Al revés también cuenta: un cambio del servidor que **rechaza** algo que un cliente viejo aún envía (por ejemplo, un índice único) se aplica **después** de publicar el cliente que sabe manejar ese rechazo.
+
+Contexto: el 2 de octubre de 2026 se eliminó `daily_summary_free_usage` antes de que la `1.9.0` estuviera pública; el build `1.8.0+18`, que la consultaba en cada sincronización y espera el login sin manejar errores, dejó a un usuario nuevo con el Inbox cargando indefinidamente.
+
 ## Arquitectura: Feature-Based Clean Architecture
 
 El proyecto usa Clean Architecture organizada por features, no por capas globales.
