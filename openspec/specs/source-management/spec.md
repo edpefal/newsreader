@@ -5,9 +5,7 @@
 Gestión de fuentes RSS/Atom del usuario: agregar fuentes manualmente por URL, importar desde OPML, renombrar y eliminar fuentes existentes.
 
 ---
-
 ## Requirements
-
 ### Requirement: AddSourceScreen ofrece la opción de importar desde OPML
 El sistema SHALL mostrar un botón o acción secundaria "Importar desde OPML" en `AddSourceScreen`, como alternativa al ingreso manual de URL.
 
@@ -77,7 +75,7 @@ El sistema SHALL mostrar en `AddSourceScreen` un texto explicativo y un hint de 
 ---
 
 ### Requirement: Verificación de duplicado sobre la feed URL final resuelta
-El sistema SHALL verificar si una fuente ya existe usando la feed URL final que efectivamente resultó válida (tras aplicar, si corresponde, la detección automática), no la URL cruda ingresada por el usuario.
+El sistema SHALL verificar si una fuente ya existe usando la feed URL final que efectivamente resultó válida (tras aplicar, si corresponde, la detección automática), no la URL cruda ingresada por el usuario. La verificación SHALL considerar tanto las fuentes activas del dispositivo como, cuando hay sesión iniciada y conexión, las fuentes activas del mismo usuario que existen en la nube aunque todavía no se hayan sincronizado al dispositivo. Si la consulta a la nube falla por cualquier motivo (sin red, timeout, error del servidor), el sistema SHALL continuar solo con la verificación local, sin impedir agregar la fuente ni mostrar un error por ese motivo.
 
 #### Scenario: Usuario reingresa la URL humana de una fuente ya agregada
 - **WHEN** el usuario ingresa una URL humana de newsletter cuya feed URL resuelta ya corresponde a una fuente existente
@@ -87,7 +85,17 @@ El sistema SHALL verificar si una fuente ya existe usando la feed URL final que 
 - **WHEN** el usuario ingresa directamente la feed URL exacta de una fuente ya existente
 - **THEN** el sistema informa que la fuente ya existe
 
----
+#### Scenario: La fuente existe en la nube pero todavía no en este dispositivo
+- **WHEN** el usuario agrega una feed URL que ya tiene como fuente activa en su cuenta (agregada desde otro dispositivo) y que este dispositivo aún no sincronizó, con sesión iniciada y conexión disponible
+- **THEN** el sistema informa que la fuente ya existe y no crea una fuente nueva
+
+#### Scenario: No se puede consultar la nube al agregar
+- **WHEN** el usuario agrega una feed URL que no existe en el dispositivo y la consulta a la nube falla o no hay sesión iniciada
+- **THEN** el sistema agrega la fuente normalmente usando solo la verificación local, sin mostrar ningún error de red
+
+#### Scenario: La fuente duplicada solo existe borrada en la nube
+- **WHEN** el usuario agrega una feed URL cuya única fuente en la nube está marcada como borrada
+- **THEN** el sistema no la considera duplicada y agrega la fuente normalmente
 
 ### Requirement: AddSourceScreen informa cuando falla la detección automática de feed
 El sistema SHALL, cuando `AddSource` lanza `FeedDiscoveryException`, mostrar un aviso de error en `AddSourceScreen` con el mensaje correspondiente, sin ninguna acción asociada. Este aviso SHALL permanecer visible hasta que el usuario lo cierre explícitamente (mediante un ícono de cerrar), reintente agregar una fuente, o abandone la pantalla, sin ocultarse por el paso del tiempo.
@@ -140,3 +148,4 @@ La card SHALL volver a su estado colapsado automáticamente cuando el usuario ge
 #### Scenario: La card se colapsa al agregar una fuente por otra vía
 - **WHEN** la card está expandida y el usuario agrega una fuente exitosamente por URL o por OPML
 - **THEN** la card vuelve a su estado colapsado
+
