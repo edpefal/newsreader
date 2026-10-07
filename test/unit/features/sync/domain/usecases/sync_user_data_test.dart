@@ -619,6 +619,42 @@ void main() {
     });
   });
 
+  group('compatibilidad con clientes 1.8.x', () {
+    test(
+        'el cliente actual no consulta daily_summary_free_usage: esa tabla '
+        'existe en el servidor solo como compatibilidad temporal para la 1.8.x',
+        () async {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(null);
+      when(() => mockSourceLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockArticleLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince(any(), null))
+          .thenAnswer((_) async => []);
+
+      await sut.execute();
+
+      verifyNever(
+        () => mockCloudSyncClient.fetchChangedSince(
+          'daily_summary_free_usage',
+          any(),
+        ),
+      );
+      verifyNever(
+        () => mockCloudSyncClient.fetchChangedSince(
+          'daily_summary_free_usage',
+          null,
+        ),
+      );
+      verifyNever(
+        () => mockCloudSyncClient.upsert('daily_summary_free_usage', any()),
+      );
+    });
+  });
+
   group('imagen del artículo', () {
     test('mapea image_url de la fila remota al modelo local', () async {
       when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
