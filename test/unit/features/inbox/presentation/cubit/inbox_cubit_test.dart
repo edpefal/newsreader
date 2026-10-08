@@ -844,12 +844,16 @@ void main() {
   });
 
   group('tarjeta del resumen diario', () {
+    // Medianoche local de hoy en UTC, como la guarda el servidor: el cubit
+    // decide qué es "hoy" con la fecha real del dispositivo.
+    final now = DateTime.now();
+    final todayMidnightUtc = DateTime(now.year, now.month, now.day).toUtc();
     final tSummary = DailySummary(
       id: 'summary-1',
-      date: DateTime(2026, 10, 7).toUtc(),
+      date: todayMidnightUtc,
       content: 'contenido',
       articleCount: 4,
-      createdAt: DateTime(2026, 10, 7).toUtc(),
+      createdAt: todayMidnightUtc,
     );
 
     void stubLoad({DailySummary? pending}) {
