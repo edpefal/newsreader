@@ -334,6 +334,40 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get inboxSummaryCardTitle => 'Résumé du jour';
+
+  @override
+  String get inboxSummaryCardCta => 'Lire';
+
+  @override
+  String get inboxSummaryCardOpen => 'Ouvert';
+
+  @override
+  String get inboxSummaryCardDismiss => 'Ignorer';
+
+  @override
+  String inboxSummaryCardCountOnly(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count articles',
+      one: '1 article',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String inboxSummaryCardSources(int sources) {
+    String _temp0 = intl.Intl.pluralLogic(
+      sources,
+      locale: localeName,
+      other: '$sources sources',
+      one: '1 source',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get summariesSelectSummaryTitle => 'Sélectionne un résumé';
 
   @override

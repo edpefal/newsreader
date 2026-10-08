@@ -10,11 +10,10 @@ class HiveSummaryDatasource implements SummaryLocalDataSource {
   const HiveSummaryDatasource(this._box);
 
   @override
-  Future<List<DailySummaryModel>> getAll() async {
-    final summaries = _box.values.toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
-    return summaries;
-  }
+  Future<List<DailySummaryModel>> getAll() async => _sortedValues();
+
+  List<DailySummaryModel> _sortedValues() =>
+      _box.values.toList()..sort((a, b) => b.date.compareTo(a.date));
 
   @override
   Future<void> save(DailySummaryModel model) async {
@@ -34,14 +33,34 @@ class HiveSummaryDatasource implements SummaryLocalDataSource {
 
   @override
   Future<void> applyRemote(DailySummaryModel model) async {
-    if (model.sourceBlocks == null) {
-      final existing = _box.get(dateKey(model.date));
-      if (existing?.sourceBlocks != null) {
-        model.sourceBlocks = existing!.sourceBlocks;
-      }
+    final existing = _box.get(dateKey(model.date));
+    if (model.sourceBlocks == null && existing?.sourceBlocks != null) {
+      model.sourceBlocks = existing!.sourceBlocks;
+    }
+    // Un remoto sin `dismissed_at` no pisa un descarte local aún no subido.
+    if (model.dismissedAt == null && existing?.dismissedAt != null) {
+      model.dismissedAt = existing!.dismissedAt;
     }
     await _box.put(dateKey(model.date), model);
   }
+
+  @override
+  Future<DailySummaryModel?> dismiss(String id) async {
+    for (final model in _box.values) {
+      if (model.id != id) continue;
+      if (model.dismissedAt != null) return null;
+      final now = DateTime.now();
+      model.dismissedAt = now;
+      model.updatedAt = now;
+      await _box.put(dateKey(model.date), model);
+      return model;
+    }
+    return null;
+  }
+
+  @override
+  Stream<List<DailySummaryModel>> watchAll() =>
+      _box.watch().map((_) => _sortedValues());
 
   @override
   Future<void> clearAll() async => _box.clear();

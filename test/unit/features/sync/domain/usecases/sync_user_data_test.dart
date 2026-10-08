@@ -992,4 +992,108 @@ void main() {
       );
     });
   });
+
+  group('daily_summaries: dismissed_at', () {
+    void stubEmptyExceptSummaries() {
+      when(() => mockSettingsBox.get(AppConstants.settingsLastSyncedAtKey))
+          .thenReturn(null);
+      when(() => mockSourceLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockArticleLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.upsert(any(), any()))
+          .thenAnswer((_) async {});
+      when(() => mockCloudSyncClient.fetchChangedSince(any(), null))
+          .thenAnswer((_) async => []);
+    }
+
+    DailySummaryModel summary({DateTime? dismissedAt}) => DailySummaryModel(
+          id: 'summary-1',
+          date: DateTime(2026, 9, 9),
+          content: 'contenido',
+          articleCount: 2,
+          createdAt: DateTime(2026, 9, 9),
+          dismissedAt: dismissedAt,
+        );
+
+    test('sube dismissed_at en UTC cuando el resumen está descartado',
+        () async {
+      stubEmptyExceptSummaries();
+      final dismissedAt = DateTime.utc(2026, 9, 9, 14, 30);
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => [summary(dismissedAt: dismissedAt)]);
+
+      await sut.execute();
+
+      final rows = verify(
+        () => mockCloudSyncClient.upsert('daily_summaries', captureAny()),
+      ).captured.single as List<Map<String, dynamic>>;
+      expect(rows.single['dismissed_at'], dismissedAt.toIso8601String());
+    });
+
+    test(
+        'no envía la clave dismissed_at si el resumen no está descartado, para no borrar el valor del servidor',
+        () async {
+      stubEmptyExceptSummaries();
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => [summary()]);
+
+      await sut.execute();
+
+      final rows = verify(
+        () => mockCloudSyncClient.upsert('daily_summaries', captureAny()),
+      ).captured.single as List<Map<String, dynamic>>;
+      expect(rows.single.containsKey('dismissed_at'), isFalse);
+    });
+
+    test('una fila remota con dismissed_at lo reconstruye al bajar', () async {
+      stubEmptyExceptSummaries();
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('daily_summaries', null))
+          .thenAnswer((_) async => [
+                {
+                  'id': 'summary-1',
+                  'date': DateTime(2026, 9, 9).toIso8601String(),
+                  'content': 'contenido',
+                  'article_count': 2,
+                  'created_at': DateTime(2026, 9, 9).toIso8601String(),
+                  'updated_at': DateTime(2026, 9, 9, 10).toIso8601String(),
+                  'dismissed_at': '2026-09-09T14:30:00Z',
+                },
+              ]);
+
+      await sut.execute();
+
+      final applied = verify(() => mockSummaryLocal.applyRemote(captureAny()))
+          .captured
+          .single as DailySummaryModel;
+      expect(applied.dismissedAt, DateTime.utc(2026, 9, 9, 14, 30));
+    });
+
+    test('una fila remota sin dismissed_at lo deja en null', () async {
+      stubEmptyExceptSummaries();
+      when(() => mockSummaryLocal.getChangedSince(null))
+          .thenAnswer((_) async => []);
+      when(() => mockCloudSyncClient.fetchChangedSince('daily_summaries', null))
+          .thenAnswer((_) async => [
+                {
+                  'id': 'summary-1',
+                  'date': DateTime(2026, 9, 9).toIso8601String(),
+                  'content': 'contenido',
+                  'article_count': 2,
+                  'created_at': DateTime(2026, 9, 9).toIso8601String(),
+                  'updated_at': DateTime(2026, 9, 9, 10).toIso8601String(),
+                  'dismissed_at': null,
+                },
+              ]);
+
+      await sut.execute();
+
+      final applied = verify(() => mockSummaryLocal.applyRemote(captureAny()))
+          .captured
+          .single as DailySummaryModel;
+      expect(applied.dismissedAt, isNull);
+    });
+  });
 }

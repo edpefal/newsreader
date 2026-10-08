@@ -271,7 +271,7 @@ void main() {
       );
 
       await tester.pumpWidget(_buildSubject(cubit));
-      await tester.fling(find.byType(AnimatedList), const Offset(0, 400), 1000);
+      await tester.fling(find.byType(CustomScrollView), const Offset(0, 400), 1000);
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
@@ -295,7 +295,7 @@ void main() {
       );
 
       await tester.pumpWidget(_buildSubject(cubit));
-      await tester.fling(find.byType(AnimatedList), const Offset(0, 400), 1000);
+      await tester.fling(find.byType(CustomScrollView), const Offset(0, 400), 1000);
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
@@ -436,7 +436,7 @@ void main() {
       );
 
       await tester.pumpWidget(_buildSubject(cubit));
-      await tester.fling(find.byType(AnimatedList), const Offset(0, 400), 1000);
+      await tester.fling(find.byType(CustomScrollView), const Offset(0, 400), 1000);
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();

@@ -4,10 +4,14 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
+import 'package:newsreader/core/utils/is_local_today.dart';
 import 'package:newsreader/core/utils/article_text_matcher.dart';
+import 'package:newsreader/features/inbox/domain/usecases/dismiss_daily_summary.dart';
 import 'package:newsreader/features/inbox/domain/usecases/get_inbox_articles.dart';
+import 'package:newsreader/features/inbox/domain/usecases/get_pending_inbox_summary.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
@@ -20,7 +24,13 @@ class InboxCubit extends Cubit<InboxState> {
   final FeedSyncTrigger _feedSyncTrigger;
   final MarkArticleAsRead _markArticleAsRead;
   final SyncUserData _syncUserData;
+  final GetPendingInboxSummary _getPendingInboxSummary;
+  final DismissDailySummary _dismissDailySummary;
   final TelemetryClient _observabilityClient;
+
+  /// Suscripción a los cambios locales del resumen de hoy (otra tab, sync).
+  /// Se crea en la primera recarga y se cancela en `close()`.
+  StreamSubscription<DailySummary?>? _summarySubscription;
 
   /// Invocación de `_feedSyncTrigger.execute()` en curso, si hay una. Se
   /// cachea para que `syncAndReload()` (pull-to-refresh manual) y la fase
@@ -48,8 +58,16 @@ class InboxCubit extends Cubit<InboxState> {
     this._feedSyncTrigger,
     this._markArticleAsRead,
     this._syncUserData,
+    this._getPendingInboxSummary,
+    this._dismissDailySummary,
     this._observabilityClient,
   ) : super(const InboxLoading());
+
+  @override
+  Future<void> close() async {
+    await _summarySubscription?.cancel();
+    return super.close();
+  }
 
   Future<void> loadArticles() async {
     emit(const InboxLoading());
@@ -92,6 +110,8 @@ class InboxCubit extends Cubit<InboxState> {
           readArticleId: current.readArticleId,
           isSyncingInBackground: true,
           openArticleId: current.openArticleId,
+          pendingSummary: current.pendingSummary,
+          openSummaryId: current.openSummaryId,
         ),
       );
     }
@@ -139,6 +159,8 @@ class InboxCubit extends Cubit<InboxState> {
           readArticleId: current.readArticleId,
           isSyncingInBackground: true,
           openArticleId: current.openArticleId,
+          pendingSummary: current.pendingSummary,
+          openSummaryId: current.openSummaryId,
         ),
       );
     }
@@ -167,7 +189,7 @@ class InboxCubit extends Cubit<InboxState> {
     if (current is! InboxLoaded) return;
     final previous = current.openArticleId;
     if (previous == articleId) return;
-    if (previous == null) {
+    if (previous == null && current.openSummaryId == null) {
       emit(
         InboxLoaded(
           current.articles,
@@ -175,20 +197,85 @@ class InboxCubit extends Cubit<InboxState> {
           isSyncingInBackground: current.isSyncingInBackground,
           searchQuery: current.searchQuery,
           openArticleId: articleId,
+          pendingSummary: current.pendingSummary,
         ),
       );
       return;
     }
-    await _reload(readArticleId: previous, openArticleId: articleId);
+    // Seleccionar un artículo reemplaza al resumen abierto (si lo hay): la
+    // tarjeta sale al recalcularse el resumen pendiente.
+    await _reload(
+      readArticleId: previous,
+      openArticleId: articleId,
+      clearOpenSummaryId: true,
+    );
+  }
+
+  /// Registra el tap en la tarjeta del resumen. Solo el evento: la
+  /// navegación la hace la pantalla y el descarte lo persiste el detalle al
+  /// mostrarse (ver `DismissDailySummary`).
+  void openSummaryCard(DailySummary summary) {
+    _observabilityClient.trackEvent(
+      'inbox_summary_card_opened',
+      properties: {'article_count': summary.articleCount},
+    );
+  }
+
+  /// Selecciona [summary] como el resumen abierto en el panel de detalle
+  /// (layout de dos paneles): la tarjeta se conserva resaltada aunque el
+  /// detalle ya lo haya descartado, y reaparece si el detalle ya estaba
+  /// abierto cuando se cruzó el umbral desde compact (donde la tarjeta ya
+  /// había salido). Cierra el artículo abierto, si lo había. Idempotente.
+  Future<void> selectSummary(DailySummary summary) async {
+    final current = state;
+    if (current is! InboxLoaded) return;
+    if (current.openSummaryId == summary.id) return;
+    final previousArticle = current.openArticleId;
+    final pending = current.pendingSummary ??
+        (isLocalToday(summary.date) ? summary : null);
+    emit(
+      InboxLoaded(
+        current.articles,
+        hasSources: current.hasSources,
+        isSyncingInBackground: current.isSyncingInBackground,
+        searchQuery: current.searchQuery,
+        openArticleId: previousArticle,
+        pendingSummary: pending,
+        openSummaryId: summary.id,
+      ),
+    );
+    if (previousArticle == null) return;
+    await _reload(
+      readArticleId: previousArticle,
+      openSummaryId: summary.id,
+      clearOpenArticleId: true,
+    );
+  }
+
+  /// Descarta la tarjeta con swipe: evento de producto y persistencia. La
+  /// tarjeta sale cuando el `Stream` de resúmenes reporta el cambio.
+  Future<void> dismissSummary(DailySummary summary) async {
+    _observabilityClient.trackEvent(
+      'inbox_summary_card_dismissed',
+      properties: {'article_count': summary.articleCount},
+    );
+    await _dismissDailySummary.execute(summary.id);
   }
 
   /// Cierra el artículo actualmente abierto en el panel de detalle (el
   /// usuario volvió con el botón del lector): se anima su salida de la
-  /// columna central, igual que al marcarlo como leído.
+  /// columna central, igual que al marcarlo como leído. También cierra el
+  /// resumen abierto (la tarjeta sale al recalcularse el resumen pendiente):
+  /// ambos comparten el estado vacío del panel derecho.
   Future<void> closeOpenArticle() async {
     final current = state;
-    if (current is! InboxLoaded || current.openArticleId == null) return;
-    await _reload(readArticleId: current.openArticleId, clearOpenArticleId: true);
+    if (current is! InboxLoaded) return;
+    if (current.openArticleId == null && current.openSummaryId == null) return;
+    await _reload(
+      readArticleId: current.openArticleId,
+      clearOpenArticleId: true,
+      clearOpenSummaryId: true,
+    );
   }
 
   /// Filtra, en memoria, la lista de artículos ya cargada por [query] (ver
@@ -204,6 +291,8 @@ class InboxCubit extends Cubit<InboxState> {
           isSyncingInBackground: current.isSyncingInBackground,
           searchQuery: query,
           openArticleId: current.openArticleId,
+          pendingSummary: current.pendingSummary,
+          openSummaryId: current.openSummaryId,
         ),
       );
     }
@@ -327,19 +416,29 @@ class InboxCubit extends Cubit<InboxState> {
   Future<void> _reload({
     String? readArticleId,
     String? openArticleId,
+    String? openSummaryId,
     bool clearOpenArticleId = false,
+    bool clearOpenSummaryId = false,
   }) async {
+    _subscribeToSummaries();
     final previous = state;
     final searchQuery = previous is InboxLoaded ? previous.searchQuery : '';
     final effectiveOpenArticleId = clearOpenArticleId
         ? null
-        : openArticleId ?? (previous is InboxLoaded ? previous.openArticleId : null);
+        : openArticleId ??
+              (previous is InboxLoaded ? previous.openArticleId : null);
+    final effectiveOpenSummaryId = clearOpenSummaryId
+        ? null
+        : openSummaryId ??
+              (previous is InboxLoaded ? previous.openSummaryId : null);
     final results = await Future.wait([
       _getInboxArticles.execute(),
       _getSources.execute(),
+      _loadPendingSummary(previous, effectiveOpenSummaryId),
     ]);
     final articles = results[0] as List<Article>;
     final hasSources = (results[1] as List).isNotEmpty;
+    final pendingSummary = results[2] as DailySummary?;
     emit(
       InboxLoaded(
         articles,
@@ -347,6 +446,68 @@ class InboxCubit extends Cubit<InboxState> {
         readArticleId: readArticleId,
         searchQuery: searchQuery,
         openArticleId: effectiveOpenArticleId,
+        pendingSummary: pendingSummary,
+        openSummaryId: effectiveOpenSummaryId,
+      ),
+    );
+  }
+
+  /// Resumen a mostrar como tarjeta. Una falla se reporta y deja el Inbox
+  /// sin tarjeta, sin afectar al resto de la carga.
+  Future<DailySummary?> _loadPendingSummary(
+    InboxState previous,
+    String? openSummaryId,
+  ) async {
+    DailySummary? pending;
+    try {
+      pending = await _getPendingInboxSummary.execute();
+    } catch (e, st) {
+      _observabilityClient.captureException(
+        e,
+        st,
+        context: const {'operation': 'load'},
+      );
+    }
+    return pending ?? _retainedSummary(previous, openSummaryId);
+  }
+
+  /// En dos paneles, el resumen abierto sigue como tarjeta (resaltada) aunque
+  /// el detalle ya lo haya descartado, hasta que se cierre la selección.
+  DailySummary? _retainedSummary(InboxState previous, String? openSummaryId) {
+    if (openSummaryId == null || previous is! InboxLoaded) return null;
+    final pending = previous.pendingSummary;
+    return pending?.id == openSummaryId ? pending : null;
+  }
+
+  void _subscribeToSummaries() {
+    if (_summarySubscription != null) return;
+    _summarySubscription = _getPendingInboxSummary.watch().listen(
+      _onPendingSummaryChanged,
+      onError: (Object e, StackTrace st) {
+        _observabilityClient.captureException(
+          e,
+          st,
+          context: const {'operation': 'watch'},
+        );
+      },
+    );
+  }
+
+  void _onPendingSummaryChanged(DailySummary? pending) {
+    final current = state;
+    if (current is! InboxLoaded) return;
+    final effective =
+        pending ?? _retainedSummary(current, current.openSummaryId);
+    if (effective == current.pendingSummary) return;
+    emit(
+      InboxLoaded(
+        current.articles,
+        hasSources: current.hasSources,
+        isSyncingInBackground: current.isSyncingInBackground,
+        searchQuery: current.searchQuery,
+        openArticleId: current.openArticleId,
+        pendingSummary: effective,
+        openSummaryId: current.openSummaryId,
       ),
     );
   }

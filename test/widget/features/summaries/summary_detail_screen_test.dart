@@ -23,7 +23,11 @@ Article _article({required String id, required String title}) => Article(
       articleUrl: 'https://example.com/$id',
     );
 
-Widget _buildSubject(DailySummary summary, ResolveSummaryArticles resolver) {
+Widget _buildSubject(
+  DailySummary summary,
+  ResolveSummaryArticles resolver, {
+  VoidCallback? onOpened,
+}) {
   final router = GoRouter(
     initialLocation: '/summary',
     routes: [
@@ -32,6 +36,7 @@ Widget _buildSubject(DailySummary summary, ResolveSummaryArticles resolver) {
         builder: (_, __) => SummaryDetailScreen(
           summary: summary,
           resolveSummaryArticles: resolver,
+          onOpened: onOpened,
         ),
         routes: [
           GoRoute(
@@ -321,5 +326,19 @@ void main() {
       expect(find.text('Fuente: Reporte'), findsOneWidget);
       expect(find.text('Artículo único'), findsOneWidget);
     });
+  });
+
+  testWidgets('invoca onOpened una sola vez al mostrarse', (tester) async {
+    var opened = 0;
+    await tester.pumpWidget(
+      _buildSubject(tSummary, resolver, onOpened: () => opened++),
+    );
+    await tester.pumpAndSettle();
+
+    expect(opened, 1);
+
+    // Un rebuild de la misma pantalla no lo vuelve a disparar.
+    await tester.pump();
+    expect(opened, 1);
   });
 }

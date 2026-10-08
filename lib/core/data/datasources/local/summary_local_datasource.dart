@@ -13,6 +13,14 @@ abstract class SummaryLocalDataSource {
   /// `updatedAt`).
   Future<void> applyRemote(DailySummaryModel model);
 
+  /// Marca el resumen [id] como descartado (`dismissedAt` y `updatedAt` = ahora).
+  /// Idempotente: devuelve el modelo actualizado, o `null` si no existe o ya
+  /// estaba descartado (no hay nada que escribir ni que subir).
+  Future<DailySummaryModel?> dismiss(String id);
+
+  /// Emite la lista completa de resúmenes cada vez que la caja cambia.
+  Stream<List<DailySummaryModel>> watchAll();
+
   /// Borra todos los resúmenes locales (usado al cerrar sesión).
   Future<void> clearAll();
 }

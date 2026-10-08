@@ -5,10 +5,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
+import 'package:newsreader/features/inbox/domain/usecases/dismiss_daily_summary.dart';
 import 'package:newsreader/features/inbox/domain/usecases/get_inbox_articles.dart';
+import 'package:newsreader/features/inbox/domain/usecases/get_pending_inbox_summary.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/sources/domain/usecases/get_sources.dart';
@@ -26,13 +29,21 @@ class MockMarkArticleAsRead extends Mock implements MarkArticleAsRead {}
 
 class MockSyncUserData extends Mock implements SyncUserData {}
 
+class MockGetPendingInboxSummary extends Mock
+    implements GetPendingInboxSummary {}
+
+class MockDismissDailySummary extends Mock implements DismissDailySummary {}
+
 void main() {
   late MockGetInboxArticles mockGetInboxArticles;
   late MockGetSources mockGetSources;
   late MockFeedSyncTrigger mockFeedSyncTrigger;
   late MockMarkArticleAsRead mockMarkArticleAsRead;
   late MockSyncUserData mockSyncUserData;
+  late MockGetPendingInboxSummary mockGetPendingInboxSummary;
+  late MockDismissDailySummary mockDismissDailySummary;
   late MockTelemetryClient mockTelemetryClient;
+  late StreamController<DailySummary?> streamController;
 
   final tArticles = [
     Article(
@@ -72,8 +83,14 @@ void main() {
         mockFeedSyncTrigger,
         mockMarkArticleAsRead,
         mockSyncUserData,
+        mockGetPendingInboxSummary,
+        mockDismissDailySummary,
         mockTelemetryClient,
       );
+
+  setUpAll(() {
+    registerFallbackValue(StackTrace.empty);
+  });
 
   setUp(() {
     mockGetInboxArticles = MockGetInboxArticles();
@@ -81,8 +98,15 @@ void main() {
     mockFeedSyncTrigger = MockFeedSyncTrigger();
     mockMarkArticleAsRead = MockMarkArticleAsRead();
     mockSyncUserData = MockSyncUserData();
+    mockGetPendingInboxSummary = MockGetPendingInboxSummary();
+    mockDismissDailySummary = MockDismissDailySummary();
     mockTelemetryClient = MockTelemetryClient();
     when(() => mockSyncUserData.execute()).thenAnswer((_) async {});
+    when(() => mockGetPendingInboxSummary.execute())
+        .thenAnswer((_) async => null);
+    when(() => mockGetPendingInboxSummary.watch())
+        .thenAnswer((_) => const Stream.empty());
+    when(() => mockDismissDailySummary.execute(any())).thenAnswer((_) async {});
   });
 
   group('InboxCubit', () {
@@ -693,6 +717,8 @@ void main() {
         mockFeedSyncTrigger,
         mockMarkArticleAsRead,
         mockSyncUserData,
+        mockGetPendingInboxSummary,
+        mockDismissDailySummary,
         mockTelemetryClient,
       );
       cubit.emit(InboxLoaded(tSearchableArticles, hasSources: true));
@@ -815,5 +841,356 @@ void main() {
         InboxLoaded(tArticles, hasSources: true, openArticleId: '1'),
       ],
     );
+  });
+
+  group('tarjeta del resumen diario', () {
+    // Medianoche local de hoy en UTC, como la guarda el servidor: el cubit
+    // decide qué es "hoy" con la fecha real del dispositivo.
+    final now = DateTime.now();
+    final todayMidnightUtc = DateTime(now.year, now.month, now.day).toUtc();
+    final tSummary = DailySummary(
+      id: 'summary-1',
+      date: todayMidnightUtc,
+      content: 'contenido',
+      articleCount: 4,
+      createdAt: todayMidnightUtc,
+    );
+
+    void stubLoad({DailySummary? pending}) {
+      when(() => mockGetInboxArticles.execute())
+          .thenAnswer((_) async => tArticles);
+      when(() => mockGetSources.execute()).thenAnswer((_) async => tSources);
+      when(() => mockGetPendingInboxSummary.execute())
+          .thenAnswer((_) async => pending);
+    }
+
+    blocTest<InboxCubit, InboxState>(
+      'loadArticles() incluye el resumen pendiente cuando existe',
+      build: () {
+        stubLoad(pending: tSummary);
+        return buildCubit();
+      },
+      act: (cubit) => cubit.loadArticles(),
+      expect: () => [
+        const InboxLoading(),
+        InboxLoaded(tArticles, hasSources: true, pendingSummary: tSummary),
+      ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'loadArticles() sin resumen de hoy (o con el de ayer) no muestra tarjeta',
+      build: () {
+        stubLoad();
+        return buildCubit();
+      },
+      act: (cubit) => cubit.loadArticles(),
+      expect: () => [
+        const InboxLoading(),
+        InboxLoaded(tArticles, hasSources: true),
+      ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'una falla al cargar el resumen se reporta y el Inbox sigue sin tarjeta',
+      build: () {
+        stubLoad();
+        when(() => mockGetPendingInboxSummary.execute())
+            .thenThrow(Exception('hive'));
+        return buildCubit();
+      },
+      act: (cubit) => cubit.loadArticles(),
+      expect: () => [
+        const InboxLoading(),
+        InboxLoaded(tArticles, hasSources: true),
+      ],
+      verify: (_) => verify(
+        () => mockTelemetryClient.captureException(
+          any(),
+          any(),
+          context: const {'operation': 'load'},
+        ),
+      ).called(1),
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'el Stream quita la tarjeta cuando el resumen se abre desde otra tab',
+      build: () {
+        stubLoad(pending: tSummary);
+        final controller = StreamController<DailySummary?>();
+        when(() => mockGetPendingInboxSummary.watch())
+            .thenAnswer((_) => controller.stream);
+        addTearDown(controller.close);
+        streamController = controller;
+        return buildCubit();
+      },
+      act: (cubit) async {
+        await cubit.loadArticles();
+        streamController.add(null);
+        await Future<void>.delayed(Duration.zero);
+      },
+      expect: () => [
+        const InboxLoading(),
+        InboxLoaded(tArticles, hasSources: true, pendingSummary: tSummary),
+        InboxLoaded(tArticles, hasSources: true),
+      ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'el Stream agrega la tarjeta cuando llega el resumen del día por sync',
+      build: () {
+        stubLoad();
+        final controller = StreamController<DailySummary?>();
+        when(() => mockGetPendingInboxSummary.watch())
+            .thenAnswer((_) => controller.stream);
+        addTearDown(controller.close);
+        streamController = controller;
+        return buildCubit();
+      },
+      act: (cubit) async {
+        await cubit.loadArticles();
+        streamController.add(tSummary);
+        await Future<void>.delayed(Duration.zero);
+      },
+      expect: () => [
+        const InboxLoading(),
+        InboxLoaded(tArticles, hasSources: true),
+        InboxLoaded(tArticles, hasSources: true, pendingSummary: tSummary),
+      ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'un error del Stream se reporta con contexto watch',
+      build: () {
+        stubLoad();
+        when(() => mockGetPendingInboxSummary.watch())
+            .thenAnswer((_) => Stream.error(Exception('watch')));
+        return buildCubit();
+      },
+      act: (cubit) async {
+        await cubit.loadArticles();
+        await Future<void>.delayed(Duration.zero);
+      },
+      verify: (_) => verify(
+        () => mockTelemetryClient.captureException(
+          any(),
+          any(),
+          context: const {'operation': 'watch'},
+        ),
+      ).called(1),
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'dos paneles: con el resumen abierto, el Stream que lo marca como descartado conserva la tarjeta',
+      build: () {
+        stubLoad(pending: tSummary);
+        final controller = StreamController<DailySummary?>();
+        when(() => mockGetPendingInboxSummary.watch())
+            .thenAnswer((_) => controller.stream);
+        addTearDown(controller.close);
+        streamController = controller;
+        return buildCubit();
+      },
+      act: (cubit) async {
+        await cubit.loadArticles();
+        await cubit.selectSummary(tSummary);
+        streamController.add(null); // el detalle ya lo descartó
+        await Future<void>.delayed(Duration.zero);
+      },
+      expect: () => [
+        const InboxLoading(),
+        InboxLoaded(tArticles, hasSources: true, pendingSummary: tSummary),
+        InboxLoaded(
+          tArticles,
+          hasSources: true,
+          pendingSummary: tSummary,
+          openSummaryId: 'summary-1',
+        ),
+      ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'dos paneles: la tarjeta retenida conserva la selección al sincronizar y sale al cerrar',
+      build: () {
+        stubLoad(pending: tSummary);
+        return buildCubit();
+      },
+      act: (cubit) async {
+        await cubit.loadArticles();
+        await cubit.selectSummary(tSummary);
+        // El detalle ya descartó el resumen: la recarga ya no lo devuelve.
+        when(() => mockGetPendingInboxSummary.execute())
+            .thenAnswer((_) async => null);
+        await cubit.syncInBackground();
+        await cubit.closeOpenArticle();
+      },
+      expect: () => [
+        const InboxLoading(),
+        InboxLoaded(tArticles, hasSources: true, pendingSummary: tSummary),
+        InboxLoaded(
+          tArticles,
+          hasSources: true,
+          pendingSummary: tSummary,
+          openSummaryId: 'summary-1',
+        ),
+        InboxLoaded(
+          tArticles,
+          hasSources: true,
+          isSyncingInBackground: true,
+          pendingSummary: tSummary,
+          openSummaryId: 'summary-1',
+        ),
+        InboxLoaded(
+          tArticles,
+          hasSources: true,
+          pendingSummary: tSummary,
+          openSummaryId: 'summary-1',
+        ),
+        InboxLoaded(tArticles, hasSources: true),
+      ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'seleccionar un artículo reemplaza el resumen abierto y quita la tarjeta',
+      build: () {
+        stubLoad(pending: tSummary);
+        return buildCubit();
+      },
+      act: (cubit) async {
+        await cubit.loadArticles();
+        await cubit.selectSummary(tSummary);
+        when(() => mockGetPendingInboxSummary.execute())
+            .thenAnswer((_) async => null);
+        await cubit.selectArticle('1');
+      },
+      verify: (cubit) {
+        final loaded = cubit.state as InboxLoaded;
+        expect(loaded.openArticleId, '1');
+        expect(loaded.openSummaryId, isNull);
+        expect(loaded.pendingSummary, isNull);
+      },
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'seleccionar un resumen cierra el artículo abierto',
+      build: () {
+        stubLoad(pending: tSummary);
+        return buildCubit();
+      },
+      act: (cubit) async {
+        await cubit.loadArticles();
+        await cubit.selectArticle('1');
+        await cubit.selectSummary(tSummary);
+      },
+      verify: (cubit) {
+        final loaded = cubit.state as InboxLoaded;
+        expect(loaded.openSummaryId, 'summary-1');
+        expect(loaded.openArticleId, isNull);
+        expect(loaded.pendingSummary, tSummary);
+      },
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'cruzar a dos paneles con el detalle ya abierto (resumen descartado en compact) vuelve a mostrar la tarjeta resaltada',
+      build: () {
+        stubLoad();
+        return buildCubit();
+      },
+      act: (cubit) async {
+        await cubit.loadArticles();
+        await cubit.selectSummary(tSummary);
+        await cubit.selectSummary(tSummary); // idempotente
+      },
+      expect: () => [
+        const InboxLoading(),
+        InboxLoaded(tArticles, hasSources: true),
+        InboxLoaded(
+          tArticles,
+          hasSources: true,
+          pendingSummary: tSummary,
+          openSummaryId: 'summary-1',
+        ),
+      ],
+    );
+
+    blocTest<InboxCubit, InboxState>(
+      'selectSummary() de un resumen de un día anterior no muestra tarjeta',
+      build: () {
+        stubLoad();
+        return buildCubit();
+      },
+      act: (cubit) async {
+        await cubit.loadArticles();
+        await cubit.selectSummary(DailySummary(
+          id: 'viejo',
+          date: DateTime(2020).toUtc(),
+          content: 'c',
+          articleCount: 1,
+          createdAt: DateTime(2020).toUtc(),
+        ));
+      },
+      verify: (cubit) {
+        expect((cubit.state as InboxLoaded).pendingSummary, isNull);
+      },
+    );
+
+    test('openSummaryCard() registra inbox_summary_card_opened con article_count',
+        () {
+      buildCubit().openSummaryCard(tSummary);
+
+      verify(
+        () => mockTelemetryClient.trackEvent(
+          'inbox_summary_card_opened',
+          properties: {'article_count': 4},
+        ),
+      ).called(1);
+    });
+
+    test('dismissSummary() registra el evento y persiste el descarte', () async {
+      await buildCubit().dismissSummary(tSummary);
+
+      verify(
+        () => mockTelemetryClient.trackEvent(
+          'inbox_summary_card_dismissed',
+          properties: {'article_count': 4},
+        ),
+      ).called(1);
+      verify(() => mockDismissDailySummary.execute('summary-1')).called(1);
+    });
+
+    blocTest<InboxCubit, InboxState>(
+      'un descarte traído por el Stream (sync/otra tab) no registra eventos',
+      build: () {
+        stubLoad(pending: tSummary);
+        final controller = StreamController<DailySummary?>();
+        when(() => mockGetPendingInboxSummary.watch())
+            .thenAnswer((_) => controller.stream);
+        addTearDown(controller.close);
+        streamController = controller;
+        return buildCubit();
+      },
+      act: (cubit) async {
+        await cubit.loadArticles();
+        streamController.add(null);
+        await Future<void>.delayed(Duration.zero);
+      },
+      verify: (_) => verifyNever(
+        () => mockTelemetryClient.trackEvent(any(), properties: any(named: 'properties')),
+      ),
+    );
+
+    test('close() cancela la suscripción al Stream', () async {
+      stubLoad(pending: tSummary);
+      final controller = StreamController<DailySummary?>();
+      when(() => mockGetPendingInboxSummary.watch())
+          .thenAnswer((_) => controller.stream);
+      final cubit = buildCubit();
+      await cubit.loadArticles();
+      expect(controller.hasListener, isTrue);
+
+      await cubit.close();
+
+      expect(controller.hasListener, isFalse);
+      await controller.close();
+    });
   });
 }

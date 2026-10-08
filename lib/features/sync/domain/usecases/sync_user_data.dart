@@ -337,6 +337,10 @@ class SyncUserData {
         'created_at': _toUtcIsoRequired(m.createdAt),
         'updated_at': _toUtcIsoRequired(m.updatedAt ?? DateTime.now()),
         'source_blocks': m.sourceBlocks,
+        // Solo si existe: un upsert con `null` borraría en el servidor un
+        // descarte hecho en otro dispositivo que este aún no ha bajado.
+        if (m.dismissedAt != null)
+          'dismissed_at': _toUtcIsoRequired(m.dismissedAt!),
       };
 
   DailySummaryModel _summaryFromRow(Map<String, dynamic> row) =>
@@ -348,6 +352,9 @@ class SyncUserData {
         createdAt: DateTime.parse(row['created_at'] as String),
         updatedAt: DateTime.parse(row['updated_at'] as String),
         sourceBlocks: _sourceBlocksFromRow(row['source_blocks']),
+        dismissedAt: (row['dismissed_at'] as String?) != null
+            ? DateTime.parse(row['dismissed_at'] as String)
+            : null,
       );
 
   List<Map<dynamic, dynamic>>? _sourceBlocksFromRow(dynamic value) {

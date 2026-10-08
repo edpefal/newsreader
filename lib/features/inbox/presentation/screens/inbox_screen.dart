@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
+import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/utils/window_size_class.dart';
 import 'package:newsreader/core/widgets/date_separator.dart';
@@ -10,6 +11,7 @@ import 'package:newsreader/core/widgets/no_search_results_state.dart';
 import 'package:newsreader/core/widgets/paper_texture.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/article_inbox_tile.dart';
+import 'package:newsreader/features/inbox/presentation/widgets/inbox_summary_card.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 
 // ---------------------------------------------------------------------------
@@ -49,9 +51,15 @@ class InboxView extends StatefulWidget {
 }
 
 class _InboxViewState extends State<InboxView> {
-  GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  GlobalKey<SliverAnimatedListState> _listKey =
+      GlobalKey<SliverAnimatedListState>();
   List<_InboxListItem> _flatItems = [];
   bool _initialized = false;
+
+  /// Resumen recién descartado con swipe: se oculta de inmediato (un
+  /// `Dismissible` descartado no puede seguir en el árbol) sin esperar a que
+  /// el `Stream` de resúmenes confirme el cambio.
+  String? _hiddenSummaryId;
 
   @override
   void didChangeDependencies() {
@@ -141,7 +149,7 @@ class _InboxViewState extends State<InboxView> {
           // posición de scroll con un `_listKey` nuevo.
           setState(() {
             _flatItems = _buildFlatItems(loaded.visibleArticles);
-            _listKey = GlobalKey<AnimatedListState>();
+            _listKey = GlobalKey<SliverAnimatedListState>();
           });
         }
       },
@@ -154,8 +162,15 @@ class _InboxViewState extends State<InboxView> {
         // reconstruir si `openArticleId` cambió: si no, la fila del
         // artículo recién seleccionado no se resalta hasta el próximo
         // rebuild ajeno a este cambio.
-        final prevOpenArticleId = prev is InboxLoaded ? prev.openArticleId : null;
-        return prevOpenArticleId != curr.openArticleId;
+        final prevOpenArticleId = prev is InboxLoaded
+            ? prev.openArticleId
+            : null;
+        if (prevOpenArticleId != curr.openArticleId) return true;
+        // La tarjeta del resumen puede aparecer/salir o cambiar su
+        // selección en la misma emisión que una señal de lectura.
+        return prev is! InboxLoaded ||
+            prev.pendingSummary != curr.pendingSummary ||
+            prev.openSummaryId != curr.openSummaryId;
       },
       builder: (context, state) {
         if (state is InboxLoading) {
@@ -175,29 +190,35 @@ class _InboxViewState extends State<InboxView> {
         }
         final loaded = state as InboxLoaded;
 
+        final isExpanded = context.windowSizeClass == WindowSizeClass.expanded;
+        if (!isExpanded && loaded.openSummaryId != null) {
+          // La selección de un resumen solo existe en dos paneles: si se
+          // cruzó a compact con ella activa, se limpia (el resumen ya está
+          // descartado, así que la tarjeta no debe quedar fija).
+          final cubit = context.read<InboxCubit>();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            cubit.closeOpenArticle();
+          });
+        }
+        final pendingSummary = loaded.pendingSummary;
+        final showCard =
+            pendingSummary != null &&
+            pendingSummary.id != _hiddenSummaryId &&
+            (isExpanded || loaded.openSummaryId == null);
+
+        final Widget listSliver;
         if (_flatItems.isEmpty) {
           final emptyWidget = loaded.searchQuery.isNotEmpty
               ? const NoSearchResultsState()
               : loaded.hasSources
-                  ? const _UpToDateState()
-                  : const _OnboardingState();
-          return RefreshIndicator(
-            onRefresh: () => _onRefresh(context),
-            child: LayoutBuilder(
-              builder: (_, constraints) => SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: constraints.maxHeight,
-                  child: emptyWidget,
-                ),
-              ),
-            ),
+              ? const _UpToDateState()
+              : const _OnboardingState();
+          listSliver = SliverFillRemaining(
+            hasScrollBody: false,
+            child: emptyWidget,
           );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () => _onRefresh(context),
-          child: AnimatedList(
+        } else {
+          listSliver = SliverAnimatedList(
             key: _listKey,
             initialItemCount: _flatItems.length,
             itemBuilder: (context, index, animation) {
@@ -226,19 +247,73 @@ class _InboxViewState extends State<InboxView> {
                       cubit.selectArticle(article.id);
                       return;
                     }
-                    context.push('/article/${article.id}', extra: article).then((_) {
-                      if (context.mounted) {
-                        cubit.loadArticlesAfterReading(article.id);
-                      }
-                    });
+                    context.push('/article/${article.id}', extra: article).then(
+                      (_) {
+                        if (context.mounted) {
+                          cubit.loadArticlesAfterReading(article.id);
+                        }
+                      },
+                    );
                   },
                 ),
               );
             },
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () => _onRefresh(context),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  alignment: Alignment.topCenter,
+                  child: showCard
+                      ? InboxSummaryCard(
+                          summary: pendingSummary,
+                          isSelected: pendingSummary.id == loaded.openSummaryId,
+                          onTap: () => _onSummaryCardTap(
+                            context,
+                            pendingSummary,
+                            isExpanded: isExpanded,
+                          ),
+                          onDismissed: () =>
+                              _onSummaryCardDismissed(context, pendingSummary),
+                        )
+                      : const SizedBox(width: double.infinity),
+                ),
+              ),
+              listSliver,
+            ],
           ),
         );
       },
     );
+  }
+
+  void _onSummaryCardTap(
+    BuildContext context,
+    DailySummary summary, {
+    required bool isExpanded,
+  }) {
+    final cubit = context.read<InboxCubit>();
+    cubit.openSummaryCard(summary);
+    if (isExpanded) {
+      // Igual que un artículo en dos paneles: el detalle va al panel derecho
+      // y la tarjeta se queda resaltada hasta que se cierre la selección.
+      context.go('/summary/${summary.id}', extra: summary);
+      cubit.selectSummary(summary);
+      return;
+    }
+    context.push('/summary/${summary.id}', extra: summary);
+  }
+
+  void _onSummaryCardDismissed(BuildContext context, DailySummary summary) {
+    setState(() => _hiddenSummaryId = summary.id);
+    context.read<InboxCubit>().dismissSummary(summary);
   }
 
   void _onSwipeDismiss(BuildContext context, Article article) {
@@ -356,9 +431,9 @@ Future<void> _onRefresh(BuildContext context) async {
   final result = await context.read<InboxCubit>().syncAndReload();
   if (!context.mounted) return;
   if (result.isNetworkError) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.inboxOfflineSyncMessage)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.inboxOfflineSyncMessage)));
   } else if (result.failedSourceIds.isNotEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -429,8 +504,9 @@ class _OnboardingState extends StatelessWidget {
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () async {
-                final addedSource =
-                    await context.push<NewsSource>('/sources/add');
+                final addedSource = await context.push<NewsSource>(
+                  '/sources/add',
+                );
                 if (context.mounted) {
                   context.read<InboxCubit>().loadArticles();
                 }
