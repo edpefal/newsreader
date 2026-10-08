@@ -580,6 +580,42 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 article} other{{count} articles}}'**
   String summaryListArticleCount(int count);
 
+  /// No description provided for @inboxSummaryCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s summary'**
+  String get inboxSummaryCardTitle;
+
+  /// No description provided for @inboxSummaryCardCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get inboxSummaryCardCta;
+
+  /// No description provided for @inboxSummaryCardOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get inboxSummaryCardOpen;
+
+  /// No description provided for @inboxSummaryCardDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get inboxSummaryCardDismiss;
+
+  /// No description provided for @inboxSummaryCardCountOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 article} other{{count} articles}}'**
+  String inboxSummaryCardCountOnly(int count);
+
+  /// No description provided for @inboxSummaryCardSources.
+  ///
+  /// In en, this message translates to:
+  /// **'{sources, plural, =1{1 source} other{{sources} sources}}'**
+  String inboxSummaryCardSources(int sources);
+
   /// No description provided for @summariesSelectSummaryTitle.
   ///
   /// In en, this message translates to:

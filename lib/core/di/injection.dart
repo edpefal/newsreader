@@ -68,6 +68,8 @@ import 'package:newsreader/features/archive/presentation/cubit/archive_cubit.dar
 import 'package:newsreader/features/favorites/domain/usecases/get_favorites.dart';
 import 'package:newsreader/features/favorites/presentation/cubit/favorites_cubit.dart';
 import 'package:newsreader/features/inbox/domain/usecases/get_inbox_articles.dart';
+import 'package:newsreader/features/inbox/domain/usecases/dismiss_daily_summary.dart';
+import 'package:newsreader/features/inbox/domain/usecases/get_pending_inbox_summary.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/reader/domain/usecases/toggle_favorite.dart';
@@ -221,6 +223,12 @@ Future<void> setupDependencies() async {
     ),
   );
 
+  // Use cases — Inbox summary card
+  getIt.registerLazySingleton(() => GetPendingInboxSummary(getIt()));
+  getIt.registerLazySingleton(
+    () => DismissDailySummary(getIt(), getIt(), getIt(), getIt()),
+  );
+
   // Use cases — Summaries
   getIt.registerLazySingleton(() => GetDailySummaries(getIt()));
   getIt.registerLazySingleton(() => ResolveSummaryArticles(getIt()));
@@ -264,7 +272,16 @@ Future<void> setupDependencies() async {
     ThemeCubit(Hive.box<dynamic>(AppConstants.hiveSettingsBox)),
   );
   getIt.registerSingleton<InboxCubit>(
-    InboxCubit(getIt(), getIt(), getIt(), getIt(), getIt(), getIt()),
+    InboxCubit(
+      getIt(),
+      getIt(),
+      getIt(),
+      getIt(),
+      getIt(),
+      getIt(),
+      getIt(),
+      getIt(),
+    ),
   );
   getIt.registerSingleton<FavoritesCubit>(FavoritesCubit(getIt()));
   getIt.registerSingleton<ArchiveCubit>(ArchiveCubit(getIt()));

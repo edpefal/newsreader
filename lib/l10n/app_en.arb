@@ -185,6 +185,27 @@
     }
   },
 
+  "inboxSummaryCardTitle": "Today's summary",
+  "inboxSummaryCardCta": "Read",
+  "inboxSummaryCardOpen": "Open",
+  "inboxSummaryCardDismiss": "Dismiss",
+  "inboxSummaryCardCountOnly": "{count, plural, =1{1 article} other{{count} articles}}",
+  "@inboxSummaryCardCountOnly": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inboxSummaryCardSources": "{sources, plural, =1{1 source} other{{sources} sources}}",
+  "@inboxSummaryCardSources": {
+    "placeholders": {
+      "sources": {
+        "type": "int"
+      }
+    }
+  },
+
   "summariesSelectSummaryTitle": "Select a summary",
   "summariesSelectSummarySubtitle": "Choose a daily summary from the list to read it here.",
 

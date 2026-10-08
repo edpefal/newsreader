@@ -44,10 +44,16 @@ class SummaryDetailScreen extends StatefulWidget {
   final DailySummary summary;
   final ResolveSummaryArticles resolveSummaryArticles;
 
+  /// Se invoca una vez, al mostrarse el detalle (también al restaurar o
+  /// abrir la ruta directamente). Lo usan las rutas para quitar el resumen
+  /// de hoy del Inbox sin que este feature conozca al de Inbox.
+  final VoidCallback? onOpened;
+
   const SummaryDetailScreen({
     super.key,
     required this.summary,
     required this.resolveSummaryArticles,
+    this.onOpened,
   });
 
   @override
@@ -61,6 +67,11 @@ class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
   void initState() {
     super.initState();
     _resolveArticles();
+    // Fuera del build: el callback persiste y puede emitir estados en otros
+    // Cubits que se reconstruyen en este mismo frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.onOpened?.call();
+    });
   }
 
   Future<void> _resolveArticles() async {

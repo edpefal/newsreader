@@ -28,6 +28,16 @@ final class InboxLoaded extends InboxState {
   /// `closeOpenArticle`.
   final String? openArticleId;
 
+  /// Resumen diario de hoy que se muestra como tarjeta sobre la lista (ver
+  /// capability `inbox-daily-summary-card`), o `null` si no hay ninguno.
+  final DailySummary? pendingSummary;
+
+  /// Resumen cuyo detalle está abierto en el panel derecho (layout de dos
+  /// paneles). Mientras coincida con `pendingSummary.id`, la tarjeta se
+  /// conserva (resaltada) aunque el resumen ya esté descartado. Mutuamente
+  /// excluyente con `openArticleId`.
+  final String? openSummaryId;
+
   const InboxLoaded(
     this.articles, {
     required this.hasSources,
@@ -35,6 +45,8 @@ final class InboxLoaded extends InboxState {
     this.isSyncingInBackground = false,
     this.searchQuery = '',
     this.openArticleId,
+    this.pendingSummary,
+    this.openSummaryId,
   });
 
   List<Article> get visibleArticles => searchQuery.isEmpty
@@ -49,5 +61,7 @@ final class InboxLoaded extends InboxState {
     isSyncingInBackground,
     searchQuery,
     openArticleId,
+    pendingSummary,
+    openSummaryId,
   ];
 }

@@ -29,6 +29,7 @@ import 'package:newsreader/features/article_summary/presentation/cubit/article_s
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/auth/presentation/screens/login_screen.dart';
 import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
+import 'package:newsreader/features/inbox/domain/usecases/dismiss_daily_summary.dart';
 import 'package:newsreader/features/inbox/domain/usecases/mark_article_as_read.dart';
 import 'package:newsreader/features/inbox/presentation/cubit/inbox_cubit.dart';
 import 'package:newsreader/features/inbox/presentation/screens/inbox_screen.dart';
@@ -186,6 +187,7 @@ StatefulShellBranch articleListBranch({
   required Widget Function() listScreenBuilder,
   required List<NavigatorObserver> observers,
   void Function(BuildContext)? onEmptyDetailShown,
+  List<RouteBase> extraRoutes = const [],
 }) {
   return StatefulShellBranch(
     routes: [
@@ -201,11 +203,65 @@ StatefulShellBranch articleListBranch({
               listScreenBuilder(),
               onEmptyDetailShown: onEmptyDetailShown,
             ),
-            routes: [_articleRoute(paramName: 'id')],
+            routes: [_articleRoute(paramName: 'id'), ...extraRoutes],
           ),
         ],
       ),
     ],
+  );
+}
+
+/// Mantiene en el `InboxCubit` la selección del resumen cuyo detalle está en
+/// pantalla mientras el layout es de dos paneles. Cubre el caso en que el
+/// detalle ya estaba abierto (abierto en compact) al cruzar el umbral de
+/// 840dp: sin esto la tarjeta no volvería a aparecer resaltada. Es
+/// idempotente (`selectSummary` ignora la misma selección) y no hace nada
+/// en compact.
+class _InboxSummarySelection extends StatelessWidget {
+  final DailySummary summary;
+  final Widget child;
+
+  const _InboxSummarySelection({required this.summary, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (context.windowSizeClass == WindowSizeClass.expanded) {
+      final cubit = context.read<InboxCubit>();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        cubit.selectSummary(summary);
+      });
+    }
+    return child;
+  }
+}
+
+/// Detalle del resumen diario abierto desde la tarjeta del Inbox
+/// (`/summary/:id`), con su ruta anidada de artículo para no cambiar de tab.
+/// Descarta el resumen de hoy al mostrarse (ver `DismissDailySummary`).
+GoRoute _inboxSummaryRoute() {
+  return GoRoute(
+    path: 'summary/:id',
+    builder: (context, state) => RouteExtraResolver<DailySummary>(
+      extra: state.extra,
+      resolve: () =>
+          getIt<SummaryRepository>().getById(state.pathParameters['id']!),
+      onNotFound: (context) {
+        getIt<TelemetryClient>().captureMessage(
+          'Inbox summary route opened for a summary that no longer exists',
+          level: TelemetryLevel.warning,
+        );
+        context.go('/');
+      },
+      builder: (context, summary) => _InboxSummarySelection(
+        summary: summary,
+        child: SummaryDetailScreen(
+          summary: summary,
+          resolveSummaryArticles: getIt<ResolveSummaryArticles>(),
+          onOpened: () => getIt<DismissDailySummary>().execute(summary.id),
+        ),
+      ),
+    ),
+    routes: [_articleRoute(paramName: 'articleId')],
   );
 }
 
@@ -278,6 +334,7 @@ final appRouter = GoRouter(
           // explícito -- ver `InboxCubit.closeOpenArticle`.
           onEmptyDetailShown: (context) =>
               context.read<InboxCubit>().closeOpenArticle(),
+          extraRoutes: [_inboxSummaryRoute()],
         ),
         articleListBranch(
           rootPath: '/favorites',
@@ -369,6 +426,8 @@ final appRouter = GoRouter(
                         builder: (context, summary) => SummaryDetailScreen(
                           summary: summary,
                           resolveSummaryArticles: getIt<ResolveSummaryArticles>(),
+                          onOpened: () =>
+                              getIt<DismissDailySummary>().execute(summary.id),
                         ),
                       ),
                       routes: [_articleRoute(paramName: 'articleId')],

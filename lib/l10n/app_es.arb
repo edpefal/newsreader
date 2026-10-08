@@ -108,6 +108,12 @@
   "summaryDetailTitle": "Resumen del {date}",
   "summaryDetailArticleCount": "{count, plural, =1{1 artículo resumido} other{{count} artículos resumidos}}",
   "summaryListArticleCount": "{count, plural, =1{1 artículo} other{{count} artículos}}",
+  "inboxSummaryCardTitle": "Resumen de hoy",
+  "inboxSummaryCardCta": "Leer",
+  "inboxSummaryCardOpen": "Abierto",
+  "inboxSummaryCardDismiss": "Descartar",
+  "inboxSummaryCardCountOnly": "{count, plural, =1{1 artículo} other{{count} artículos}}",
+  "inboxSummaryCardSources": "{sources, plural, =1{1 fuente} other{{sources} fuentes}}",
   "summariesSelectSummaryTitle": "Selecciona un resumen",
   "summariesSelectSummarySubtitle": "Elige un resumen diario de la lista para leerlo aquí.",
 
