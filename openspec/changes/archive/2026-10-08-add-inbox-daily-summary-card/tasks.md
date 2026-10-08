@@ -51,5 +51,5 @@
 
 - [x] 7.1 `flutter analyze` sin warnings y `flutter test` en verde
 - [x] 7.2 Validar con `openspec validate add-inbox-daily-summary-card --strict`
-- [ ] 7.3 Pruebas manuales en simulador/dispositivo e iPad a cargo del usuario (tarjeta en claro/oscuro, swipe, apertura desde la tarjeta y desde la tab, sync entre dispositivos, rotación en iPad, usuario con huso al este de UTC)
-- [ ] 7.4 Commits separados por cambio lógico (CLAUDE.md, migración, modelo/sync, Inbox, tarjeta), push de la rama, PR contra `main`, esperar `analyze-and-test` en verde y mergear; luego archivar el change en el mismo PR final y borrar la rama local y remota
+- [x] 7.3 Pruebas manuales en simulador/dispositivo e iPad a cargo del usuario (tarjeta en claro/oscuro, swipe, apertura desde la tarjeta y desde la tab, sync entre dispositivos, rotación en iPad, usuario con huso al este de UTC)
+- [x] 7.4 Commits separados por cambio lógico (CLAUDE.md, migración, modelo/sync, Inbox, tarjeta), push de la rama, PR contra `main`, esperar `analyze-and-test` en verde y mergear; luego archivar el change en el mismo PR final y borrar la rama local y remota
