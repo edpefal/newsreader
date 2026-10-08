@@ -163,6 +163,19 @@ emit(state..articles.add(article)); // mutación
 - Nunca llamar `Hive.box()` fuera de las clases datasource en `core/data/datasources/local/`.
 - Las boxes se abren **una sola vez** en `main.dart` antes de `runApp`.
 
+## Offline-first con push inmediato
+
+La app es offline-first: Hive es la copia de trabajo local de lo que se obtuvo del backend, y la UI siempre lee de ahí (nunca consulta Supabase directo para pintar una pantalla). Supabase es la fuente de la verdad **entre dispositivos**, y `SyncUserData` reconcilia ambos lados.
+
+**Cuando una acción del usuario cambia datos sincronizados** (marcar leído, favorito, descartar la tarjeta de un resumen, etc.), el cambio SHALL aplicarse primero en Hive y luego intentarse **subir de inmediato** a Supabase, sin esperar al próximo sync completo (login, resume, pull-to-refresh). El push inmediato sigue el patrón de `MarkArticleAsRead` / `ToggleFavorite` (ver requirements "Push inmediato…" en `openspec/specs/cloud-sync/spec.md`):
+
+- Best-effort: no bloquea ni retrasa la actualización local ni la UI.
+- Cualquier falla (sin red, error del servidor) se ignora sin propagarse a la interfaz; el sync completo la repara después, porque el cambio local queda pendiente de subir.
+- Se intenta solo si hay sesión activa.
+- Va por `CloudSyncClient.updatePartial` (solo las columnas que cambiaron), no con un upsert de la fila completa.
+
+Al diseñar un feature nuevo con estado que se sincroniza, planear el push inmediato desde el spec (un requirement "Push inmediato de …" con sus escenarios: con conexión, sin conexión, sin sesión, y falla reparada por el sync completo), no dejarlo viajando solo con el sync incremental.
+
 ## Internacionalización (i18n)
 
 La app soporta inglés, español (neutro) y francés, vía el mecanismo oficial de Flutter — `flutter_localizations` + archivos `.arb` + `flutter gen-l10n` (no `easy_localization` ni ningún otro paquete de terceros).
