@@ -28,6 +28,9 @@ class DailySummaryModel extends HiveObject {
   @HiveField(6)
   List<Map<dynamic, dynamic>>? sourceBlocks;
 
+  @HiveField(7)
+  DateTime? dismissedAt;
+
   DailySummaryModel({
     required this.id,
     required this.date,
@@ -36,6 +39,7 @@ class DailySummaryModel extends HiveObject {
     required this.createdAt,
     this.updatedAt,
     this.sourceBlocks,
+    this.dismissedAt,
   });
 
   static List<Map<dynamic, dynamic>>? _sourceBlocksToMaps(
@@ -73,6 +77,7 @@ class DailySummaryModel extends HiveObject {
         createdAt: entity.createdAt,
         updatedAt: entity.updatedAt,
         sourceBlocks: _sourceBlocksToMaps(entity.sourceBlocks),
+        dismissedAt: entity.dismissedAt,
       );
 
   DailySummary toEntity() => DailySummary(
@@ -83,5 +88,6 @@ class DailySummaryModel extends HiveObject {
         createdAt: createdAt,
         updatedAt: updatedAt,
         sourceBlocks: _sourceBlocksFromMaps(sourceBlocks),
+        dismissedAt: dismissedAt,
       );
 }

@@ -11,6 +11,9 @@ class DailySummary extends Equatable {
   final DateTime? updatedAt;
   final List<SummarySourceBlock>? sourceBlocks;
 
+  /// Instante en que el usuario abrió o descartó el resumen en el Inbox.
+  final DateTime? dismissedAt;
+
   const DailySummary({
     required this.id,
     required this.date,
@@ -19,9 +22,18 @@ class DailySummary extends Equatable {
     required this.createdAt,
     this.updatedAt,
     this.sourceBlocks,
+    this.dismissedAt,
   });
 
   @override
-  List<Object?> get props =>
-      [id, date, content, articleCount, createdAt, updatedAt, sourceBlocks];
+  List<Object?> get props => [
+        id,
+        date,
+        content,
+        articleCount,
+        createdAt,
+        updatedAt,
+        sourceBlocks,
+        dismissedAt,
+      ];
 }

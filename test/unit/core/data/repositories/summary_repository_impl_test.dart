@@ -43,4 +43,42 @@ void main() {
       expect(result, isNull);
     });
   });
+
+  group('dismiss', () {
+    test('devuelve el resumen actualizado con su dismissedAt', () async {
+      final dismissedAt = DateTime(2026, 1, 2);
+      final model = _summary('sm1')..dismissedAt = dismissedAt;
+      when(() => mockDataSource.dismiss('sm1')).thenAnswer((_) async => model);
+
+      final result = await sut.dismiss('sm1');
+
+      expect(result?.id, 'sm1');
+      expect(result?.dismissedAt, dismissedAt);
+    });
+
+    test('devuelve null si no hay nada que descartar', () async {
+      when(() => mockDataSource.dismiss('sm1')).thenAnswer((_) async => null);
+
+      expect(await sut.dismiss('sm1'), isNull);
+    });
+  });
+
+  group('watchAll', () {
+    test('mapea cada emisión del datasource a entidades', () async {
+      when(() => mockDataSource.watchAll()).thenAnswer(
+        (_) => Stream.value([_summary('sm1'), _summary('sm2')]),
+      );
+
+      final emitted = await sut.watchAll().first;
+
+      expect(emitted.map((s) => s.id), ['sm1', 'sm2']);
+    });
+  });
+
+  test('fromEntity/toEntity conservan dismissedAt', () {
+    final model = _summary('sm1')..dismissedAt = DateTime(2026, 3, 4);
+
+    expect(DailySummaryModel.fromEntity(model.toEntity()).dismissedAt,
+        DateTime(2026, 3, 4));
+  });
 }

@@ -32,4 +32,15 @@ class SummaryRepositoryImpl implements SummaryRepository {
     }
     return null;
   }
+
+  @override
+  Future<DailySummary?> dismiss(String id) async {
+    final model = await _dataSource.dismiss(id);
+    return model?.toEntity();
+  }
+
+  @override
+  Stream<List<DailySummary>> watchAll() => _dataSource
+      .watchAll()
+      .map((models) => models.map((m) => m.toEntity()).toList());
 }
