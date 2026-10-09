@@ -45,6 +45,7 @@ import 'package:newsreader/features/sources/presentation/screens/source_detail_s
 import 'package:newsreader/features/sources/presentation/screens/sources_screen.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
+import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_sources.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summaries_screen.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summary_detail_screen.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
@@ -257,6 +258,7 @@ GoRoute _inboxSummaryRoute() {
         child: SummaryDetailScreen(
           summary: summary,
           resolveSummaryArticles: getIt<ResolveSummaryArticles>(),
+          resolveSummarySources: getIt<ResolveSummarySources>(),
           onOpened: () => getIt<DismissDailySummary>().execute(summary.id),
         ),
       ),
@@ -426,6 +428,7 @@ final appRouter = GoRouter(
                         builder: (context, summary) => SummaryDetailScreen(
                           summary: summary,
                           resolveSummaryArticles: getIt<ResolveSummaryArticles>(),
+                          resolveSummarySources: getIt<ResolveSummarySources>(),
                           onOpened: () =>
                               getIt<DismissDailySummary>().execute(summary.id),
                         ),

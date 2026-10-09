@@ -176,6 +176,17 @@
       }
     }
   },
+  "summaryDetailHeaderCount": "{articles, plural, =1{1 article} other{{articles} articles}} from {sources, plural, =1{1 source} other{{sources} sources}}",
+  "@summaryDetailHeaderCount": {
+    "placeholders": {
+      "articles": {
+        "type": "int"
+      },
+      "sources": {
+        "type": "int"
+      }
+    }
+  },
   "summaryListArticleCount": "{count, plural, =1{1 article} other{{count} articles}}",
   "@summaryListArticleCount": {
     "placeholders": {

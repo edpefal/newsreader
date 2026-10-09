@@ -107,6 +107,7 @@
   "summariesEmptySubtitle": "Tu resumen diario va a aparecer aquí automáticamente en cuanto haya noticias para resumir.",
   "summaryDetailTitle": "Resumen del {date}",
   "summaryDetailArticleCount": "{count, plural, =1{1 artículo resumido} other{{count} artículos resumidos}}",
+  "summaryDetailHeaderCount": "{articles, plural, =1{1 artículo} other{{articles} artículos}} de {sources, plural, =1{1 fuente} other{{sources} fuentes}}",
   "summaryListArticleCount": "{count, plural, =1{1 artículo} other{{count} artículos}}",
   "inboxSummaryCardTitle": "Resumen de hoy",
   "inboxSummaryCardCta": "Leer",

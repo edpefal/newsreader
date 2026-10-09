@@ -574,6 +574,12 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 article summarized} other{{count} articles summarized}}'**
   String summaryDetailArticleCount(int count);
 
+  /// No description provided for @summaryDetailHeaderCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{articles, plural, =1{1 article} other{{articles} articles}} from {sources, plural, =1{1 source} other{{sources} sources}}'**
+  String summaryDetailHeaderCount(int articles, int sources);
+
   /// No description provided for @summaryListArticleCount.
   ///
   /// In en, this message translates to:
