@@ -8,7 +8,8 @@ Dirigirse al usuario siempre en **español latinoamericano neutro, con tuteo** (
 
 ```bash
 flutter pub get                          # instalar dependencias
-flutter run                              # correr la app
+flutter run                              # correr la app (APP_ENV=dev por defecto → reevo-dev)
+flutter run --dart-define=APP_ENV=prod   # solo si alguien lo pide: apunta a prod (reevo)
 flutter test                             # correr todos los tests
 flutter test test/unit/                  # solo unit tests
 flutter test test/widget/                # solo widget tests
@@ -33,6 +34,20 @@ Existen dos proyectos de Supabase, ambos bajo la misma organización:
 | `reevo-dev` | `xgwnxhpdcrghrtdbrmpn` | Desarrollo |
 
 Al desplegar una Edge Function (`supabase functions deploy <nombre>`), por defecto solo se despliega al proyecto linkeado (`reevo`, prod). Para desplegar también a `reevo-dev`, agregar `--project-ref xgwnxhpdcrghrtdbrmpn` sin cambiar el link del repo. Antes de dar por terminado un cambio de Edge Function, confirmar con el usuario a cuál(es) de los dos proyectos hay que desplegarlo — no asumir que solo uno basta.
+
+### Edge Functions (`supabase/functions/`)
+
+| Función | Qué hace |
+|---------|----------|
+| `sync-feeds` | Fetch y parseo de RSS/Atom del lado del servidor (también por cron en modo background) |
+| `generate-daily-summaries` | Genera el resumen diario de cada usuario elegible, sin acción del usuario (service_role) |
+| `summarize-article` | Proxy a Gemini: resumen de un artículo + menciones |
+| `enrich-mentions` | Proxy a Google Books / iTunes Search para enriquecer menciones (requiere `GOOGLE_BOOKS_API_KEY`) |
+| `create-feed`, `feed`, `inbound-email` | Feeds generados a partir de emails (dirección única, feed RSS, webhook de entrada) |
+| `delete-account` | Borra la cuenta y sus datos |
+| `superwall-webhook` | Eventos de suscripción de Superwall |
+
+Las migraciones se aplican con `apply_migration` (MCP de Supabase), no con `supabase db push`: las versiones del repo y de Supabase están desfasadas desde 2026-09-16 y `db push` reaplicaría migraciones viejas.
 
 ### Cuentas de Gemini (dev vs prod)
 
@@ -61,39 +76,61 @@ El proyecto usa Clean Architecture organizada por features, no por capas globale
 ```
 lib/
 ├── core/                          # infraestructura compartida entre features
-│   ├── constants/
+│   ├── ai/                        # ArticleSummaryGenerator, MentionEnricher (Edge Functions)
+│   ├── auth/                      # AuthClient (Supabase, Google, Apple)
+│   ├── config/                    # AppConfig (APP_ENV: dev por defecto, prod solo con dart-define)
+│   ├── constants/                 # AppConstants (nombres de boxes Hive, etc.)
 │   ├── data/                      # capa de datos COMPARTIDA
 │   │   ├── datasources/local/     # interfaces + implementaciones Hive
 │   │   ├── models/                # Hive models + .g.dart generados
-│   │   └── repositories/         # implementaciones concretas
+│   │   └── repositories/          # implementaciones concretas
 │   ├── di/                        # injection.dart (único punto de get_it)
 │   ├── domain/                    # dominio COMPARTIDO entre features
-│   │   ├── entities/              # Article, NewsSource
-│   │   └── repositories/         # interfaces (contratos)
-│   ├── errors/
-│   ├── feed/                      # abstracción FeedParser
-│   ├── navigation/                # abstracción AppNavigator
+│   │   ├── entities/              # Article, NewsSource, DailySummary, SummarySourceBlock, ArticleSummary, AiUsageStatus
+│   │   └── repositories/          # interfaces (contratos)
+│   ├── email_feed/                # EmailFeedGenerator (feeds por email)
+│   ├── errors/                    # AppException + AppErrorCode (+ traducción a l10n)
+│   ├── feed/                      # FeedParser, FeedSyncTrigger, FeedUrlResolver
+│   ├── navigation/                # AppNavigator, ExternalLinkLauncher, RouteExtraResolver
 │   ├── network/                   # abstracción HttpClient
-│   ├── utils/                     # IdGenerator, FeedContentChecker
-│   └── widgets/                   # abstracciones de widgets de terceros
+│   ├── observability/             # TelemetryClient (Sentry + PostHog), ScreenViewObserver
+│   ├── opml/                      # OpmlParser
+│   ├── sharing/                   # FileSharer
+│   ├── subscription/              # SubscriptionStatusProvider (Superwall)
+│   ├── sync/                      # CloudSyncClient, RemoteSourceChecker (Supabase)
+│   ├── theme/                     # ReevoAccent (acento óxido, ThemeExtension)
+│   ├── utils/                     # IdGenerator, FeedContentChecker, LocalizedDateFormatter, is_local_today…
+│   └── widgets/                   # abstracciones de widgets de terceros + SourceIcon, ChamferedBox
 ├── features/
-│   ├── sources/                   # Épica 1: gestión de fuentes
-│   │   ├── domain/usecases/       # AddSource, DeleteSource, GetSources, UpdateSourceName
-│   │   └── presentation/          # SourcesScreen + Bloc/Cubit + widgets propios
-│   ├── inbox/                     # Épica 2: inbox y sincronización
-│   │   ├── domain/usecases/       # GetInboxArticles, MarkArticleAsRead
-│   │   └── presentation/          # InboxScreen + InboxBloc + widgets propios
-│   ├── reader/                    # Épica 3: experiencia de lectura
-│   │   ├── domain/usecases/       # ToggleFavorite
-│   │   └── presentation/          # ReaderScreen + ReaderCubit
-│   ├── favorites/                 # Épica 4a: favoritos
-│   │   ├── domain/usecases/       # GetFavorites
-│   │   └── presentation/          # FavoritesScreen + FavoritesCubit
-│   ├── archive/                   # Épica 4b: archivo
+│   ├── account/                   # exportar datos (JSON/OPML) y borrar cuenta
+│   │   └── domain/usecases/       # ExportUserData, ExportFavoritesJson, ExportSourcesOpml, DeleteAccount
+│   ├── archive/                   # artículos leídos ("Leídos")
 │   │   ├── domain/usecases/       # GetArchive
 │   │   └── presentation/          # ArchiveScreen + ArchiveCubit
-│   ├── maintenance/               # Épica 5: limpieza automática
-│   │   └── domain/usecases/       # RunMaintenance
+│   ├── article_summary/           # resumen con IA de un artículo (+ menciones)
+│   │   ├── domain/usecases/       # GenerateArticleSummary
+│   │   └── presentation/          # ArticleSummaryCubit + widgets
+│   ├── auth/                      # login (Google / Apple)
+│   │   └── presentation/          # LoginScreen + LoginCubit
+│   ├── favorites/                 # favoritos
+│   │   ├── domain/usecases/       # GetFavorites
+│   │   └── presentation/          # FavoritesScreen + FavoritesCubit
+│   ├── inbox/                     # inbox, sincronización y tarjeta del resumen de hoy
+│   │   ├── domain/usecases/       # GetInboxArticles, MarkArticleAsRead, GetPendingInboxSummary, DismissDailySummary
+│   │   └── presentation/          # InboxScreen + InboxCubit + widgets propios (InboxSummaryCard)
+│   ├── maintenance/               # mantenimiento local
+│   │   └── domain/usecases/       # MigrateArchivedArticles, ResetLocalArticles
+│   ├── reader/                    # experiencia de lectura
+│   │   ├── domain/usecases/       # ToggleFavorite
+│   │   └── presentation/          # ReaderScreen + ReaderCubit
+│   ├── settings/                  # ajustes (cuenta, tema, idioma, suscripción)
+│   │   └── presentation/
+│   ├── sources/                   # gestión de fuentes
+│   │   ├── domain/usecases/       # AddSource, DeleteSource, GetSources, GetSourceArticles, UpdateSourceName, ImportOpml, GenerateEmailFeed
+│   │   └── presentation/          # SourcesScreen, AddSourceScreen, ImportOpmlScreen + Cubits
+│   ├── summaries/                 # resúmenes diarios (lista y detalle)
+│   │   ├── domain/usecases/       # GetDailySummaries, ResolveSummaryArticles, ResolveSummarySources
+│   │   └── presentation/          # SummariesScreen, SummaryDetailScreen + widgets (tarjeta por fuente)
 │   └── sync/                      # sincronización con Supabase (todos los features)
 │       └── domain/usecases/       # SyncUserData, ClearLocalUserData
 └── presentation/                  # elementos a nivel de app (no de feature)
@@ -135,8 +172,17 @@ Ninguna librería de infraestructura se importa directamente en `domain/` o `pre
 | `go_router` | `AppNavigator` (`core/navigation/`) |
 | `uuid` | `IdGenerator` (`core/utils/`) |
 | `get_it` | Solo en `core/di/injection.dart`. Nunca llamar `getIt<>()` fuera de ese archivo. |
+| `supabase_flutter` | `AuthClient`, `CloudSyncClient`, `RemoteSourceChecker`, `FeedSyncTrigger`, `EmailFeedGenerator`, `ArticleSummaryGenerator`, `MentionEnricher` (`core/auth`, `core/sync`, `core/feed`, `core/email_feed`, `core/ai`) |
+| `google_sign_in`, `sign_in_with_apple` | Solo dentro de `SupabaseAuthClient`. |
+| `sentry_flutter`, `posthog_flutter` | `TelemetryClient` (`core/observability/`) — errores, eventos de producto y `screen_view`. |
+| `superwallkit_flutter` | `SubscriptionStatusProvider` (`core/subscription/`). Excepción: `main.dart` lo configura. |
+| `share_plus` | `FileSharer` (`core/sharing/`) |
+| `url_launcher` | `ExternalLinkLauncher` (`core/navigation/`) |
+| `xml` (OPML) | `OpmlParser` (`core/opml/`); `ExportSourcesOpml` también genera XML en `features/account`. |
+| `html` | Solo en `core/feed/` (`html_feed_link_extractor.dart`). |
+| `google_fonts` | Solo en `presentation/theme/app_theme.dart`. |
 
-**Excepción:** `flutter_bloc` / Cubit no se abstrae; es una dependencia estructural.
+**Excepciones:** `flutter_bloc` / Cubit no se abstrae; es una dependencia estructural. `file_picker` se usa directo en `add_source_screen.dart` (sin abstracción). Hoy algunas screens importan `go_router` para leer `GoRouterState`/navegar con `context.go` (ej. lector, Inbox, Resúmenes): al tocarlas, preferir `AppNavigator`/`RouteExtraResolver` en vez de ampliar ese uso. El cubit de un feature puede depender de un use case de otro solo si ya lo hace hoy (ej. `InboxCubit` usa `GetSources`); para código nuevo, mover lo compartido a `core/`.
 
 ## State Management: Bloc / Cubit
 
@@ -159,9 +205,9 @@ emit(state..articles.add(article)); // mutación
 ## Hive CE
 
 - TypeAdapters generados con `build_runner`. Correr después de cambiar modelos.
-- IDs de tipo reservados: `0` = `NewsSourceModel`, `1` = `ArticleModel`.
+- IDs de tipo en uso: `0` `NewsSourceModel`, `1` `ArticleModel`, `2` `DailySummaryModel`, `3` `ArticleSummaryModel`, `4` `AiUsageDailyModel`, `6` `UserPreferencesModel`. El `5` lo usó un modelo ya eliminado (uso gratuito de resúmenes): no reutilizarlo, puede haber cajas viejas en dispositivos. El siguiente libre es `7`.
 - Nunca llamar `Hive.box()` fuera de las clases datasource en `core/data/datasources/local/`.
-- Las boxes se abren **una sola vez** en `main.dart` antes de `runApp`.
+- Las boxes (fuentes, artículos, ajustes, resúmenes, resúmenes de artículo, uso de IA y preferencias de usuario; nombres en `AppConstants`) se abren **una sola vez** en `main.dart` antes de `runApp`.
 
 ## Offline-first con push inmediato
 
@@ -197,6 +243,9 @@ La app soporta inglés, español (neutro) y francés, vía el mecanismo oficial 
 - Una clase/widget por archivo.
 - Los widgets no contienen lógica de negocio; solo construyen UI y despachan eventos.
 - Inyectar dependencias por constructor; nunca instanciar servicios dentro de un widget.
+- Íconos de fuente: siempre `SourceIcon` (`core/widgets/`), que ya resuelve el fallback a la inicial en óxido; avatares redondos apilados son la excepción y repiten ese fallback.
+- Color de marca: el óxido vive en `ReevoAccent` (`core/theme/`), no en `ColorScheme`. Para tonos que no existen en el tema (ej. los beiges de las tarjetas de resumen) usar constantes locales con variante clara y oscura, no `surfaceContainerHighest`/`outlineVariant`, que en `AppTheme` son hairlines translúcidos que se leen grises.
+- `dart format`: formatear solo los archivos que tocaste. Correrlo sobre carpetas enteras reformatea archivos ajenos; revisar `git diff --stat` después.
 
 ## Testing
 
@@ -220,15 +269,26 @@ Reevo soporta iPad con un layout adaptativo (`NavigationRail` permanente + maste
 ## Rutas de navegación
 
 ```
-/                    Inbox
-/article/:id         Lector (desde Inbox)
-/archive             Archivo
-/archive/:id         Lector (desde Archivo)
-/favorites           Favoritos
-/favorites/:id       Lector (desde Favoritos)
-/sources             Fuentes
-/sources/add         Agregar fuente
+/login                          Login (redirect si no hay sesión)
+/                               Inbox
+/summary/:id                    Detalle del resumen de hoy (dentro del Inbox)
+/article/:id                    Lector (desde Inbox) — sub-ruta /web: artículo web
+/archive                        Archivo ("Leídos")
+/archive/article/:id            Lector (desde Archivo)
+/favorites                      Favoritos
+/favorites/article/:id          Lector (desde Favoritos)
+/sources                        Fuentes
+/sources/:id                    Artículos de una fuente
+/sources/:id/article/:articleId Lector (desde una fuente)
+/sources/add                    Agregar fuente
+/sources/import-opml            Importar OPML (extra: contenido XML)
+/summaries                      Lista de resúmenes diarios
+/summaries/:date                Detalle de un resumen
+/summaries/:date/article/:articleId  Lector (desde un resumen)
+/settings                       Ajustes
 ```
+
+Inbox, Favoritos, Archivo, Fuentes y Resúmenes son `StatefulShellBranch` con `ShellRoute` interno para el master-detail; el lector se reusa en las 5 vía `_articleRoute` (`router.dart`). Verificar siempre las rutas reales en `lib/presentation/app/router.dart` antes de documentar o depender de una.
 
 ## Reglas de negocio clave
 
@@ -237,6 +297,9 @@ Reevo soporta iPad con un layout adaptativo (`NavigationRail` permanente + maste
 - Favoritos nunca se eliminan automáticamente.
 - Contenido truncado: `contentHtml == null || contentHtml.length < 500`.
 - El parseo de RSS/Atom no vive en el cliente: lo hace la Edge Function `sync-feeds` (`supabase/functions/sync-feeds/`), disparada por `FeedSyncTrigger`/`SupabaseFeedSyncTrigger` (`core/feed/`) desde el cliente. El cliente solo pide el fetch y espera la respuesta; no existe un `SyncSources` del lado del cliente. Timeout por feed del lado del servidor: 10 segundos (`FEED_FETCH_TIMEOUT_MS`). Un fallo no interrumpe las demás fuentes.
+- Resumen diario: lo genera el servidor (`generate-daily-summaries`), como máximo uno por fecha local por usuario y sin regeneración. Es elegible quien tiene suscripción activa (cualquier día) o, sin suscripción, solo los lunes. El cliente solo lo recibe por `SyncUserData` y lo muestra: tarjeta del Inbox (resumen de hoy sin `dismissed_at`; abrirlo lo descarta), lista y detalle en la tab Resúmenes. Cada resumen guarda su agrupación por fuente (`sourceBlocks`); los anteriores a esa funcionalidad no la tienen y se muestran sin tarjetas ni íconos. Ver `openspec/specs/daily-summaries/spec.md` y `inbox-daily-summary-card`.
+- Resumen con IA de un artículo (`article_summary`) y menciones: pasan por Edge Functions (Gemini, Google Books, iTunes), con presupuesto diario por usuario (`AiUsageRepository`, ver `ai-usage-budget`) y acceso según suscripción (`SubscriptionStatusProvider`, ver `subscription-entitlements`).
+- Preferencias de usuario (idioma, offset horario) se sincronizan (`user-preferences`): el servidor las usa para generar el resumen en el idioma y el día local correctos.
 - La sincronización con la nube (subir/bajar fuentes, artículos y resúmenes) vive en `features/sync/domain/usecases/SyncUserData`, independiente del fetch de feeds — ver capability `openspec/specs/cloud-sync/spec.md`.
 
 ## Flujo de trabajo
@@ -254,6 +317,10 @@ Todos los features se implementan por medio de OpenSpec (`/opsx:propose` → `/o
 7. Tras mergear el PR (de implementación, de archive, o cualquier PR suelto), volver a `main`, actualizarla, y borrar la rama ya mergeada (local y remota) — no dejar ramas viejas acumulándose. Un feature no queda "terminado" hasta este paso.
 
 **Cerrar tareas y archivar van en el mismo PR final**, no en dos PRs separados — marcar `tasks.md` como completo y mover el change a `archive/` es un solo commit/PR. Solo se separan si aparece un bug real a mitad de camino que necesita su propio ciclo de verificación (rama + PR + CI) antes de poder cerrar la tarea correspondiente.
+
+**Archivar un change:** `openspec archive <name> --yes` aplica el delta al spec principal y mueve el change. Si el delta *reemplaza* escenarios de un requirement (los quita y agrega otros), el CLI se niega ("scenario(s) not present in the modified block"): en ese caso fusionar el requirement a mano en `openspec/specs/<capability>/spec.md`, correr `openspec validate --specs` y archivar con `--skip-specs`. `/opsx:apply`/`/opsx:propose` crean la rama y los artefactos; el change se cierra y archiva en el mismo PR final.
+
+**Pruebas en dispositivo:** las builds de prueba salen por TestFlight (Codemagic, trigger manual, `APP_ENV=prod`); un problema encontrado ahí se corrige en un change aparte, no reabriendo el archivado. CI de GitHub (`ci.yml`) corre `flutter analyze` + `flutter test` en cada PR.
 
 Nunca usar `git push` directo a `main` ni `--no-verify`/bypass de branch protection salvo que el usuario lo pida explícitamente.
 
