@@ -1,48 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/domain/entities/summary_source_block.dart';
-import 'package:newsreader/core/navigation/route_path.dart';
 import 'package:newsreader/core/utils/localized_date_formatter.dart';
 import 'package:newsreader/features/summaries/domain/summary_block_title.dart';
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
+import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_sources.dart';
+import 'package:newsreader/features/summaries/presentation/widgets/summary_block_parser.dart';
+import 'package:newsreader/features/summaries/presentation/widgets/summary_header.dart';
+import 'package:newsreader/features/summaries/presentation/widgets/summary_plain_block.dart';
+import 'package:newsreader/features/summaries/presentation/widgets/summary_source_card.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 
-/// Un bloque parseado de `DailySummary.content`: [title] es el nombre de
-/// fuente (línea inicial del bloque) cuando se pudo identificar, `null` si
-/// el bloque no sigue el formato esperado (fallback sin negrita).
-class _ParsedBlock {
-  final String? title;
-  final String text;
-
-  const _ParsedBlock({this.title, required this.text});
-}
-
-List<_ParsedBlock> _parseBlocks(String content) {
-  final rawBlocks = content
-      .trim()
-      .split(RegExp(r'\n\s*\n'))
-      .map((b) => b.trim())
-      .where((b) => b.isNotEmpty)
-      .toList();
-
-  return rawBlocks.map((raw) {
-    final newlineIndex = raw.indexOf('\n');
-    if (newlineIndex == -1) return _ParsedBlock(text: raw);
-
-    final title = raw.substring(0, newlineIndex).trim();
-    final rest = raw.substring(newlineIndex + 1).trim();
-    if (title.isEmpty || rest.isEmpty) return _ParsedBlock(text: raw);
-
-    return _ParsedBlock(title: title, text: rest);
-  }).toList();
-}
+/// Ancho máximo del contenido; mismo criterio que el lector (~680pt), para no
+/// estirar las tarjetas de borde a borde en iPad.
+const double _kMaxContentWidth = 680;
 
 class SummaryDetailScreen extends StatefulWidget {
   final DailySummary summary;
   final ResolveSummaryArticles resolveSummaryArticles;
+  final ResolveSummarySources resolveSummarySources;
 
   /// Se invoca una vez, al mostrarse el detalle (también al restaurar o
   /// abrir la ruta directamente). Lo usan las rutas para quitar el resumen
@@ -53,6 +32,7 @@ class SummaryDetailScreen extends StatefulWidget {
     super.key,
     required this.summary,
     required this.resolveSummaryArticles,
+    required this.resolveSummarySources,
     this.onOpened,
   });
 
@@ -62,11 +42,13 @@ class SummaryDetailScreen extends StatefulWidget {
 
 class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
   Map<String, Article> _resolvedArticles = const {};
+  Map<String, NewsSource> _resolvedSources = const {};
+  bool _resolved = false;
 
   @override
   void initState() {
     super.initState();
-    _resolveArticles();
+    _resolveReferences();
     // Fuera del build: el callback persiste y puede emitir estados en otros
     // Cubits que se reconstruyen en este mismo frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -74,13 +56,25 @@ class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
     });
   }
 
-  Future<void> _resolveArticles() async {
+  /// Resuelve artículos y fuentes en paralelo y aplica ambos en un solo
+  /// `setState`, para que la tarjeta no pinte primero la inicial y luego
+  /// salte al ícono real.
+  Future<void> _resolveReferences() async {
     final blocks = widget.summary.sourceBlocks;
     if (blocks == null || blocks.isEmpty) return;
 
-    final allIds = blocks.expand((b) => b.articleIds).toList();
-    final resolved = await widget.resolveSummaryArticles.execute(allIds);
-    if (mounted) setState(() => _resolvedArticles = resolved);
+    final articleIds = blocks.expand((b) => b.articleIds).toList();
+    final sourceIds = blocks.map((b) => b.sourceId).toList();
+    final results = await Future.wait([
+      widget.resolveSummaryArticles.execute(articleIds),
+      widget.resolveSummarySources.execute(sourceIds),
+    ]);
+    if (!mounted) return;
+    setState(() {
+      _resolvedArticles = results[0] as Map<String, Article>;
+      _resolvedSources = results[1] as Map<String, NewsSource>;
+      _resolved = true;
+    });
   }
 
   SummarySourceBlock? _findSourceBlock(String title) {
@@ -107,26 +101,34 @@ class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
     return (title: normalized, sourceBlock: _findSourceBlock(normalized));
   }
 
-  Widget _buildBlock(_ParsedBlock block) {
+  Widget _buildBlock(ParsedSummaryBlock block) {
     final rawTitle = block.title;
-    if (rawTitle == null) {
-      return _SummaryBlockView(
-        block: block,
-        sourceBlock: null,
-        resolvedArticles: _resolvedArticles,
-      );
-    }
+    if (rawTitle == null) return SummaryPlainBlock(text: block.text);
+
     final resolved = _resolveBlockTitle(rawTitle);
-    return _SummaryBlockView(
-      block: _ParsedBlock(title: resolved.title, text: block.text),
-      sourceBlock: resolved.sourceBlock,
-      resolvedArticles: _resolvedArticles,
+    final sourceBlock = resolved.sourceBlock;
+    if (sourceBlock == null) {
+      return SummaryPlainBlock(title: resolved.title, text: block.text);
+    }
+
+    final articles = sourceBlock.articleIds
+        .map((id) => _resolvedArticles[id])
+        .whereType<Article>()
+        .toList();
+    return SummarySourceCard(
+      title: resolved.title,
+      text: block.text,
+      iconUrl: _resolvedSources[sourceBlock.sourceId]?.iconUrl,
+      articles: articles,
+      // Antes de resolver se usa el conteo guardado para que el contador no
+      // parpadee de 0 a N; después, solo lo que realmente se muestra.
+      articleCount: _resolved ? articles.length : sourceBlock.articleIds.length,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final blocks = _parseBlocks(widget.summary.content);
+    final blocks = parseSummaryBlocks(widget.summary.content);
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
@@ -139,134 +141,27 @@ class _SummaryDetailScreenState extends State<SummaryDetailScreen> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.summaryDetailArticleCount(widget.summary.articleCount),
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 16),
-            for (final block in blocks)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 20),
-                child: _buildBlock(block),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SummaryBlockView extends StatelessWidget {
-  final _ParsedBlock block;
-  final SummarySourceBlock? sourceBlock;
-  final Map<String, Article> resolvedArticles;
-
-  const _SummaryBlockView({
-    required this.block,
-    required this.sourceBlock,
-    required this.resolvedArticles,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final articles = sourceBlock == null
-        ? const <Article>[]
-        : sourceBlock!.articleIds
-            .map((id) => resolvedArticles[id])
-            .whereType<Article>()
-            .toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (block.title != null) ...[
-          Text(
-            block.title!,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _kMaxContentWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SummaryHeader(
+                  summary: widget.summary,
+                  sources: _resolvedSources,
                 ),
-          ),
-          const SizedBox(height: 4),
-        ],
-        Text(block.text, style: Theme.of(context).textTheme.bodyLarge),
-        if (articles.length == 1) ...[
-          const SizedBox(height: 8),
-          _ArticleLink(article: articles.first),
-        ] else if (articles.length > 1) ...[
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final article in articles) _ArticleChip(article: article),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _ArticleLink extends StatelessWidget {
-  final Article article;
-
-  const _ArticleLink({required this.article});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
-    return InkWell(
-      onTap: () => _openArticle(context, article),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.open_in_new, size: 16, color: color),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              article.title,
-              style: TextStyle(color: color),
-              overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 16),
+                for (final block in blocks)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _buildBlock(block),
+                  ),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ArticleChip extends StatelessWidget {
-  final Article article;
-
-  const _ArticleChip({required this.article});
-
-  @override
-  Widget build(BuildContext context) {
-    return ActionChip(
-      label: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 160),
-        child: Text(
-          article.title,
-          overflow: TextOverflow.ellipsis,
-          maxLines: 1,
         ),
       ),
-      onPressed: () => _openArticle(context, article),
     );
   }
-}
-
-void _openArticle(BuildContext context, Article article) {
-  final basePath = GoRouterState.of(context).uri.path;
-  openDetailRoute(
-    context: context,
-    path: joinRoutePath(basePath, 'article/${article.id}'),
-    extra: article,
-    onOpened: () {},
-  );
 }

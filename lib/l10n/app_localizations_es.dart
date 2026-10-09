@@ -323,6 +323,23 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String summaryDetailHeaderCount(int articles, int sources) {
+    String _temp0 = intl.Intl.pluralLogic(
+      articles,
+      locale: localeName,
+      other: '$articles artículos',
+      one: '1 artículo',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      sources,
+      locale: localeName,
+      other: '$sources fuentes',
+      one: '1 fuente',
+    );
+    return '$_temp0 de $_temp1';
+  }
+
+  @override
   String summaryListArticleCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
