@@ -274,6 +274,7 @@ class _InboxViewState extends State<InboxView> {
                   child: showCard
                       ? InboxSummaryCard(
                           summary: pendingSummary,
+                          summarySourceIcons: loaded.summarySourceIcons,
                           isSelected: pendingSummary.id == loaded.openSummaryId,
                           onTap: () => _onSummaryCardTap(
                             context,

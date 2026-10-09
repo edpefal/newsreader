@@ -32,6 +32,11 @@ final class InboxLoaded extends InboxState {
   /// capability `inbox-daily-summary-card`), o `null` si no hay ninguno.
   final DailySummary? pendingSummary;
 
+  /// `sourceId` → `iconUrl` de las fuentes de `pendingSummary`, para los
+  /// avatares de la tarjeta. Un id con valor `null` es una fuente sin ícono
+  /// o ya eliminada (la tarjeta muestra su inicial).
+  final Map<String, String?> summarySourceIcons;
+
   /// Resumen cuyo detalle está abierto en el panel derecho (layout de dos
   /// paneles). Mientras coincida con `pendingSummary.id`, la tarjeta se
   /// conserva (resaltada) aunque el resumen ya esté descartado. Mutuamente
@@ -46,6 +51,7 @@ final class InboxLoaded extends InboxState {
     this.searchQuery = '',
     this.openArticleId,
     this.pendingSummary,
+    this.summarySourceIcons = const {},
     this.openSummaryId,
   });
 
@@ -62,6 +68,7 @@ final class InboxLoaded extends InboxState {
     searchQuery,
     openArticleId,
     pendingSummary,
+    summarySourceIcons,
     openSummaryId,
   ];
 }

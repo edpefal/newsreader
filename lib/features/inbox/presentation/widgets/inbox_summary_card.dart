@@ -3,6 +3,7 @@ import 'package:flutter/semantics.dart';
 
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/theme/reevo_accent.dart';
+import 'package:newsreader/core/widgets/cached_network_image_widget.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 
 /// Tarjeta destacada del resumen diario de hoy, al inicio del Inbox. Se
@@ -10,10 +11,15 @@ import 'package:newsreader/l10n/app_localizations.dart';
 /// "Descartar"); tocarla abre el detalle del resumen.
 class InboxSummaryCard extends StatelessWidget {
   static const int _maxAvatars = 3;
-  static const double _avatarSize = 28;
+  static const double _avatarSize = 34;
+  static const double _cornerRadius = 14;
   static const double _avatarOverlap = 10;
 
   final DailySummary summary;
+
+  /// `sourceId` → `iconUrl` de las fuentes del resumen. Un id ausente o con
+  /// `null` muestra la inicial de la fuente.
+  final Map<String, String?> summarySourceIcons;
 
   /// `true` mientras su detalle está abierto en el panel derecho (layout de
   /// dos paneles): borde de 2px y CTA "Abierto".
@@ -28,6 +34,7 @@ class InboxSummaryCard extends StatelessWidget {
     required this.summary,
     required this.onTap,
     required this.onDismissed,
+    this.summarySourceIcons = const {},
     this.isSelected = false,
   });
 
@@ -55,7 +62,7 @@ class InboxSummaryCard extends StatelessWidget {
     final card = Material(
       color: fill,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(_cornerRadius),
         side: isSelected
             ? BorderSide(color: theme.colorScheme.onSurface, width: 2)
             : BorderSide.none,
@@ -71,12 +78,24 @@ class InboxSummaryCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      l10n.inboxSummaryCardTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: foreground,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome_outlined,
+                          size: 16,
+                          color: foreground,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            l10n.inboxSummaryCardTitle,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: foreground,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -88,7 +107,13 @@ class InboxSummaryCard extends StatelessWidget {
                     if (hasSources) ...[
                       const SizedBox(height: 12),
                       _SourceAvatars(
-                        names: [for (final b in blocks) b.sourceName],
+                        sources: [
+                          for (final b in blocks)
+                            (
+                              name: b.sourceName,
+                              iconUrl: summarySourceIcons[b.sourceId],
+                            ),
+                        ],
                         maxAvatars: _maxAvatars,
                         size: _avatarSize,
                         overlap: _avatarOverlap,
@@ -145,7 +170,7 @@ class InboxSummaryCard extends StatelessWidget {
 }
 
 class _SourceAvatars extends StatelessWidget {
-  final List<String> names;
+  final List<({String name, String? iconUrl})> sources;
   final int maxAvatars;
   final double size;
   final double overlap;
@@ -153,7 +178,7 @@ class _SourceAvatars extends StatelessWidget {
   final Color foreground;
 
   const _SourceAvatars({
-    required this.names,
+    required this.sources,
     required this.maxAvatars,
     required this.size,
     required this.overlap,
@@ -163,8 +188,8 @@ class _SourceAvatars extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shown = names.take(maxAvatars).toList();
-    final extra = names.length - shown.length;
+    final shown = sources.take(maxAvatars).toList();
+    final extra = sources.length - shown.length;
     final step = size - overlap;
     final stackWidth = size + step * (shown.length - 1);
 
@@ -180,7 +205,8 @@ class _SourceAvatars extends StatelessWidget {
                 Positioned(
                   left: i * step,
                   child: _Avatar(
-                    name: shown[i],
+                    name: shown[i].name,
+                    iconUrl: shown[i].iconUrl,
                     size: size,
                     ringColor: fill,
                     background: foreground.withValues(alpha: 0.25),
@@ -206,7 +232,10 @@ class _SourceAvatars extends StatelessWidget {
 }
 
 class _Avatar extends StatelessWidget {
+  static const double _ringWidth = 2;
+
   final String name;
+  final String? iconUrl;
   final double size;
   final Color ringColor;
   final Color background;
@@ -214,6 +243,7 @@ class _Avatar extends StatelessWidget {
 
   const _Avatar({
     required this.name,
+    required this.iconUrl,
     required this.size,
     required this.ringColor,
     required this.background,
@@ -223,21 +253,44 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    return Container(
+
+    // Sin ícono, fuente eliminada o imagen que falla: la inicial sobre el
+    // círculo translúcido de siempre (sobre el óxido de la tarjeta, un
+    // relleno sólido de marca desaparecería).
+    Widget buildInitial(BuildContext _) => ColoredBox(
+      color: background,
+      child: Center(
+        child: Text(
+          initial,
+          style: TextStyle(
+            fontSize: size * 0.42,
+            fontWeight: FontWeight.w700,
+            color: foreground,
+          ),
+        ),
+      ),
+    );
+
+    return SizedBox(
       width: size,
       height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: background,
-        border: Border.all(color: ringColor, width: 2),
-      ),
-      child: Text(
-        initial,
-        style: TextStyle(
-          fontSize: size * 0.42,
-          fontWeight: FontWeight.w700,
-          color: foreground,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: ringColor, width: _ringWidth),
+        ),
+        // El borde de `DecoratedBox` no agrega tamaño: el padding reserva el
+        // anillo para que el avatar mida exactamente [size].
+        child: Padding(
+          padding: const EdgeInsets.all(_ringWidth),
+          child: ClipOval(
+            child: CachedNetworkImageWidget(
+              imageUrl: iconUrl,
+              width: size - 2 * _ringWidth,
+              height: size - 2 * _ringWidth,
+              placeholderBuilder: buildInitial,
+            ),
+          ),
         ),
       ),
     );
@@ -255,7 +308,7 @@ class _SwipeDismissBackground extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(InboxSummaryCard._cornerRadius),
       ),
       child: Align(
         alignment: Alignment.centerRight,

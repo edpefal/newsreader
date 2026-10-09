@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/domain/entities/summary_source_block.dart';
+import 'package:newsreader/core/widgets/cached_network_image_widget.dart';
 import 'package:newsreader/features/inbox/presentation/widgets/inbox_summary_card.dart';
 import 'package:newsreader/presentation/theme/app_theme.dart';
 
@@ -43,12 +44,14 @@ Widget _wrap(
 InboxSummaryCard _card({
   DailySummary? summary,
   bool isSelected = false,
+  Map<String, String?> icons = const {},
   VoidCallback? onTap,
   VoidCallback? onDismissed,
 }) =>
     InboxSummaryCard(
       summary: summary ?? _summary(),
       isSelected: isSelected,
+      summarySourceIcons: icons,
       onTap: onTap ?? () {},
       onDismissed: onDismissed ?? () {},
     );
@@ -141,6 +144,77 @@ void main() {
           .first,
     );
     expect((material.shape! as RoundedRectangleBorder).side, BorderSide.none);
+  });
+
+  testWidgets('el título lleva el ícono de destello', (tester) async {
+    await tester.pumpWidget(_wrap(_card()));
+
+    expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
+  });
+
+  testWidgets('sin sourceBlocks el título conserva el ícono de destello',
+      (tester) async {
+    await tester.pumpWidget(_wrap(_card(summary: _summary(withBlocks: false))));
+
+    expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget);
+  });
+
+  testWidgets('sin ícono de fuente el avatar muestra la inicial',
+      (tester) async {
+    await tester.pumpWidget(_wrap(_card(icons: const {'s0': null})));
+
+    expect(find.text('A'), findsOneWidget);
+    expect(find.byType(CachedNetworkImageWidget), findsNWidgets(3));
+  });
+
+  testWidgets('con ícono de fuente el avatar usa la imagen de esa fuente',
+      (tester) async {
+    await tester.pumpWidget(
+      _wrap(_card(icons: const {'s0': 'https://s0.com/icon.png'})),
+    );
+
+    final images = tester
+        .widgetList<CachedNetworkImageWidget>(
+          find.byType(CachedNetworkImageWidget),
+        )
+        .toList();
+    expect(images.map((i) => i.imageUrl), [
+      'https://s0.com/icon.png',
+      null,
+      null,
+    ]);
+  });
+
+  testWidgets('el avatar mide 34 y la tarjeta tiene radio 14', (tester) async {
+    await tester.pumpWidget(_wrap(_card()));
+
+    final avatar = tester.getSize(
+      find.ancestor(of: find.text('A'), matching: find.byType(SizedBox)).first,
+    );
+    expect(avatar, const Size(34, 34));
+    final material = tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(InboxSummaryCard),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+    expect(
+      (material.shape! as RoundedRectangleBorder).borderRadius,
+      BorderRadius.circular(14),
+    );
+  });
+
+  testWidgets('el destello no se anuncia: la etiqueta semántica no cambia',
+      (tester) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(_wrap(_card()));
+
+    final data =
+        tester.getSemantics(find.byType(InboxSummaryCard)).getSemanticsData();
+    expect(data.label, 'Resumen de hoy, 12 artículos · 5 fuentes, Leer');
+    handle.dispose();
   });
 
   testWidgets('tocar la tarjeta invoca onTap', (tester) async {
