@@ -259,7 +259,7 @@ Nunca usar `git push` directo a `main` ni `--no-verify`/bypass de branch protect
 
 ## Commits
 
-Seguir [Conventional Commits](https://www.conventionalcommits.org/): `<tipo>: <descripción>` en minúscula, sin punto final, en español.
+Seguir [Conventional Commits](https://www.conventionalcommits.org/): `<tipo>: <descripción>` en minúscula, sin punto final, **en inglés** (el asunto y el cuerpo; la conversación con el usuario sigue en español).
 
 Tipos usados en este proyecto: `feat`, `fix`, `chore`. (`docs`, `refactor`, `test`, `perf` quedan disponibles si aplica, pero no se han usado todavía.)
 
@@ -267,9 +267,9 @@ Tipos usados en este proyecto: `feat`, `fix`, `chore`. (`docs`, `refactor`, `tes
 - El cuerpo (opcional, después de una línea en blanco) explica el *por qué*, no el *qué* — el diff ya muestra el qué.
 
 ```
-feat: mostrar imagen destacada del feed en la lista de artículos
-fix: cascadear el borrado de una fuente a sus artículos en Supabase
-chore: bump versión a 1.6.0+7
+feat: show the feed's featured image in the article list
+fix: cascade a source deletion to its articles in Supabase
+chore: bump version to 1.6.0+7
 ```
 
 ## Documentos de referencia
