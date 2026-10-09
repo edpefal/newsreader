@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
 import 'package:newsreader/core/domain/entities/news_source.dart';
+import 'package:newsreader/core/domain/entities/summary_source_block.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/sync/cloud_sync_client.dart';
 import 'package:newsreader/features/inbox/domain/usecases/dismiss_daily_summary.dart';
@@ -1191,6 +1192,153 @@ void main() {
 
       expect(controller.hasListener, isFalse);
       await controller.close();
+    });
+  });
+
+  group('íconos de las fuentes de la tarjeta', () {
+    final now = DateTime.now();
+    final todayMidnightUtc = DateTime(now.year, now.month, now.day).toUtc();
+
+    DailySummary summaryWith(List<String> sourceIds) => DailySummary(
+          id: 'summary-1',
+          date: todayMidnightUtc,
+          content: 'contenido',
+          articleCount: 4,
+          createdAt: todayMidnightUtc,
+          sourceBlocks: [
+            for (final id in sourceIds)
+              SummarySourceBlock(
+                sourceId: id,
+                sourceName: 'Fuente $id',
+                articleIds: ['a-$id'],
+              ),
+          ],
+        );
+
+    NewsSource source(String id, {String? iconUrl}) => NewsSource(
+          id: id,
+          name: 'Fuente $id',
+          feedUrl: 'https://$id.com/feed',
+          iconUrl: iconUrl,
+          addedAt: DateTime(2024),
+        );
+
+    void stubLoad({
+      required DailySummary? pending,
+      required List<NewsSource> sources,
+    }) {
+      when(() => mockGetInboxArticles.execute())
+          .thenAnswer((_) async => tArticles);
+      when(() => mockGetSources.execute()).thenAnswer((_) async => sources);
+      when(() => mockGetPendingInboxSummary.execute())
+          .thenAnswer((_) async => pending);
+    }
+
+    test('carga el ícono de cada fuente del resumen, null si no tiene',
+        () async {
+      stubLoad(
+        pending: summaryWith(['s1', 's2']),
+        sources: [
+          source('s1', iconUrl: 'https://s1.com/icon.png'),
+          source('s2'),
+          source('ajena', iconUrl: 'https://ajena.com/icon.png'),
+        ],
+      );
+      final cubit = buildCubit();
+      addTearDown(cubit.close);
+
+      await cubit.loadArticles();
+
+      expect((cubit.state as InboxLoaded).summarySourceIcons, {
+        's1': 'https://s1.com/icon.png',
+        's2': null,
+      });
+    });
+
+    test('una fuente eliminada queda con null sin romper la carga', () async {
+      stubLoad(
+        pending: summaryWith(['s1', 'borrada']),
+        sources: [source('s1', iconUrl: 'https://s1.com/icon.png')],
+      );
+      final cubit = buildCubit();
+      addTearDown(cubit.close);
+
+      await cubit.loadArticles();
+
+      expect((cubit.state as InboxLoaded).summarySourceIcons, {
+        's1': 'https://s1.com/icon.png',
+        'borrada': null,
+      });
+    });
+
+    test('un resumen sin sourceBlocks no tiene íconos', () async {
+      stubLoad(
+        pending: DailySummary(
+          id: 'summary-1',
+          date: todayMidnightUtc,
+          content: 'contenido',
+          articleCount: 4,
+          createdAt: todayMidnightUtc,
+        ),
+        sources: [source('s1', iconUrl: 'https://s1.com/icon.png')],
+      );
+      final cubit = buildCubit();
+      addTearDown(cubit.close);
+
+      await cubit.loadArticles();
+
+      expect((cubit.state as InboxLoaded).summarySourceIcons, isEmpty);
+    });
+
+    test(
+        'un resumen que llega por el Stream con una fuente nueva relee las '
+        'fuentes y trae su ícono', () async {
+      final controller = StreamController<DailySummary?>();
+      addTearDown(controller.close);
+      stubLoad(pending: null, sources: [source('s1')]);
+      when(() => mockGetPendingInboxSummary.watch())
+          .thenAnswer((_) => controller.stream);
+      final cubit = buildCubit();
+      addTearDown(cubit.close);
+      await cubit.loadArticles();
+      expect((cubit.state as InboxLoaded).summarySourceIcons, isEmpty);
+
+      when(() => mockGetSources.execute()).thenAnswer(
+        (_) async => [
+          source('s1'),
+          source('nueva', iconUrl: 'https://n.com/i.png'),
+        ],
+      );
+      controller.add(summaryWith(['nueva']));
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      final loaded = cubit.state as InboxLoaded;
+      expect(loaded.pendingSummary?.id, 'summary-1');
+      expect(loaded.summarySourceIcons, {'nueva': 'https://n.com/i.png'});
+    });
+
+    test(
+        'si el resumen del Stream ya está cubierto por el mapa no relee las '
+        'fuentes', () async {
+      final controller = StreamController<DailySummary?>();
+      addTearDown(controller.close);
+      stubLoad(
+        pending: summaryWith(['s1']),
+        sources: [source('s1', iconUrl: 'https://s1.com/icon.png')],
+      );
+      when(() => mockGetPendingInboxSummary.watch())
+          .thenAnswer((_) => controller.stream);
+      final cubit = buildCubit();
+      addTearDown(cubit.close);
+      await cubit.loadArticles();
+      clearInteractions(mockGetSources);
+
+      controller.add(null);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      verifyNever(() => mockGetSources.execute());
     });
   });
 }

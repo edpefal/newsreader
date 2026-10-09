@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/core/domain/entities/news_source.dart';
 import 'package:newsreader/core/feed/feed_sync_trigger.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/utils/is_local_today.dart';
@@ -111,6 +112,7 @@ class InboxCubit extends Cubit<InboxState> {
           isSyncingInBackground: true,
           openArticleId: current.openArticleId,
           pendingSummary: current.pendingSummary,
+          summarySourceIcons: current.summarySourceIcons,
           openSummaryId: current.openSummaryId,
         ),
       );
@@ -160,6 +162,7 @@ class InboxCubit extends Cubit<InboxState> {
           isSyncingInBackground: true,
           openArticleId: current.openArticleId,
           pendingSummary: current.pendingSummary,
+          summarySourceIcons: current.summarySourceIcons,
           openSummaryId: current.openSummaryId,
         ),
       );
@@ -198,6 +201,7 @@ class InboxCubit extends Cubit<InboxState> {
           searchQuery: current.searchQuery,
           openArticleId: articleId,
           pendingSummary: current.pendingSummary,
+          summarySourceIcons: current.summarySourceIcons,
         ),
       );
       return;
@@ -231,8 +235,12 @@ class InboxCubit extends Cubit<InboxState> {
     if (current is! InboxLoaded) return;
     if (current.openSummaryId == summary.id) return;
     final previousArticle = current.openArticleId;
-    final pending = current.pendingSummary ??
-        (isLocalToday(summary.date) ? summary : null);
+    final pending =
+        current.pendingSummary ?? (isLocalToday(summary.date) ? summary : null);
+    final icons = await _resolveSummaryIcons(
+      pending,
+      current.summarySourceIcons,
+    );
     emit(
       InboxLoaded(
         current.articles,
@@ -241,6 +249,7 @@ class InboxCubit extends Cubit<InboxState> {
         searchQuery: current.searchQuery,
         openArticleId: previousArticle,
         pendingSummary: pending,
+        summarySourceIcons: icons,
         openSummaryId: summary.id,
       ),
     );
@@ -292,6 +301,7 @@ class InboxCubit extends Cubit<InboxState> {
           searchQuery: query,
           openArticleId: current.openArticleId,
           pendingSummary: current.pendingSummary,
+          summarySourceIcons: current.summarySourceIcons,
           openSummaryId: current.openSummaryId,
         ),
       );
@@ -437,7 +447,8 @@ class InboxCubit extends Cubit<InboxState> {
       _loadPendingSummary(previous, effectiveOpenSummaryId),
     ]);
     final articles = results[0] as List<Article>;
-    final hasSources = (results[1] as List).isNotEmpty;
+    final sources = results[1] as List<NewsSource>;
+    final hasSources = sources.isNotEmpty;
     final pendingSummary = results[2] as DailySummary?;
     emit(
       InboxLoaded(
@@ -447,6 +458,7 @@ class InboxCubit extends Cubit<InboxState> {
         searchQuery: searchQuery,
         openArticleId: effectiveOpenArticleId,
         pendingSummary: pendingSummary,
+        summarySourceIcons: _iconsFromSources(pendingSummary, sources),
         openSummaryId: effectiveOpenSummaryId,
       ),
     );
@@ -493,12 +505,19 @@ class InboxCubit extends Cubit<InboxState> {
     );
   }
 
-  void _onPendingSummaryChanged(DailySummary? pending) {
+  Future<void> _onPendingSummaryChanged(DailySummary? pending) async {
+    final before = state;
+    if (before is! InboxLoaded) return;
+    final effective = pending ?? _retainedSummary(before, before.openSummaryId);
+    if (effective == before.pendingSummary) return;
+    final icons = await _resolveSummaryIcons(
+      effective,
+      before.summarySourceIcons,
+    );
+    // Tras el await el estado pudo cambiar (otra recarga): se parte del más
+    // reciente, no del que se leyó antes de esperar.
     final current = state;
-    if (current is! InboxLoaded) return;
-    final effective =
-        pending ?? _retainedSummary(current, current.openSummaryId);
-    if (effective == current.pendingSummary) return;
+    if (isClosed || current is! InboxLoaded) return;
     emit(
       InboxLoaded(
         current.articles,
@@ -507,8 +526,43 @@ class InboxCubit extends Cubit<InboxState> {
         searchQuery: current.searchQuery,
         openArticleId: current.openArticleId,
         pendingSummary: effective,
+        summarySourceIcons: icons,
         openSummaryId: current.openSummaryId,
       ),
     );
+  }
+
+  /// `sourceId` → `iconUrl` de las fuentes de [summary]. Un id sin fuente
+  /// local queda con `null` (la tarjeta cae a la inicial) y cuenta como
+  /// resuelto, para no releer las fuentes en cada cambio por una eliminada.
+  Map<String, String?> _iconsFromSources(
+    DailySummary? summary,
+    List<NewsSource> sources,
+  ) {
+    final blocks = summary?.sourceBlocks;
+    if (blocks == null || blocks.isEmpty) return const {};
+    final byId = {for (final s in sources) s.id: s.iconUrl};
+    return {for (final b in blocks) b.sourceId: byId[b.sourceId]};
+  }
+
+  /// Conserva [known] si ya cubre todas las fuentes de [summary]; si falta
+  /// alguna (resumen nuevo por sincronización) relee las fuentes locales.
+  Future<Map<String, String?>> _resolveSummaryIcons(
+    DailySummary? summary,
+    Map<String, String?> known,
+  ) async {
+    final blocks = summary?.sourceBlocks;
+    if (blocks == null || blocks.isEmpty) return const {};
+    if (blocks.every((b) => known.containsKey(b.sourceId))) return known;
+    try {
+      return _iconsFromSources(summary, await _getSources.execute());
+    } catch (e, st) {
+      _observabilityClient.captureException(
+        e,
+        st,
+        context: const {'operation': 'load_summary_icons'},
+      );
+      return known;
+    }
   }
 }

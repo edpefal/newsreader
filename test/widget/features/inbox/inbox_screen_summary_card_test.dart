@@ -83,6 +83,7 @@ void main() {
     DailySummary? pending,
     String searchQuery = '',
     String? openSummaryId,
+    Map<String, String?> icons = const {},
   }) {
     when(() => cubit.state).thenReturn(
       InboxLoaded(
@@ -90,6 +91,7 @@ void main() {
         hasSources: true,
         searchQuery: searchQuery,
         pendingSummary: pending,
+        summarySourceIcons: icons,
         openSummaryId: openSummaryId,
       ),
     );
@@ -104,6 +106,16 @@ void main() {
     final cardTop = tester.getTopLeft(find.byType(InboxSummaryCard)).dy;
     final articleTop = tester.getTopLeft(find.text('Artículo de prueba')).dy;
     expect(cardTop, lessThan(articleTop));
+  });
+
+  testWidgets('pasa a la tarjeta los íconos de las fuentes del estado',
+      (tester) async {
+    stubLoaded(pending: _summary, icons: const {'s1': 'https://s1.com/i.png'});
+
+    await tester.pumpWidget(_buildSubject(cubit));
+
+    final card = tester.widget<InboxSummaryCard>(find.byType(InboxSummaryCard));
+    expect(card.summarySourceIcons, {'s1': 'https://s1.com/i.png'});
   });
 
   testWidgets('sin resumen pendiente no hay tarjeta', (tester) async {
