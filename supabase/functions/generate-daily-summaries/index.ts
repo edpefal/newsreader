@@ -17,7 +17,7 @@ import { buildSourceBlocks } from "./source_blocks.ts";
 import { stripSourceLabels } from "./strip_source_label.ts";
 import { hasSummaryForToday, resolveUtcOffsetMinutes } from "./user_context.ts";
 
-const GEMINI_MODEL = "gemini-3.7-flash";
+const GEMINI_MODEL = "gemini-3.8-flash";
 const GEMINI_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 

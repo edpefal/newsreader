@@ -18,7 +18,7 @@ import { MENTION_TYPES, parseMentions } from "./mentions.ts";
 // diario, sin importar cuánto consumo le quede al usuario.
 const MAX_ARTICLE_WORDS = 8000;
 
-const GEMINI_MODEL = "gemini-3.7-flash";
+const GEMINI_MODEL = "gemini-3.8-flash";
 const GEMINI_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
