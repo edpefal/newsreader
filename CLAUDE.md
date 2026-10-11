@@ -4,6 +4,8 @@
 
 Dirigirse al usuario siempre en **español latinoamericano neutro, con tuteo** ("tienes", "puedes", "avísame", "aquí"), nunca en voseo rioplatense/argentino ("tenés", "podés", "avisame", "acá"). Aplica a toda respuesta conversacional de Claude en el chat, sin excepción.
 
+En `/opsx:explore`, hacer **una sola pregunta por turno** y esperar la respuesta antes de pasar a la siguiente. Nada de listas de preguntas abiertas ni de tablas con varias decisiones a la vez: se puede dar el contexto necesario y una recomendación, pero se cierra con una única pregunta. Si hay varias decisiones pendientes, ordenarlas y plantear primero la que más condiciona a las demás.
+
 ## Comandos esenciales
 
 ```bash
