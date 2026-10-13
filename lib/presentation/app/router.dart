@@ -133,11 +133,29 @@ class _EmptyArticleDetailState extends State<_EmptyArticleDetail> {
 Widget _adaptiveBranchShell(
   BuildContext context,
   Widget listScreen,
-  Widget child,
-) {
+  Widget child, {
+  double? listWidth,
+}) {
   if (context.windowSizeClass == WindowSizeClass.compact) return child;
-  return AdaptiveListDetailScaffold(list: listScreen, detail: child);
+  return AdaptiveListDetailScaffold(
+    list: listScreen,
+    detail: child,
+    listWidth: listWidth ?? 380,
+  );
 }
+
+/// Ancho del panel izquierdo de Resúmenes en el layout de dos paneles: el
+/// resumen (tarjetas por fuente con miniaturas) necesita más que una fila de
+/// lista.
+const double _kSummariesPaneWidth = 480;
+
+/// Raíz de la tab Resúmenes: el resumen más reciente (o su estado vacío).
+/// Abrirlo descarta la tarjeta de hoy del Inbox (ver `DismissDailySummary`).
+Widget _summariesScreen() => SummariesScreen(
+      resolveSummaryArticles: getIt<ResolveSummaryArticles>(),
+      resolveSummarySources: getIt<ResolveSummarySources>(),
+      onSummaryOpened: (id) => getIt<DismissDailySummary>().execute(id),
+    );
 
 /// Ruta anidada del lector de artículo (más su sub-ruta `web`), reusada por
 /// las 5 branches. [paramName] es el nombre del path parameter (`id` para
@@ -400,42 +418,25 @@ final appRouter = GoRouter(
               observers: [_newScreenViewObserver()],
               builder: (context, state, child) => _adaptiveBranchShell(
                 context,
-                const SummariesScreen(),
+                _summariesScreen(),
                 child,
+                listWidth: _kSummariesPaneWidth,
               ),
               routes: [
                 GoRoute(
                   path: '/summaries',
                   builder: (context, state) {
                     if (context.windowSizeClass == WindowSizeClass.compact) {
-                      return const SummariesScreen();
+                      return _summariesScreen();
                     }
                     final l10n = AppLocalizations.of(context);
                     return EmptyDetailPlaceholder(
-                      icon: Icons.auto_awesome_outlined,
-                      title: l10n.summariesSelectSummaryTitle,
-                      subtitle: l10n.summariesSelectSummarySubtitle,
+                      icon: Icons.article_outlined,
+                      title: l10n.summariesSelectArticleTitle,
+                      subtitle: l10n.summariesSelectArticleSubtitle,
                     );
                   },
-                  routes: [
-                    GoRoute(
-                      path: ':date',
-                      builder: (context, state) => RouteExtraResolver<DailySummary>(
-                        extra: state.extra,
-                        resolve: () => getIt<SummaryRepository>()
-                            .getById(state.pathParameters['date']!),
-                        onNotFound: (context) => context.go('/'),
-                        builder: (context, summary) => SummaryDetailScreen(
-                          summary: summary,
-                          resolveSummaryArticles: getIt<ResolveSummaryArticles>(),
-                          resolveSummarySources: getIt<ResolveSummarySources>(),
-                          onOpened: () =>
-                              getIt<DismissDailySummary>().execute(summary.id),
-                        ),
-                      ),
-                      routes: [_articleRoute(paramName: 'articleId')],
-                    ),
-                  ],
+                  routes: [_articleRoute(paramName: 'articleId')],
                 ),
               ],
             ),

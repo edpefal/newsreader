@@ -10,6 +10,7 @@ import 'package:newsreader/core/domain/entities/summary_source_block.dart';
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_sources.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summary_detail_screen.dart';
+import 'package:newsreader/features/summaries/presentation/widgets/summary_detail_body.dart';
 import 'package:newsreader/features/summaries/presentation/widgets/summary_article_row.dart';
 import 'package:newsreader/features/summaries/presentation/widgets/summary_source_card.dart';
 
@@ -593,4 +594,47 @@ void main() {
     await tester.pump();
     expect(opened, 1);
   });
+
+  testWidgets(
+    'el detalle del Inbox conserva su AppBar con la fecha en el título',
+    (tester) async {
+      await tester.pumpWidget(
+        _buildSubject(tSummary, resolver, sourcesResolver),
+      );
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.textContaining('9 jul 2026'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'el cuerpo embebido en la tab muestra la fecha dentro del contenido, sin AppBar',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: testLocale,
+          localizationsDelegates: testLocalizationsDelegates,
+          supportedLocales: testSupportedLocales,
+          home: Scaffold(
+            body: SummaryDetailBody(
+              summary: tSummary,
+              resolveSummaryArticles: resolver,
+              resolveSummarySources: sourcesResolver,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(AppBar), findsNothing);
+      expect(find.textContaining('9 jul 2026'), findsOneWidget);
+      expect(find.text('5 artículos resumidos'), findsOneWidget);
+    },
+  );
 }

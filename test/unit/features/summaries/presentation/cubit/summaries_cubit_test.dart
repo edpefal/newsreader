@@ -3,13 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
-import 'package:newsreader/features/summaries/domain/usecases/get_daily_summaries.dart';
+import 'package:newsreader/features/summaries/domain/usecases/get_latest_daily_summary.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 
-class MockGetDailySummaries extends Mock implements GetDailySummaries {}
+class MockGetLatestDailySummary extends Mock implements GetLatestDailySummary {}
 
 void main() {
-  late MockGetDailySummaries mockGetDailySummaries;
+  late MockGetLatestDailySummary mockGetLatestDailySummary;
 
   final tSummary = DailySummary(
     id: '2026-07-09',
@@ -19,10 +19,10 @@ void main() {
     createdAt: DateTime(2026, 7, 9),
   );
 
-  SummariesCubit buildCubit() => SummariesCubit(mockGetDailySummaries);
+  SummariesCubit buildCubit() => SummariesCubit(mockGetLatestDailySummary);
 
   setUp(() {
-    mockGetDailySummaries = MockGetDailySummaries();
+    mockGetLatestDailySummary = MockGetLatestDailySummary();
   });
 
   group('SummariesCubit', () {
@@ -31,30 +31,30 @@ void main() {
     });
 
     blocTest<SummariesCubit, SummariesState>(
-      'loadSummaries() emite Loaded con los resúmenes ya sincronizados',
+      'loadSummaries() emite Loaded con el resumen más reciente',
       build: () {
-        when(() => mockGetDailySummaries.execute())
-            .thenAnswer((_) async => [tSummary]);
+        when(() => mockGetLatestDailySummary.execute())
+            .thenAnswer((_) async => tSummary);
         return buildCubit();
       },
       act: (cubit) => cubit.loadSummaries(),
       expect: () => [
         const SummariesLoading(),
-        SummariesLoaded(summaries: [tSummary]),
+        SummariesLoaded(summary: tSummary),
       ],
     );
 
     blocTest<SummariesCubit, SummariesState>(
-      'loadSummaries() emite Loaded vacío sin resúmenes sincronizados',
+      'loadSummaries() emite Loaded sin resumen cuando no hay ninguno',
       build: () {
-        when(() => mockGetDailySummaries.execute())
-            .thenAnswer((_) async => []);
+        when(() => mockGetLatestDailySummary.execute())
+            .thenAnswer((_) async => null);
         return buildCubit();
       },
       act: (cubit) => cubit.loadSummaries(),
       expect: () => [
         const SummariesLoading(),
-        const SummariesLoaded(summaries: []),
+        const SummariesLoaded(summary: null),
       ],
     );
   });
