@@ -304,7 +304,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get summariesEmptySubtitle =>
-      'Tu resumen diario va a aparecer aquí automáticamente en cuanto haya noticias para resumir.';
+      'Aún no tienes resúmenes. Se creará uno automáticamente más adelante y aparecerá aquí.';
 
   @override
   String summaryDetailTitle(String date) {
@@ -385,11 +385,11 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get summariesSelectSummaryTitle => 'Selecciona un resumen';
+  String get summariesSelectArticleTitle => 'Selecciona un artículo';
 
   @override
-  String get summariesSelectSummarySubtitle =>
-      'Elige un resumen diario de la lista para leerlo aquí.';
+  String get summariesSelectArticleSubtitle =>
+      'Abre un artículo del resumen para leerlo aquí.';
 
   @override
   String get loginSubtitle => 'Inicia sesión para continuar';

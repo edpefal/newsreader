@@ -159,7 +159,7 @@
   "sourcesEditNameFieldLabel": "Name",
 
   "summariesEmptyTitle": "No summaries yet",
-  "summariesEmptySubtitle": "Your daily summary will show up here automatically once there's news to summarize.",
+  "summariesEmptySubtitle": "You don't have any summaries yet. One will be created automatically later on and will show up here.",
   "summaryDetailTitle": "Summary for {date}",
   "@summaryDetailTitle": {
     "placeholders": {
@@ -217,8 +217,8 @@
     }
   },
 
-  "summariesSelectSummaryTitle": "Select a summary",
-  "summariesSelectSummarySubtitle": "Choose a daily summary from the list to read it here.",
+  "summariesSelectArticleTitle": "Select an article",
+  "summariesSelectArticleSubtitle": "Open an article from the summary to read it here.",
 
   "loginSubtitle": "Sign in to continue",
   "loginContinueWithGoogle": "Continue with Google",

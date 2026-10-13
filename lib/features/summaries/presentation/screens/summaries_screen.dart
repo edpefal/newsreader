@@ -1,20 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
+import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
+import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_sources.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
-import 'package:newsreader/features/summaries/presentation/widgets/summary_list_item.dart';
+import 'package:newsreader/features/summaries/presentation/widgets/summary_detail_body.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 
+/// Raíz de la tab Resúmenes: el resumen más reciente directamente, sin lista
+/// (los anteriores ya no son accesibles), o un estado vacío si aún no hay.
 class SummariesScreen extends StatelessWidget {
-  const SummariesScreen({super.key});
+  final ResolveSummaryArticles resolveSummaryArticles;
+  final ResolveSummarySources resolveSummarySources;
+
+  /// Se invoca con el id del resumen mostrado al montarse (descarta la
+  /// tarjeta de hoy del Inbox sin que este feature conozca al de Inbox).
+  final void Function(String summaryId)? onSummaryOpened;
+
+  const SummariesScreen({
+    super.key,
+    required this.resolveSummaryArticles,
+    required this.resolveSummarySources,
+    this.onSummaryOpened,
+  });
 
   @override
-  Widget build(BuildContext context) => const SummariesView();
+  Widget build(BuildContext context) => SummariesView(
+        resolveSummaryArticles: resolveSummaryArticles,
+        resolveSummarySources: resolveSummarySources,
+        onSummaryOpened: onSummaryOpened,
+      );
 }
 
 class SummariesView extends StatelessWidget {
-  const SummariesView({super.key});
+  final ResolveSummaryArticles resolveSummaryArticles;
+  final ResolveSummarySources resolveSummarySources;
+  final void Function(String summaryId)? onSummaryOpened;
+
+  const SummariesView({
+    super.key,
+    required this.resolveSummaryArticles,
+    required this.resolveSummarySources,
+    this.onSummaryOpened,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,24 +53,15 @@ class SummariesView extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final summaries = (state as SummariesLoaded).summaries;
+          final summary = (state as SummariesLoaded).summary;
+          if (summary == null) return const _EmptySummariesState();
 
-          if (summaries.isEmpty) {
-            return const _EmptySummariesState();
-          }
-
-          return ListView.builder(
-            itemCount: summaries.length,
-            itemBuilder: (context, index) {
-              final summary = summaries[index];
-              return SummaryListItem(
-                summary: summary,
-                onTap: () => context.push(
-                  '/summaries/${summary.id}',
-                  extra: summary,
-                ),
-              );
-            },
+          return SummaryDetailBody(
+            key: ValueKey(summary.id),
+            summary: summary,
+            resolveSummaryArticles: resolveSummaryArticles,
+            resolveSummarySources: resolveSummarySources,
+            onOpened: () => onSummaryOpened?.call(summary.id),
           );
         },
       ),

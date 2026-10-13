@@ -559,7 +559,7 @@ abstract class AppLocalizations {
   /// No description provided for @summariesEmptySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Your daily summary will show up here automatically once there\'s news to summarize.'**
+  /// **'You don\'t have any summaries yet. One will be created automatically later on and will show up here.'**
   String get summariesEmptySubtitle;
 
   /// No description provided for @summaryDetailTitle.
@@ -622,17 +622,17 @@ abstract class AppLocalizations {
   /// **'{sources, plural, =1{1 source} other{{sources} sources}}'**
   String inboxSummaryCardSources(int sources);
 
-  /// No description provided for @summariesSelectSummaryTitle.
+  /// No description provided for @summariesSelectArticleTitle.
   ///
   /// In en, this message translates to:
-  /// **'Select a summary'**
-  String get summariesSelectSummaryTitle;
+  /// **'Select an article'**
+  String get summariesSelectArticleTitle;
 
-  /// No description provided for @summariesSelectSummarySubtitle.
+  /// No description provided for @summariesSelectArticleSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Choose a daily summary from the list to read it here.'**
-  String get summariesSelectSummarySubtitle;
+  /// **'Open an article from the summary to read it here.'**
+  String get summariesSelectArticleSubtitle;
 
   /// No description provided for @loginSubtitle.
   ///

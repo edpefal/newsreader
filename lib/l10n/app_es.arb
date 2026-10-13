@@ -104,7 +104,7 @@
   "sourcesEditNameFieldLabel": "Nombre",
 
   "summariesEmptyTitle": "Sin resúmenes todavía",
-  "summariesEmptySubtitle": "Tu resumen diario va a aparecer aquí automáticamente en cuanto haya noticias para resumir.",
+  "summariesEmptySubtitle": "Aún no tienes resúmenes. Se creará uno automáticamente más adelante y aparecerá aquí.",
   "summaryDetailTitle": "Resumen del {date}",
   "summaryDetailArticleCount": "{count, plural, =1{1 artículo resumido} other{{count} artículos resumidos}}",
   "summaryDetailHeaderCount": "{articles, plural, =1{1 artículo} other{{articles} artículos}} de {sources, plural, =1{1 fuente} other{{sources} fuentes}}",
@@ -115,8 +115,8 @@
   "inboxSummaryCardDismiss": "Descartar",
   "inboxSummaryCardCountOnly": "{count, plural, =1{1 artículo} other{{count} artículos}}",
   "inboxSummaryCardSources": "{sources, plural, =1{1 fuente} other{{sources} fuentes}}",
-  "summariesSelectSummaryTitle": "Selecciona un resumen",
-  "summariesSelectSummarySubtitle": "Elige un resumen diario de la lista para leerlo aquí.",
+  "summariesSelectArticleTitle": "Selecciona un artículo",
+  "summariesSelectArticleSubtitle": "Abre un artículo del resumen para leerlo aquí.",
 
   "loginSubtitle": "Inicia sesión para continuar",
   "loginContinueWithGoogle": "Continuar con Google",

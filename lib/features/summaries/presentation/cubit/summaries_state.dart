@@ -12,10 +12,11 @@ final class SummariesLoading extends SummariesState {
 }
 
 final class SummariesLoaded extends SummariesState {
-  final List<DailySummary> summaries;
+  /// `null` cuando todavía no existe ningún resumen.
+  final DailySummary? summary;
 
-  const SummariesLoaded({required this.summaries});
+  const SummariesLoaded({required this.summary});
 
   @override
-  List<Object?> get props => [summaries];
+  List<Object?> get props => [summary];
 }

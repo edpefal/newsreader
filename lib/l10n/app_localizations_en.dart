@@ -303,7 +303,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get summariesEmptySubtitle =>
-      'Your daily summary will show up here automatically once there\'s news to summarize.';
+      'You don\'t have any summaries yet. One will be created automatically later on and will show up here.';
 
   @override
   String summaryDetailTitle(String date) {
@@ -384,11 +384,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get summariesSelectSummaryTitle => 'Select a summary';
+  String get summariesSelectArticleTitle => 'Select an article';
 
   @override
-  String get summariesSelectSummarySubtitle =>
-      'Choose a daily summary from the list to read it here.';
+  String get summariesSelectArticleSubtitle =>
+      'Open an article from the summary to read it here.';
 
   @override
   String get loginSubtitle => 'Sign in to continue';

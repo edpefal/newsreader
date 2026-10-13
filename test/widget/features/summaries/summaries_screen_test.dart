@@ -2,39 +2,41 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/domain/entities/daily_summary.dart';
+import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_articles.dart';
+import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_sources.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summaries_screen.dart';
+import 'package:newsreader/features/summaries/presentation/widgets/summary_detail_body.dart';
 
 import '../../../support/pump_localized_app.dart';
 
 class MockSummariesCubit extends MockCubit<SummariesState>
     implements SummariesCubit {}
 
-Widget _buildSubject(SummariesCubit cubit) {
-  final router = GoRouter(
-    routes: [
-      GoRoute(
-        path: '/',
-        builder: (_, __) => BlocProvider<SummariesCubit>.value(
-          value: cubit,
-          child: const SummariesView(),
-        ),
-      ),
-      GoRoute(
-        path: '/summaries/:date',
-        builder: (_, __) => const Scaffold(body: Text('Detail')),
-      ),
-    ],
-  );
-  return MaterialApp.router(
+class MockResolveSummaryArticles extends Mock
+    implements ResolveSummaryArticles {}
+
+class MockResolveSummarySources extends Mock implements ResolveSummarySources {}
+
+Widget _buildSubject(
+  SummariesCubit cubit, {
+  void Function(String)? onSummaryOpened,
+}) {
+  return MaterialApp(
     locale: testLocale,
     localizationsDelegates: testLocalizationsDelegates,
     supportedLocales: testSupportedLocales,
-    routerConfig: router,
+    home: BlocProvider<SummariesCubit>.value(
+      value: cubit,
+      child: SummariesView(
+        resolveSummaryArticles: MockResolveSummaryArticles(),
+        resolveSummarySources: MockResolveSummarySources(),
+        onSummaryOpened: onSummaryOpened,
+      ),
+    ),
   );
 }
 
@@ -54,8 +56,9 @@ void main() {
   });
 
   group('SummariesScreen', () {
-    testWidgets('muestra spinner cuando estado es SummariesLoading',
-        (tester) async {
+    testWidgets('muestra spinner cuando estado es SummariesLoading', (
+      tester,
+    ) async {
       when(() => cubit.state).thenReturn(const SummariesLoading());
 
       await tester.pumpWidget(_buildSubject(cubit));
@@ -63,40 +66,53 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('muestra estado vacío sin resúmenes', (tester) async {
-      when(() => cubit.state)
-          .thenReturn(const SummariesLoaded(summaries: []));
+    testWidgets(
+      'sin resumen muestra el estado vacío que explica que habrá otro',
+      (tester) async {
+        when(
+          () => cubit.state,
+        ).thenReturn(const SummariesLoaded(summary: null));
+
+        await tester.pumpWidget(_buildSubject(cubit));
+
+        expect(find.text('Sin resúmenes todavía'), findsOneWidget);
+        expect(find.textContaining('Se creará uno'), findsOneWidget);
+        expect(find.byType(SummaryDetailBody), findsNothing);
+      },
+    );
+
+    testWidgets('con resumen lo muestra directo, sin lista ni AppBar propia', (
+      tester,
+    ) async {
+      when(() => cubit.state).thenReturn(SummariesLoaded(summary: tSummary));
 
       await tester.pumpWidget(_buildSubject(cubit));
-
-      expect(find.text('Sin resúmenes todavía'), findsOneWidget);
-    });
-
-    testWidgets('muestra la lista de resúmenes existentes', (tester) async {
-      when(() => cubit.state)
-          .thenReturn(SummariesLoaded(summaries: [tSummary]));
-
-      await tester.pumpWidget(_buildSubject(cubit));
-
-      expect(find.textContaining('Resumen del'), findsOneWidget);
-      expect(find.text('4 artículos'), findsOneWidget);
-    });
-
-    testWidgets('tap en un item navega al detalle', (tester) async {
-      when(() => cubit.state)
-          .thenReturn(SummariesLoaded(summaries: [tSummary]));
-
-      await tester.pumpWidget(_buildSubject(cubit));
-      await tester.tap(find.textContaining('Resumen del'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Detail'), findsOneWidget);
+      expect(find.byType(SummaryDetailBody), findsOneWidget);
+      expect(find.byType(ListTile), findsNothing);
+      expect(find.byType(AppBar), findsNothing);
+      expect(find.text('Resumen de hoy'), findsOneWidget);
     });
 
-    testWidgets('no muestra ningún botón de generar ni indicador de cupo',
-        (tester) async {
-      when(() => cubit.state)
-          .thenReturn(SummariesLoaded(summaries: [tSummary]));
+    testWidgets('abrir la tab notifica el id del resumen mostrado', (
+      tester,
+    ) async {
+      when(() => cubit.state).thenReturn(SummariesLoaded(summary: tSummary));
+      final opened = <String>[];
+
+      await tester.pumpWidget(
+        _buildSubject(cubit, onSummaryOpened: opened.add),
+      );
+      await tester.pumpAndSettle();
+
+      expect(opened, ['2026-07-09']);
+    });
+
+    testWidgets('no muestra ningún botón de generar ni indicador de cupo', (
+      tester,
+    ) async {
+      when(() => cubit.state).thenReturn(SummariesLoaded(summary: tSummary));
 
       await tester.pumpWidget(_buildSubject(cubit));
 
