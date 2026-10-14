@@ -612,7 +612,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorTooManyAuthRequests =>
-      'Too many attempts. Wait a moment and try again.';
+      'Too many requests right now. Try again later or sign in with Google or Apple.';
 
   @override
   String get errorInvalidEmail => 'Enter a valid email address.';

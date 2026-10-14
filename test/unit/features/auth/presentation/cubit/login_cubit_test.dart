@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
+import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 
 import '../../../../../support/fake_telemetry_client.dart';
@@ -13,7 +14,10 @@ class MockAuthClient extends Mock implements AuthClient {}
 class _FakeStackTrace extends Fake implements StackTrace {}
 
 void main() {
-  setUpAll(() => registerFallbackValue(_FakeStackTrace()));
+  setUpAll(() {
+    registerFallbackValue(_FakeStackTrace());
+    registerFallbackValue(TelemetryLevel.info);
+  });
 
   late MockAuthClient mockAuthClient;
   late MockTelemetryClient mockTelemetryClient;
@@ -298,6 +302,77 @@ void main() {
         ),
       ],
     );
+
+    group('señal login_email_rate_limited en Sentry', () {
+      void verifyRateLimited(String step) => verify(
+        () => mockTelemetryClient.captureMessage(
+          'login_email_rate_limited: $step',
+          level: TelemetryLevel.warning,
+        ),
+      ).called(1);
+
+      blocTest<LoginCubit, LoginState>(
+        'submitEmail() con límite registra step send',
+        build: () {
+          when(
+            () => mockAuthClient.requestEmailCode(email),
+          ).thenThrow(const AuthException(AppErrorCode.tooManyAuthRequests));
+          return buildAt(() => t0);
+        },
+        act: (cubit) => cubit.submitEmail(email),
+        verify: (_) => verifyRateLimited('send'),
+      );
+
+      blocTest<LoginCubit, LoginState>(
+        'resendCode() con límite registra step resend',
+        build: () {
+          when(
+            () => mockAuthClient.requestEmailCode(email),
+          ).thenThrow(const AuthException(AppErrorCode.tooManyAuthRequests));
+          return buildAt(() => resendAt);
+        },
+        seed: () => LoginCodeSent(email: email, resendAvailableAt: resendAt),
+        act: (cubit) => cubit.resendCode(),
+        verify: (_) => verifyRateLimited('resend'),
+      );
+
+      blocTest<LoginCubit, LoginState>(
+        'verifyCode() con límite registra step verify',
+        build: () {
+          when(
+            () => mockAuthClient.verifyEmailCode(email: email, code: '123456'),
+          ).thenThrow(const AuthException(AppErrorCode.tooManyAuthRequests));
+          return buildAt(() => t0);
+        },
+        seed: () => LoginCodeSent(email: email, resendAvailableAt: resendAt),
+        act: (cubit) => cubit.verifyCode('123456'),
+        verify: (_) => verifyRateLimited('verify'),
+      );
+
+      for (final code in [
+        AppErrorCode.invalidEmailCode,
+        AppErrorCode.invalidEmail,
+        AppErrorCode.network,
+        AppErrorCode.unknown,
+      ]) {
+        blocTest<LoginCubit, LoginState>(
+          'un error $code no registra la señal',
+          build: () {
+            when(
+              () => mockAuthClient.requestEmailCode(email),
+            ).thenThrow(AuthException(code));
+            return buildAt(() => t0);
+          },
+          act: (cubit) => cubit.submitEmail(email),
+          verify: (_) => verifyNever(
+            () => mockTelemetryClient.captureMessage(
+              any(),
+              level: any(named: 'level'),
+            ),
+          ),
+        );
+      }
+    });
 
     blocTest<LoginCubit, LoginState>(
       'back() del paso del código vuelve al correo conservándolo',

@@ -313,7 +313,7 @@
   "errorArticleTooLongToSummarize": "This article is too long to summarize automatically.",
   "errorCloudSyncFailed": "We couldn't sync with the server. Please try again.",
   "errorInvalidEmailCode": "That code is invalid or has expired. Check it or request a new one.",
-  "errorTooManyAuthRequests": "Too many attempts. Wait a moment and try again.",
+  "errorTooManyAuthRequests": "Too many requests right now. Try again later or sign in with Google or Apple.",
   "errorInvalidEmail": "Enter a valid email address.",
   "errorUnknown": "Something unexpected happened"
 }
