@@ -36,6 +36,20 @@ abstract class AuthClient {
   /// flujo nativo de Sign in with Apple.
   Future<AuthResult> signInWithApple();
 
+  /// Envía un código de acceso de 6 dígitos al [email]. Si el correo no
+  /// tiene cuenta, se crea al verificar el código. Lanza [AuthException] con
+  /// un código como [AppErrorCode.invalidEmail] o
+  /// [AppErrorCode.tooManyAuthRequests] si el envío falla.
+  Future<void> requestEmailCode(String email);
+
+  /// Verifica el [code] enviado a [email] y abre la sesión. Lanza
+  /// [AuthException] con [AppErrorCode.invalidEmailCode] si es incorrecto o
+  /// expiró. No hay estado `cancelled` en este flujo.
+  Future<AuthResult> verifyEmailCode({
+    required String email,
+    required String code,
+  });
+
   /// Cierra la sesión activa.
   Future<void> signOut();
 }

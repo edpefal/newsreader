@@ -121,6 +121,34 @@
   "loginSubtitle": "Connecte-toi pour continuer",
   "loginContinueWithGoogle": "Continuer avec Google",
   "loginContinueWithApple": "Continuer avec Apple",
+  "loginContinueWithEmail": "Continuer avec l'e-mail",
+  "loginOrSeparator": "ou",
+  "loginEmailTitle": "Connecte-toi avec ton e-mail",
+  "loginEmailSubtitle": "On t'enverra un code à 6 chiffres par e-mail.",
+  "loginEmailFieldLabel": "E-mail",
+  "loginEmailLinkedAccountsHint": "Tu t'es déjà connecté avec Apple ou Google ? Utilise la même méthode pour retrouver tes données.",
+  "loginSendCode": "Envoyer le code",
+  "loginCodeTitle": "Saisis le code",
+  "loginCodeSubtitle": "On a envoyé un code à 6 chiffres à {email}. Il expire dans 10 minutes.",
+  "@loginCodeSubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "loginCodeFieldLabel": "Code à 6 chiffres",
+  "loginVerifyCode": "Vérifier",
+  "loginResendCode": "Renvoyer le code",
+  "loginResendCodeIn": "Renvoyer le code dans {seconds}s",
+  "@loginResendCodeIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "loginChangeEmail": "Changer d'e-mail",
 
   "accountDeleteDialogTitle": "Supprimer le compte",
   "accountDeleteDialogBody": "Cette action est irréversible : ton compte et toutes tes données (sources, articles, favoris et résumés) seront supprimés. Cette action ne peut pas être annulée.",
@@ -175,5 +203,8 @@
   "errorSubscriptionRequired": "Cela nécessite un abonnement actif.",
   "errorArticleTooLongToSummarize": "Cet article est trop long pour être résumé automatiquement.",
   "errorCloudSyncFailed": "Nous n'avons pas pu synchroniser avec le serveur. Réessaie.",
+  "errorInvalidEmailCode": "Ce code est invalide ou a expiré. Vérifie-le ou demande-en un nouveau.",
+  "errorTooManyAuthRequests": "Trop de tentatives. Attends un instant et réessaie.",
+  "errorInvalidEmail": "Entre une adresse e-mail valide.",
   "errorUnknown": "Une erreur inattendue s'est produite"
 }

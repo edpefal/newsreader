@@ -400,6 +400,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginContinueWithApple => 'Continue with Apple';
 
   @override
+  String get loginContinueWithEmail => 'Continue with email';
+
+  @override
+  String get loginOrSeparator => 'or';
+
+  @override
+  String get loginEmailTitle => 'Sign in with email';
+
+  @override
+  String get loginEmailSubtitle => 'We\'ll send a 6-digit code to your email.';
+
+  @override
+  String get loginEmailFieldLabel => 'Email';
+
+  @override
+  String get loginEmailLinkedAccountsHint =>
+      'Signed in before with Apple or Google? Use that same method to see your data.';
+
+  @override
+  String get loginSendCode => 'Send code';
+
+  @override
+  String get loginCodeTitle => 'Enter the code';
+
+  @override
+  String loginCodeSubtitle(String email) {
+    return 'We sent a 6-digit code to $email. It expires in 10 minutes.';
+  }
+
+  @override
+  String get loginCodeFieldLabel => '6-digit code';
+
+  @override
+  String get loginVerifyCode => 'Verify';
+
+  @override
+  String get loginResendCode => 'Resend code';
+
+  @override
+  String loginResendCodeIn(int seconds) {
+    return 'Resend code in ${seconds}s';
+  }
+
+  @override
+  String get loginChangeEmail => 'Change email';
+
+  @override
   String get accountDeleteDialogTitle => 'Delete account';
 
   @override
@@ -558,6 +605,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorCloudSyncFailed =>
       'We couldn\'t sync with the server. Please try again.';
+
+  @override
+  String get errorInvalidEmailCode =>
+      'That code is invalid or has expired. Check it or request a new one.';
+
+  @override
+  String get errorTooManyAuthRequests =>
+      'Too many attempts. Wait a moment and try again.';
+
+  @override
+  String get errorInvalidEmail => 'Enter a valid email address.';
 
   @override
   String get errorUnknown => 'Something unexpected happened';

@@ -81,6 +81,17 @@ enum AppErrorCode {
   /// capability `cloud-sync`.
   cloudSyncFailed,
 
+  /// El código de acceso por correo es incorrecto o ya expiró. El servidor
+  /// responde igual en ambos casos (`otp_expired`), así que no se distinguen.
+  invalidEmailCode,
+
+  /// Demasiados envíos de código o intentos de verificación en poco tiempo
+  /// (límite de Supabase Auth).
+  tooManyAuthRequests,
+
+  /// El correo ingresado para recibir el código no tiene un formato válido.
+  invalidEmail,
+
   /// Cualquier error no anticipado por los demás códigos.
   unknown,
 }

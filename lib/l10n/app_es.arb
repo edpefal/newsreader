@@ -121,6 +121,34 @@
   "loginSubtitle": "Inicia sesión para continuar",
   "loginContinueWithGoogle": "Continuar con Google",
   "loginContinueWithApple": "Continuar con Apple",
+  "loginContinueWithEmail": "Continuar con correo",
+  "loginOrSeparator": "o",
+  "loginEmailTitle": "Inicia sesión con tu correo",
+  "loginEmailSubtitle": "Te enviaremos un código de 6 dígitos a tu correo.",
+  "loginEmailFieldLabel": "Correo electrónico",
+  "loginEmailLinkedAccountsHint": "¿Entraste antes con Apple o Google? Usa ese mismo método para ver tus datos.",
+  "loginSendCode": "Enviar código",
+  "loginCodeTitle": "Ingresa el código",
+  "loginCodeSubtitle": "Enviamos un código de 6 dígitos a {email}. Vence en 10 minutos.",
+  "@loginCodeSubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "loginCodeFieldLabel": "Código de 6 dígitos",
+  "loginVerifyCode": "Verificar",
+  "loginResendCode": "Reenviar código",
+  "loginResendCodeIn": "Reenviar código en {seconds}s",
+  "@loginResendCodeIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "loginChangeEmail": "Cambiar correo",
 
   "accountDeleteDialogTitle": "Eliminar cuenta",
   "accountDeleteDialogBody": "Esta acción es irreversible: se eliminarán tu cuenta y todos tus datos (fuentes, artículos, favoritos y resúmenes). No se puede deshacer.",
@@ -175,5 +203,8 @@
   "errorSubscriptionRequired": "Esto requiere una suscripción activa.",
   "errorArticleTooLongToSummarize": "Este artículo es demasiado largo para resumir automáticamente.",
   "errorCloudSyncFailed": "No pudimos sincronizar con el servidor. Intenta de nuevo.",
+  "errorInvalidEmailCode": "El código no es válido o ya venció. Revísalo o pide uno nuevo.",
+  "errorTooManyAuthRequests": "Demasiados intentos. Espera un momento e intenta de nuevo.",
+  "errorInvalidEmail": "Ingresa un correo válido.",
   "errorUnknown": "Ocurrió un error inesperado"
 }
