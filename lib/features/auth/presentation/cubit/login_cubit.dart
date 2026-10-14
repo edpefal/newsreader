@@ -64,6 +64,18 @@ class LoginCubit extends Cubit<LoginState> {
     );
   }
 
+  /// Señal del tope de correos, para alertar en Sentry: `send`/`resend`
+  /// indican el límite global del servicio y `verify` el límite por origen al
+  /// verificar. Cada paso es un mensaje distinto (un issue por paso) y no lleva
+  /// el correo ni ningún dato personal.
+  void _trackRateLimited(AppErrorCode code, String step) {
+    if (code != AppErrorCode.tooManyAuthRequests) return;
+    _observabilityClient.captureMessage(
+      'login_email_rate_limited: $step',
+      level: TelemetryLevel.warning,
+    );
+  }
+
   // --- Login con correo y código ------------------------------------------
 
   /// Abre el paso de ingresar el correo.
@@ -82,6 +94,7 @@ class LoginCubit extends Cubit<LoginState> {
       await _authClient.requestEmailCode(email);
       emit(LoginCodeSent(email: email, resendAvailableAt: _nextResendAt()));
     } on AuthException catch (e) {
+      _trackRateLimited(e.code, 'send');
       emit(LoginEmailEntry(email: email, error: e.code));
     } catch (e, st) {
       _observabilityClient.captureException(e, st);
@@ -107,6 +120,7 @@ class LoginCubit extends Cubit<LoginState> {
       _trackLoginCompleted('email');
       emit(const LoginIdle());
     } on AuthException catch (e) {
+      _trackRateLimited(e.code, 'verify');
       emit(_codeSent(current, error: e.code));
     } catch (e, st) {
       _observabilityClient.captureException(e, st);
@@ -127,6 +141,7 @@ class LoginCubit extends Cubit<LoginState> {
         LoginCodeSent(email: current.email, resendAvailableAt: _nextResendAt()),
       );
     } on AuthException catch (e) {
+      _trackRateLimited(e.code, 'resend');
       emit(_codeSent(current, error: e.code, restartCooldown: true));
     } catch (e, st) {
       _observabilityClient.captureException(e, st);

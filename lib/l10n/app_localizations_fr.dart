@@ -617,7 +617,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorTooManyAuthRequests =>
-      'Trop de tentatives. Attends un instant et réessaie.';
+      'Trop de demandes en ce moment. Réessaie plus tard ou connecte-toi avec Google ou Apple.';
 
   @override
   String get errorInvalidEmail => 'Entre une adresse e-mail valide.';

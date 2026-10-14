@@ -1033,7 +1033,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorTooManyAuthRequests.
   ///
   /// In en, this message translates to:
-  /// **'Too many attempts. Wait a moment and try again.'**
+  /// **'Too many requests right now. Try again later or sign in with Google or Apple.'**
   String get errorTooManyAuthRequests;
 
   /// No description provided for @errorInvalidEmail.
