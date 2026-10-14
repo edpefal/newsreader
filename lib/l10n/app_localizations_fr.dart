@@ -401,6 +401,54 @@ class AppLocalizationsFr extends AppLocalizations {
   String get loginContinueWithApple => 'Continuer avec Apple';
 
   @override
+  String get loginContinueWithEmail => 'Continuer avec l\'e-mail';
+
+  @override
+  String get loginOrSeparator => 'ou';
+
+  @override
+  String get loginEmailTitle => 'Connecte-toi avec ton e-mail';
+
+  @override
+  String get loginEmailSubtitle =>
+      'On t\'enverra un code à 6 chiffres par e-mail.';
+
+  @override
+  String get loginEmailFieldLabel => 'E-mail';
+
+  @override
+  String get loginEmailLinkedAccountsHint =>
+      'Tu t\'es déjà connecté avec Apple ou Google ? Utilise la même méthode pour retrouver tes données.';
+
+  @override
+  String get loginSendCode => 'Envoyer le code';
+
+  @override
+  String get loginCodeTitle => 'Saisis le code';
+
+  @override
+  String loginCodeSubtitle(String email) {
+    return 'On a envoyé un code à 6 chiffres à $email. Il expire dans 10 minutes.';
+  }
+
+  @override
+  String get loginCodeFieldLabel => 'Code à 6 chiffres';
+
+  @override
+  String get loginVerifyCode => 'Vérifier';
+
+  @override
+  String get loginResendCode => 'Renvoyer le code';
+
+  @override
+  String loginResendCodeIn(int seconds) {
+    return 'Renvoyer le code dans ${seconds}s';
+  }
+
+  @override
+  String get loginChangeEmail => 'Changer d\'e-mail';
+
+  @override
   String get accountDeleteDialogTitle => 'Supprimer le compte';
 
   @override
@@ -562,6 +610,17 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get errorCloudSyncFailed =>
       'Nous n\'avons pas pu synchroniser avec le serveur. Réessaie.';
+
+  @override
+  String get errorInvalidEmailCode =>
+      'Ce code est invalide ou a expiré. Vérifie-le ou demande-en un nouveau.';
+
+  @override
+  String get errorTooManyAuthRequests =>
+      'Trop de tentatives. Attends un instant et réessaie.';
+
+  @override
+  String get errorInvalidEmail => 'Entre une adresse e-mail valide.';
 
   @override
   String get errorUnknown => 'Une erreur inattendue s\'est produite';

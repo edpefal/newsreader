@@ -3,6 +3,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import 'package:newsreader/core/auth/auth_client.dart';
+import 'package:newsreader/core/auth/email_auth_error_mapper.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
 
@@ -22,17 +23,18 @@ class SupabaseAuthClient implements AuthClient {
     required TelemetryClient observabilityClient,
     sb.SupabaseClient? supabase,
     GoogleSignIn? googleSignIn,
-  })  : _observabilityClient = observabilityClient,
-        _supabase = supabase ?? sb.Supabase.instance.client,
-        _googleSignIn = googleSignIn ??
-            GoogleSignIn(
-              serverClientId: _googleServerClientId,
-              scopes: ['email'],
-            );
+  }) : _observabilityClient = observabilityClient,
+       _supabase = supabase ?? sb.Supabase.instance.client,
+       _googleSignIn =
+           googleSignIn ??
+           GoogleSignIn(
+             serverClientId: _googleServerClientId,
+             scopes: ['email'],
+           );
 
   @override
-  Stream<bool> get authStateChanges => _supabase.auth.onAuthStateChange
-      .map((event) => event.session != null);
+  Stream<bool> get authStateChanges =>
+      _supabase.auth.onAuthStateChange.map((event) => event.session != null);
 
   @override
   bool get isSignedIn => _supabase.auth.currentSession != null;
@@ -103,6 +105,42 @@ class SupabaseAuthClient implements AuthClient {
       _observabilityClient.captureException(e, st);
       throw const AuthException(AppErrorCode.unknown);
     }
+  }
+
+  @override
+  Future<void> requestEmailCode(String email) async {
+    try {
+      await _supabase.auth.signInWithOtp(email: email);
+    } catch (e, st) {
+      throw _emailAuthException(e, st);
+    }
+  }
+
+  @override
+  Future<AuthResult> verifyEmailCode({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      await _supabase.auth.verifyOTP(
+        email: email,
+        token: code,
+        type: sb.OtpType.email,
+      );
+      return AuthResult.success;
+    } catch (e, st) {
+      throw _emailAuthException(e, st);
+    }
+  }
+
+  /// Los fallos esperados (código inválido, límites, red) no se reportan a
+  /// Sentry; solo los que caen en [AppErrorCode.unknown].
+  AuthException _emailAuthException(Object error, StackTrace stackTrace) {
+    final code = mapEmailAuthError(error);
+    if (code == AppErrorCode.unknown) {
+      _observabilityClient.captureException(error, stackTrace);
+    }
+    return AuthException(code);
   }
 
   @override

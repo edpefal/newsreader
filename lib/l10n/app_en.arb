@@ -223,6 +223,34 @@
   "loginSubtitle": "Sign in to continue",
   "loginContinueWithGoogle": "Continue with Google",
   "loginContinueWithApple": "Continue with Apple",
+  "loginContinueWithEmail": "Continue with email",
+  "loginOrSeparator": "or",
+  "loginEmailTitle": "Sign in with email",
+  "loginEmailSubtitle": "We'll send a 6-digit code to your email.",
+  "loginEmailFieldLabel": "Email",
+  "loginEmailLinkedAccountsHint": "Signed in before with Apple or Google? Use that same method to see your data.",
+  "loginSendCode": "Send code",
+  "loginCodeTitle": "Enter the code",
+  "loginCodeSubtitle": "We sent a 6-digit code to {email}. It expires in 10 minutes.",
+  "@loginCodeSubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "loginCodeFieldLabel": "6-digit code",
+  "loginVerifyCode": "Verify",
+  "loginResendCode": "Resend code",
+  "loginResendCodeIn": "Resend code in {seconds}s",
+  "@loginResendCodeIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "loginChangeEmail": "Change email",
 
   "accountDeleteDialogTitle": "Delete account",
   "accountDeleteDialogBody": "This action is irreversible: your account and all your data (sources, articles, favorites, and summaries) will be deleted. This cannot be undone.",
@@ -284,5 +312,8 @@
   "errorSubscriptionRequired": "This requires an active subscription.",
   "errorArticleTooLongToSummarize": "This article is too long to summarize automatically.",
   "errorCloudSyncFailed": "We couldn't sync with the server. Please try again.",
+  "errorInvalidEmailCode": "That code is invalid or has expired. Check it or request a new one.",
+  "errorTooManyAuthRequests": "Too many attempts. Wait a moment and try again.",
+  "errorInvalidEmail": "Enter a valid email address.",
   "errorUnknown": "Something unexpected happened"
 }

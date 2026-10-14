@@ -52,6 +52,12 @@ extension AppErrorCodeL10n on AppErrorCode {
         return l10n.errorArticleTooLongToSummarize;
       case AppErrorCode.cloudSyncFailed:
         return l10n.errorCloudSyncFailed;
+      case AppErrorCode.invalidEmailCode:
+        return l10n.errorInvalidEmailCode;
+      case AppErrorCode.tooManyAuthRequests:
+        return l10n.errorTooManyAuthRequests;
+      case AppErrorCode.invalidEmail:
+        return l10n.errorInvalidEmail;
       case AppErrorCode.unknown:
         return l10n.errorUnknown;
     }

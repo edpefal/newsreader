@@ -652,6 +652,90 @@ abstract class AppLocalizations {
   /// **'Continue with Apple'**
   String get loginContinueWithApple;
 
+  /// No description provided for @loginContinueWithEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with email'**
+  String get loginContinueWithEmail;
+
+  /// No description provided for @loginOrSeparator.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get loginOrSeparator;
+
+  /// No description provided for @loginEmailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with email'**
+  String get loginEmailTitle;
+
+  /// No description provided for @loginEmailSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll send a 6-digit code to your email.'**
+  String get loginEmailSubtitle;
+
+  /// No description provided for @loginEmailFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get loginEmailFieldLabel;
+
+  /// No description provided for @loginEmailLinkedAccountsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in before with Apple or Google? Use that same method to see your data.'**
+  String get loginEmailLinkedAccountsHint;
+
+  /// No description provided for @loginSendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get loginSendCode;
+
+  /// No description provided for @loginCodeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code'**
+  String get loginCodeTitle;
+
+  /// No description provided for @loginCodeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a 6-digit code to {email}. It expires in 10 minutes.'**
+  String loginCodeSubtitle(String email);
+
+  /// No description provided for @loginCodeFieldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit code'**
+  String get loginCodeFieldLabel;
+
+  /// No description provided for @loginVerifyCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get loginVerifyCode;
+
+  /// No description provided for @loginResendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get loginResendCode;
+
+  /// No description provided for @loginResendCodeIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code in {seconds}s'**
+  String loginResendCodeIn(int seconds);
+
+  /// No description provided for @loginChangeEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Change email'**
+  String get loginChangeEmail;
+
   /// No description provided for @accountDeleteDialogTitle.
   ///
   /// In en, this message translates to:
@@ -939,6 +1023,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We couldn\'t sync with the server. Please try again.'**
   String get errorCloudSyncFailed;
+
+  /// No description provided for @errorInvalidEmailCode.
+  ///
+  /// In en, this message translates to:
+  /// **'That code is invalid or has expired. Check it or request a new one.'**
+  String get errorInvalidEmailCode;
+
+  /// No description provided for @errorTooManyAuthRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Wait a moment and try again.'**
+  String get errorTooManyAuthRequests;
+
+  /// No description provided for @errorInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get errorInvalidEmail;
 
   /// No description provided for @errorUnknown.
   ///
