@@ -4,7 +4,7 @@
 - [x] 1.2 Generar las credenciales SMTP de Resend y cargarlas en Supabase (Authentication → SMTP Settings) en `reevo-dev`, con remitente `no-reply` del subdominio verificado
 - [x] 1.3 En `reevo-dev`: reemplazar las plantillas "Magic link or OTP" y "Confirm sign up" (un correo sin cuenta recibe esta última) por un correo solo en inglés con `{{ .Token }}` en lugar de `{{ .ConfirmationURL }}`, y fijar la expiración del OTP en 600 s (Authentication → Sign In / Providers → Email)
 - [x] 1.4 En `reevo-dev`: revisar los límites de envío tras activar el SMTP propio (por defecto 30/hora) contra el tope de 100/día del plan gratuito de Resend
-- [ ] 1.5 Repetir 1.2 a 1.4 en `reevo` (prod, con su propia API key de Resend `supabase-auth-prod`) antes de publicar una build con el login por correo
+- [x] 1.5 Repetir 1.2 a 1.4 en `reevo` (prod, con su propia API key de Resend `supabase-auth-prod`); el SMTP propio se confirmó en los logs de auth (límite de envío de 2 a 30/hora, 2026-10-14) y las plantillas y la expiración las confirmó el usuario antes de publicar una build con el login por correo
 
 ## 2. Cliente de autenticación
 
