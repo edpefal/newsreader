@@ -1,0 +1,11 @@
+-- Retiro de la tabla de compatibilidad `daily_summary_free_usage` (ver
+-- capability `legacy-client-compatibility` y el change
+-- `add-legacy-free-usage-table-shim`).
+--
+-- Criterio cumplido el 2026-10-22: 0 personas con `$app_version` 1.8.x y algún
+-- evento en PostHog en los últimos 14 días (último evento de la 1.8.0 el
+-- 2026-10-07; 18 personas en total en 45 días) y 0 eventos PGRST205 en Sentry
+-- desde el 2026-10-06. La tabla estaba vacía.
+--
+-- Rollback: volver a aplicar 20261006000000_legacy_free_usage_table_shim.sql.
+drop table if exists daily_summary_free_usage;
