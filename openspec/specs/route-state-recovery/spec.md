@@ -9,7 +9,7 @@ Evita que la app crashee al abrir una pantalla de detalle (artículo, fuente, re
 ## Requirements
 
 ### Requirement: Recuperación de datos de ruta por identificador
-El sistema SHALL resolver el objeto de dominio necesario para renderizar las rutas `/article/:id`, `/article/:id/web`, `/sources/:id` y `/summaries/:date` a partir del identificador de la URL cuando el estado de navegación en memoria no traiga ese objeto (o traiga un valor de un tipo distinto al esperado), en vez de fallar con un error de tipo. Mientras se resuelve, el sistema SHALL mostrar un indicador de carga.
+El sistema SHALL resolver el objeto de dominio necesario para renderizar las rutas `/article/:id`, `/article/:id/web`, `/sources/:id` y `/summary/:id` a partir del identificador de la URL cuando el estado de navegación en memoria no traiga ese objeto (o traiga un valor de un tipo distinto al esperado), en vez de fallar con un error de tipo. Mientras se resuelve, el sistema SHALL mostrar un indicador de carga.
 
 #### Scenario: Navegación normal, sin necesidad de recuperación
 - **WHEN** el usuario toca un artículo (o fuente, o resumen) desde una lista y la navegación incluye el objeto completo
