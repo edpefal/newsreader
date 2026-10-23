@@ -34,6 +34,6 @@
 - [x] 5.1 `flutter analyze` sin warnings y `flutter test` en verde
 - [x] 5.2 `dart format` solo sobre los archivos tocados y revisar `git diff --stat`
 - [x] 5.3 `openspec validate add-email-otp-login --strict`
-- [ ] 5.4 Prueba manual del usuario en `reevo-dev`: correo nuevo (crea cuenta), correo de una cuenta de Google existente (misma cuenta), código incorrecto, reenvío, cambiar correo y atrás, probados el 2026-10-13 en simulador; pendiente solo el autocompletado del código desde Mail en un iPhone real
+- [x] 5.4 Prueba manual del usuario en `reevo-dev`: correo nuevo (crea cuenta), correo de una cuenta de Google existente (misma cuenta), código incorrecto, reenvío, cambiar correo y atrás, probados el 2026-10-13 en simulador; el autocompletado del código desde Mail en un iPhone real (build de TestFlight contra `reevo` prod) probado el 2026-10-23 y funcionó
 - [x] 5.5 Verificar con el MCP de Supabase en `reevo-dev`: los usuarios nuevos en `auth.users`, los logs de auth sin errores y los advisors
-- [ ] 5.6 Abrir PR contra `main`, esperar `analyze-and-test` en verde y mergear; repetir la prueba contra `reevo` (prod) y archivar el change (`openspec archive add-email-otp-login --yes`) en el mismo PR final; borrar la rama
+- [x] 5.6 Abrir PR contra `main`, esperar `analyze-and-test` en verde y mergear; repetir la prueba contra `reevo` (prod) y archivar el change (`openspec archive add-email-otp-login --yes`) en el mismo PR final; borrar la rama

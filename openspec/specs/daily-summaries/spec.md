@@ -97,19 +97,29 @@ El sistema SHALL mantener como máximo un `DailySummary` por fecha local por usu
 - **WHEN** ya existe un `DailySummary` para la fecha local de hoy de un usuario, y el sistema vuelve a evaluar a ese usuario en una corrida posterior el mismo día
 - **THEN** el sistema no invoca la API de IA ni modifica el `DailySummary` existente de hoy
 
-### Requirement: Listado de resúmenes diarios
-El sistema SHALL mostrar una pantalla con la lista de todos los `DailySummary` existentes, ordenados de más reciente a más antiguo, cada uno mostrando la fecha y la cantidad de artículos resumidos.
+### Requirement: Resumen más reciente en la tab Resúmenes
+El sistema SHALL mostrar en la tab Resúmenes únicamente el `DailySummary` de fecha más reciente, directamente en la raíz de la tab y sin una lista previa, con el detalle descrito en el Requirement "Detalle de un resumen". Los `DailySummary` anteriores NO SHALL ser accesibles desde ninguna pantalla ni ruta de la app; SHALL permanecer almacenados y sincronizados sin cambios.
 
-#### Scenario: Lista vacía en primer ingreso
-- **WHEN** el usuario entra a la pantalla de Resúmenes y no existe ningún `DailySummary`
-- **THEN** el sistema muestra únicamente el botón para crear el resumen de hoy, sin items en la lista
+Cuando no existe ningún `DailySummary` (por ejemplo, un usuario nuevo), la tab SHALL mostrar un estado vacío con un texto que indique que todavía no hay resúmenes y que se creará uno más adelante. Todo texto nuevo SHALL estar disponible en inglés, español y francés.
 
-#### Scenario: Lista con resúmenes existentes
-- **WHEN** existen uno o más `DailySummary`
-- **THEN** el sistema los lista ordenados por fecha descendente
+#### Scenario: Sin resúmenes, estado vacío
+- **WHEN** el usuario entra a la tab Resúmenes y no existe ningún `DailySummary`
+- **THEN** el sistema muestra un estado vacío que indica que aún no hay resúmenes y que se creará uno más adelante, sin lista ni items
+
+#### Scenario: Un solo resumen
+- **WHEN** existe exactamente un `DailySummary`
+- **THEN** el sistema muestra directamente ese resumen en la tab
+
+#### Scenario: Varios resúmenes, solo el más reciente
+- **WHEN** existen varios `DailySummary` de fechas distintas
+- **THEN** la tab muestra solo el de fecha más reciente, y ninguno de los anteriores es accesible desde la UI
+
+#### Scenario: Un resumen anterior no es accesible por ruta
+- **WHEN** el usuario intenta abrir la ruta `/summaries/{fecha}` de un `DailySummary` que no es el más reciente
+- **THEN** el sistema no muestra ese resumen
 
 ### Requirement: Detalle de un resumen
-El sistema SHALL permitir ver el texto completo de un `DailySummary` al seleccionar su item en la lista. El texto SHALL presentarse dividido por fuente: el nombre de cada fuente (primera línea de cada bloque separado por línea en blanco) SHALL mostrarse en negrita, seguido del párrafo correspondiente.
+El sistema SHALL mostrar el texto completo de un `DailySummary` en dos lugares: como contenido de la tab Resúmenes (el resumen más reciente, ver Requirement "Resumen más reciente en la tab Resúmenes") y, para el resumen de hoy, al abrirlo desde la tarjeta del Inbox. El texto SHALL presentarse dividido por fuente: el nombre de cada fuente (primera línea de cada bloque separado por línea en blanco) SHALL mostrarse en negrita, seguido del párrafo correspondiente.
 
 Si la primera línea de un bloque lleva como prefijo una etiqueta de fuente (`Fuente:` en español, `Source:` en inglés o `Source :` en francés, sin distinguir mayúsculas de minúsculas, con o sin espacios alrededor de los dos puntos), el sistema SHALL ignorar esa etiqueta tanto al mostrar el nombre de la fuente en negrita como al emparejar el bloque con la agrupación por fuente persistida: el nombre mostrado y el usado para el emparejamiento SHALL ser el que queda después de quitar la etiqueta y los espacios sobrantes. Este requisito aplica a cualquier `DailySummary`, incluidos los ya guardados antes de este cambio.
 
@@ -124,11 +134,19 @@ Encima de las tarjetas, el sistema SHALL mostrar una cabecera con los íconos ap
 
 Cuando el `DailySummary` no tiene agrupación por fuente persistida (resúmenes generados antes de esa funcionalidad), o el nombre de un bloque no coincide con ninguna fuente de la agrupación persistida, el sistema SHALL mostrar el título en negrita y el texto de ese bloque sin tarjeta, sin ícono y sin filas de artículos.
 
-El contenido del detalle SHALL tener un ancho máximo de aproximadamente 680pt, centrado, en cualquier ancho de pantalla. Este cambio no SHALL agregar ni alterar el chrome de la pantalla (barra superior, navegación): el detalle se sigue embebiendo en el panel derecho del master-detail y se sigue mostrando a pantalla completa por debajo del breakpoint, igual que antes.
+El contenido del detalle SHALL tener un ancho máximo de aproximadamente 680pt, centrado, en cualquier ancho de pantalla. En la tab Resúmenes el detalle SHALL mostrarse sin barra superior propia, bajo la barra superior del shell principal, y SHALL incluir dentro del contenido la fecha del resumen en formato largo localizado (antes en el título de la barra). Abierto desde la tarjeta del Inbox, el detalle SHALL conservar su propia barra superior con ese título, como antes de este cambio.
 
-#### Scenario: Ver detalle de un resumen
-- **WHEN** el usuario toca un item de la lista de resúmenes
-- **THEN** el sistema navega a una pantalla de detalle que muestra el texto completo, la fecha y la cantidad de artículos de ese resumen
+#### Scenario: Ver el texto completo del resumen más reciente
+- **WHEN** el usuario entra a la tab Resúmenes y existe al menos un `DailySummary`
+- **THEN** el sistema muestra, sin ningún paso intermedio, el texto completo, la fecha y la cantidad de artículos del `DailySummary` más reciente
+
+#### Scenario: La fecha aparece dentro del contenido en la tab
+- **WHEN** se muestra el resumen en la tab Resúmenes
+- **THEN** la fecha del resumen se muestra en formato largo localizado dentro del contenido, y no se agrega una segunda barra superior debajo de la del shell principal
+
+#### Scenario: Detalle abierto desde el Inbox conserva su barra superior
+- **WHEN** el usuario abre el resumen de hoy desde la tarjeta del Inbox
+- **THEN** el detalle se muestra con su propia barra superior con el título "Resumen del {fecha}", como antes de este cambio
 
 #### Scenario: Título de cada bloque en negrita
 - **WHEN** se muestra el detalle de un `DailySummary`

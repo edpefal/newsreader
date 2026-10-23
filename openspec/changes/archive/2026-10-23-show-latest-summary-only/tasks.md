@@ -32,5 +32,5 @@
 - [x] 5.1 `flutter analyze` sin warnings y `flutter test` en verde
 - [x] 5.2 `dart format` solo sobre los archivos tocados; revisar `git diff --stat`
 - [x] 5.3 `openspec validate show-latest-summary-only --strict`
-- [ ] 5.4 Pruebas manuales del usuario en simulador/iPad: usuario nuevo (estado vacío), con varios resúmenes (solo el último), abrir un artículo desde el resumen en compact y en iPad, rotar con un artículo abierto, y que la tarjeta del Inbox desaparece al entrar a la tab
-- [ ] 5.5 Abrir PR contra `main`, esperar `analyze-and-test` en verde y mergear; archivar el change (`openspec archive show-latest-summary-only --yes`, o fusión manual con `--skip-specs` si el CLI rechaza el RENAMED + MODIFIED) en el mismo PR final y borrar la rama
+- [x] 5.4 Pruebas manuales del usuario en simulador/iPad: usuario nuevo (estado vacío), con varios resúmenes (solo el último), abrir un artículo desde el resumen en compact y en iPad, rotar con un artículo abierto, y que la tarjeta del Inbox desaparece al entrar a la tab
+- [x] 5.5 Abrir PR contra `main`, esperar `analyze-and-test` en verde y mergear; archivar el change (`openspec archive show-latest-summary-only --yes`, o fusión manual con `--skip-specs` si el CLI rechaza el RENAMED + MODIFIED) en el mismo PR final y borrar la rama
