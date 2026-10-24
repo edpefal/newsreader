@@ -1,0 +1,16 @@
+-- Quita el permiso de ejecución de `check_and_record_ai_usage` al rol `anon`
+-- (ver capability `ai-usage-budget`).
+--
+-- Por qué: la migración 20260902000000 hace `revoke all ... from public` y
+-- `grant execute ... to authenticated`, pero Supabase otorga `EXECUTE` a `anon`
+-- a cada función nueva del esquema `public` mediante sus permisos por defecto, y
+-- `revoke ... from public` no los quita. Resultado: la función, que es
+-- `SECURITY DEFINER`, quedó invocable sin sesión por /rest/v1/rpc/. No era
+-- explotable (sin sesión `auth.uid()` es nulo y el insert falla), pero la
+-- defensa no debe depender de ese detalle interno.
+--
+-- Qué conserva: `authenticated`. La Edge Function `summarize-article` llama a
+-- la función con el JWT del usuario, es decir, como `authenticated`.
+--
+-- Rollback: grant execute on function check_and_record_ai_usage(integer) to anon;
+revoke execute on function check_and_record_ai_usage(integer) from anon;
