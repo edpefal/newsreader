@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:newsreader/core/errors/app_error_code.dart';
+import 'package:newsreader/features/auth/presentation/cubit/email_login_availability_cubit.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/auth/presentation/screens/login_screen.dart';
 
@@ -12,16 +13,34 @@ import '../../../support/pump_localized_app.dart';
 
 class MockLoginCubit extends MockCubit<LoginState> implements LoginCubit {}
 
-Widget _buildSubject(LoginCubit cubit) {
+class MockEmailLoginAvailabilityCubit extends MockCubit<bool>
+    implements EmailLoginAvailabilityCubit {}
+
+/// Por defecto el flag `email-login` está activo, para que los tests del
+/// flujo de correo lo vean; los tests del flag lo pasan en [emailLoginEnabled].
+Widget _buildSubject(
+  LoginCubit cubit, {
+  EmailLoginAvailabilityCubit? availability,
+}) {
+  final emailLogin = availability ?? _availabilityCubit(enabled: true);
   return MaterialApp(
     locale: testLocale,
     localizationsDelegates: testLocalizationsDelegates,
     supportedLocales: testSupportedLocales,
-    home: BlocProvider<LoginCubit>.value(
-      value: cubit,
+    home: MultiBlocProvider(
+      providers: [
+        BlocProvider<LoginCubit>.value(value: cubit),
+        BlocProvider<EmailLoginAvailabilityCubit>.value(value: emailLogin),
+      ],
       child: const LoginScreen(),
     ),
   );
+}
+
+MockEmailLoginAvailabilityCubit _availabilityCubit({required bool enabled}) {
+  final cubit = MockEmailLoginAvailabilityCubit();
+  when(() => cubit.state).thenReturn(enabled);
+  return cubit;
 }
 
 void main() {
@@ -75,6 +94,32 @@ void main() {
       expect(find.text('Continuar con correo'), findsOneWidget);
     });
 
+    testWidgets('con el flag apagado muestra solo Google y Apple', (
+      tester,
+    ) async {
+      final availability = _availabilityCubit(enabled: false);
+      await tester.pumpWidget(_buildSubject(cubit, availability: availability));
+
+      expect(find.text('Continuar con Google'), findsOneWidget);
+      expect(find.text('Continuar con Apple'), findsOneWidget);
+      expect(find.text('o'), findsNothing);
+      expect(find.text('Continuar con correo'), findsNothing);
+    });
+
+    testWidgets('el acceso con correo aparece cuando el flag se activa', (
+      tester,
+    ) async {
+      final availability = MockEmailLoginAvailabilityCubit();
+      whenListen(availability, Stream<bool>.value(true), initialState: false);
+      await tester.pumpWidget(_buildSubject(cubit, availability: availability));
+      expect(find.text('Continuar con correo'), findsNothing);
+
+      await tester.pump();
+
+      expect(find.text('o'), findsOneWidget);
+      expect(find.text('Continuar con correo'), findsOneWidget);
+    });
+
     testWidgets('tocar "Continuar con correo" abre el flujo de correo', (
       tester,
     ) async {
@@ -89,6 +134,18 @@ void main() {
   group('LoginScreen — paso del correo', () {
     setUp(() {
       when(() => cubit.state).thenReturn(const LoginEmailEntry());
+    });
+
+    testWidgets('el flujo en curso sigue visible si el flag está apagado', (
+      tester,
+    ) async {
+      final availability = _availabilityCubit(enabled: false);
+      await tester.pumpWidget(_buildSubject(cubit, availability: availability));
+
+      expect(
+        find.textContaining('Entraste antes con Apple o Google'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('muestra el aviso para quien entró con Apple o Google', (

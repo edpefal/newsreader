@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:newsreader/features/auth/presentation/cubit/email_login_availability_cubit.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
 
 /// Vista inicial del login: logo, Google, Apple y, como alternativa
-/// secundaria, el acceso con correo.
+/// secundaria, el acceso con correo -- solo si el flag `email-login` está
+/// activo (ver `EmailLoginAvailabilityCubit`).
 class LoginOptionsView extends StatelessWidget {
   final bool isLoading;
 
@@ -48,26 +50,36 @@ class LoginOptionsView extends StatelessWidget {
           icon: const Icon(Icons.apple),
           label: Text(l10n.loginContinueWithApple),
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            const Expanded(child: Divider()),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                l10n.loginOrSeparator,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+        BlocBuilder<EmailLoginAvailabilityCubit, bool>(
+          builder: (context, emailLoginEnabled) {
+            if (!emailLoginEnabled) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        l10n.loginOrSeparator,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
                 ),
-              ),
-            ),
-            const Expanded(child: Divider()),
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextButton(
-          onPressed: isLoading ? null : cubit.startEmailFlow,
-          child: Text(l10n.loginContinueWithEmail),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: isLoading ? null : cubit.startEmailFlow,
+                  child: Text(l10n.loginContinueWithEmail),
+                ),
+              ],
+            );
+          },
         ),
         if (isLoading) ...[
           const SizedBox(height: 24),

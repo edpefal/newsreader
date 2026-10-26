@@ -108,6 +108,47 @@ void main() {
     expect(call.arguments['properties'], containsPair('foo', 'bar'));
   });
 
+  test(
+    'initPostHog manda solo el entorno como dato de evaluación de flags',
+    () async {
+      await DefaultTelemetryClient.initPostHog('phc_test', isProd: false);
+
+      final call = postHogCalls.singleWhere(
+        (c) => c.method == 'setPersonPropertiesForFlags',
+      );
+      final sent = Map<Object?, Object?>.from(
+        call.arguments['userProperties'] as Map,
+      );
+      expect(sent, {'environment': 'development'});
+    },
+  );
+
+  test(
+    'setUserId(null) vuelve a mandar el entorno para flags tras el reset',
+    () async {
+      await DefaultTelemetryClient.initPostHog('phc_test', isProd: false);
+      postHogCalls.clear();
+
+      sut.setUserId(null);
+      await _waitUntil(
+        () => postHogCalls.any((c) => c.method == 'setPersonPropertiesForFlags'),
+      );
+
+      final methods = postHogCalls.map((c) => c.method).toList();
+      expect(methods.indexOf('reset'), isNonNegative);
+      expect(
+        methods.indexOf('setPersonPropertiesForFlags'),
+        greaterThan(methods.indexOf('reset')),
+      );
+      final call = postHogCalls.firstWhere(
+        (c) => c.method == 'setPersonPropertiesForFlags',
+      );
+      expect(Map<Object?, Object?>.from(call.arguments['userProperties'] as Map), {
+        'environment': 'development',
+      });
+    },
+  );
+
   test('trackEvent sin propiedades no manda valores null a PostHog', () async {
     sut.trackEvent('sync_triggered');
     await Future<void>.delayed(Duration.zero);

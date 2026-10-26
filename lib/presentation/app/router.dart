@@ -26,6 +26,7 @@ import 'package:newsreader/features/account/domain/usecases/delete_account.dart'
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
 import 'package:newsreader/features/archive/presentation/screens/archive_screen.dart';
 import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
+import 'package:newsreader/features/auth/presentation/cubit/email_login_availability_cubit.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/auth/presentation/screens/login_screen.dart';
 import 'package:newsreader/features/favorites/presentation/screens/favorites_screen.dart';
@@ -308,8 +309,11 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/login',
-      builder: (context, state) => BlocProvider(
-        create: (_) => getIt<LoginCubit>(),
+      builder: (context, state) => MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => getIt<LoginCubit>()),
+          BlocProvider(create: (_) => getIt<EmailLoginAvailabilityCubit>()),
+        ],
         child: const LoginScreen(),
       ),
     ),

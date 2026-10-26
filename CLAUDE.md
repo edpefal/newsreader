@@ -178,7 +178,7 @@ Ninguna librería de infraestructura se importa directamente en `domain/` o `pre
 | `get_it` | Solo en `core/di/injection.dart`. Nunca llamar `getIt<>()` fuera de ese archivo. |
 | `supabase_flutter` | `AuthClient`, `CloudSyncClient`, `RemoteSourceChecker`, `FeedSyncTrigger`, `EmailFeedGenerator`, `ArticleSummaryGenerator`, `MentionEnricher` (`core/auth`, `core/sync`, `core/feed`, `core/email_feed`, `core/ai`) |
 | `google_sign_in`, `sign_in_with_apple` | Solo dentro de `SupabaseAuthClient`. |
-| `sentry_flutter`, `posthog_flutter` | `TelemetryClient` (`core/observability/`) — errores, eventos de producto y `screen_view`. |
+| `sentry_flutter`, `posthog_flutter` | `TelemetryClient` (`core/observability/`) — errores, eventos de producto y `screen_view`. Los feature flags de PostHog van por `FeatureFlagClient` (`core/feature_flags/`), nunca por `TelemetryClient`. |
 | `superwallkit_flutter` | `SubscriptionStatusProvider` (`core/subscription/`). Excepción: `main.dart` lo configura. |
 | `share_plus` | `FileSharer` (`core/sharing/`) |
 | `url_launcher` | `ExternalLinkLauncher` (`core/navigation/`) |
