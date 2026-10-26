@@ -46,7 +46,7 @@ class DefaultTelemetryClient implements TelemetryClient {
         ..preloadFeatureFlags = false
         // Sin `$feature_flag_called`: no es un evento instrumentado del
         // producto (ver capability `product-analytics`).
-        ..sendFeatureFlagEvents = false
+        ..sendFeatureFlagEvent = false
         ..onFeatureFlags = onFeatureFlags,
     );
     _environment = isProd ? 'production' : 'development';

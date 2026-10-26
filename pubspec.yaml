@@ -60,7 +60,7 @@ dependencies:
 
   # Observabilidad
   sentry_flutter: ^8.14.2
-  posthog_flutter: ^5.38.1
+  posthog_flutter: ^5.51.0
 
   # Splash screen nativa: preserve()/remove() son APIs de runtime (no solo
   # de generación de assets), así que va en dependencies, no dev_dependencies.
