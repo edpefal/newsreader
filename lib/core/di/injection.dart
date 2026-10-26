@@ -21,6 +21,8 @@ import 'package:newsreader/core/navigation/go_router_navigator.dart';
 import 'package:newsreader/core/navigation/url_launcher_external_link_launcher.dart';
 import 'package:newsreader/core/network/http_client.dart';
 import 'package:newsreader/core/network/http_package_client.dart';
+import 'package:newsreader/core/feature_flags/feature_flag_client.dart';
+import 'package:newsreader/core/feature_flags/posthog_feature_flag_client.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/observability/default_telemetry_client.dart';
 import 'package:newsreader/core/utils/id_generator.dart';
@@ -81,6 +83,7 @@ import 'package:newsreader/core/sync/cloud_sync_client.dart';
 import 'package:newsreader/core/sync/supabase_cloud_sync_client.dart';
 import 'package:newsreader/core/sync/remote_source_checker.dart';
 import 'package:newsreader/core/sync/supabase_remote_source_checker.dart';
+import 'package:newsreader/features/auth/presentation/cubit/email_login_availability_cubit.dart';
 import 'package:newsreader/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:newsreader/features/sources/domain/usecases/add_source.dart';
 import 'package:newsreader/features/sources/domain/usecases/delete_source.dart';
@@ -136,6 +139,12 @@ Future<void> setupDependencies() async {
   );
   getIt.registerLazySingleton<TelemetryClient>(
     () => DefaultTelemetryClient(),
+  );
+  getIt.registerLazySingleton<PostHogFeatureFlagClient>(
+    () => PostHogFeatureFlagClient(),
+  );
+  getIt.registerLazySingleton<FeatureFlagClient>(
+    () => getIt<PostHogFeatureFlagClient>(),
   );
 
   // Data sources
@@ -270,6 +279,9 @@ Future<void> setupDependencies() async {
 
   // Presentation
   getIt.registerFactory<LoginCubit>(() => LoginCubit(getIt(), getIt()));
+  getIt.registerFactory<EmailLoginAvailabilityCubit>(
+    () => EmailLoginAvailabilityCubit(getIt()),
+  );
   getIt.registerSingleton<ThemeCubit>(
     ThemeCubit(Hive.box<dynamic>(AppConstants.hiveSettingsBox)),
   );

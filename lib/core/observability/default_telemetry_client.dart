@@ -22,7 +22,18 @@ class DefaultTelemetryClient implements TelemetryClient {
   /// Dev y prod comparten el mismo proyecto de PostHog (el plan free solo
   /// permite 1 Project); se distinguen registrando `environment` como super
   /// property, que queda adjunta a todos los eventos siguientes.
-  static Future<void> initPostHog(String apiKey, {required bool isProd}) async {
+  ///
+  /// También deja listos los feature flags (capability `feature-flags`): el
+  /// entorno se manda como propiedad de persona para la evaluación, porque la
+  /// super property solo viaja con los eventos y no cuenta para los flags.
+  /// La carga automática de flags se apaga para que la única petición sea la
+  /// que dispara `setPersonPropertiesForFlags`, ya con el entorno incluido.
+  /// [onFeatureFlags] se invoca cuando los flags terminan de cargar.
+  static Future<void> initPostHog(
+    String apiKey, {
+    required bool isProd,
+    void Function()? onFeatureFlags,
+  }) async {
     await Posthog().setup(
       PostHogConfig(apiKey)
         ..host = 'https://us.i.posthog.com'
@@ -31,10 +42,16 @@ class DefaultTelemetryClient implements TelemetryClient {
         // ni rage-clicks automáticos.
         ..captureApplicationLifecycleEvents = false
         ..rageClickConfig = (PostHogRageClickConfig()..enabled = false)
-        ..personProfiles = PostHogPersonProfiles.identifiedOnly,
+        ..personProfiles = PostHogPersonProfiles.identifiedOnly
+        ..preloadFeatureFlags = false
+        // Sin `$feature_flag_called`: no es un evento instrumentado del
+        // producto (ver capability `product-analytics`).
+        ..sendFeatureFlagEvent = false
+        ..onFeatureFlags = onFeatureFlags,
     );
     _environment = isProd ? 'production' : 'development';
     await Posthog().register('environment', _environment!);
+    await Posthog().setPersonPropertiesForFlags({'environment': _environment!});
   }
 
   /// Inicializa el SDK de Sentry y arranca la app dentro de la zona que
@@ -105,6 +122,13 @@ class DefaultTelemetryClient implements TelemetryClient {
           final environment = _environment;
           if (environment != null) {
             unawaited(Posthog().register('environment', environment));
+            // `reset()` también borra las propiedades de persona para flags y
+            // recarga los flags como anónimo: sin esto el flag condicionado
+            // por `environment` queda apagado en el login (cada arranque sin
+            // sesión y cada cierre de sesión pasan por acá).
+            unawaited(
+              Posthog().setPersonPropertiesForFlags({'environment': environment}),
+            );
           }
         }),
       );

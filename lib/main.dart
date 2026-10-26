@@ -11,6 +11,7 @@ import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/di/injection.dart';
+import 'package:newsreader/core/feature_flags/posthog_feature_flag_client.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/observability/default_telemetry_client.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
@@ -171,6 +172,7 @@ Future<void> _runDeferredStartupWork() async {
     await DefaultTelemetryClient.initPostHog(
       AppConfig.postHogApiKey,
       isProd: AppConfig.isProd,
+      onFeatureFlags: getIt<PostHogFeatureFlagClient>().notifyChanged,
     );
 
     // Identificar al usuario ante Superwall con el mismo user_id de
