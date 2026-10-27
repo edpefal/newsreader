@@ -30,5 +30,5 @@
 ## 5. Puesta en marcha (fuera del código, en PostHog)
 
 - [x] 5.1 Crear el flag `email-login` condicionado por `environment = development` (creado el 2026-10-24, id 991102 en el proyecto Reevo Analytics; evalúa `true` en development y `false` en production) y verificar en una build de dev que aparece (confirmado por el usuario el 2026-10-25; el apagado en producción se verificó contra `/flags`)
-- [ ] 5.2 Publicar la versión a producción con el flag apagado para prod
-- [ ] 5.3 Subir el flag en prod a 10 %, 50 % y 100 %, revisando la alerta de Sentry `login_email_rate_limited` entre pasos
+- [x] 5.2 Publicar la versión a producción con el flag apagado para prod (1.10.0 publicada el 2026-10-27)
+- [x] 5.3 Subir el flag en prod a 10 %, 50 % y 100 %, revisando la alerta de Sentry `login_email_rate_limited` entre pasos (cerrada por decisión del usuario el 2026-10-27: la condición de producción queda lista en 0 % y el encendido se hace desde el panel de PostHog cuando se decida, sin cambios de código)
