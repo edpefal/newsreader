@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 /// Selecciona el backend de Supabase contra el que corre la app, según el
 /// dart-define `APP_ENV` (`dev` por defecto). Ver
 /// `openspec/changes/split-dev-prod-backend-config/design.md`.
@@ -7,8 +9,10 @@
 class AppConfig {
   AppConfig._();
 
-  static const String _env =
-      String.fromEnvironment('APP_ENV', defaultValue: 'dev');
+  static const String _env = String.fromEnvironment(
+    'APP_ENV',
+    defaultValue: 'dev',
+  );
 
   static const bool isProd = _env == 'prod';
 
@@ -23,8 +27,9 @@ class AppConfig {
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2eWF4emhkaWxodWZ5aW1yenpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3OTE1MTMsImV4cCI6MjA5OTM2NzUxM30.LfgL2Arsth-br6qoAUzbAYhMFtiVCXnrnpoWU59Xzh0';
 
   static const String supabaseUrl = isProd ? _prodSupabaseUrl : _devSupabaseUrl;
-  static const String supabaseAnonKey =
-      isProd ? _prodSupabaseAnonKey : _devSupabaseAnonKey;
+  static const String supabaseAnonKey = isProd
+      ? _prodSupabaseAnonKey
+      : _devSupabaseAnonKey;
 
   static const String _devSentryDsn =
       'https://c2a2926296b11986795345a4b2c47cf6@o4511954552946688.ingest.us.sentry.io/4511954576474112';
@@ -37,5 +42,23 @@ class AppConfig {
   // comparten el mismo proyecto/API key (a diferencia de Supabase/Sentry).
   // Se distinguen entre sí por la super property `environment` que registra
   // `DefaultTelemetryClient.initPostHog` (ver openspec/changes/add-product-analytics).
-  static const String postHogApiKey = 'phc_uPfRbZA8WehSymjbD4wmBgs6ACVZXs8DiMEurY3CvqaN';
+  static const String postHogApiKey =
+      'phc_uPfRbZA8WehSymjbD4wmBgs6ACVZXs8DiMEurY3CvqaN';
+
+  /// Llave pública de RevenueCat por plataforma (no es un secreto: viaja en el
+  /// binario, igual que la publishable key de Supabase). Hay un solo proyecto
+  /// de RevenueCat para dev y prod; sandbox vs producción lo decide la build.
+  /// `null` en las plataformas sin compras (hoy Android): el proveedor de
+  /// suscripciones no configura el SDK y trata al usuario como sin suscripción.
+  static String? get revenueCatApiKey =>
+      Platform.isIOS ? 'appl_YoQxhzewKPNbsMSTdVAJeICZmpo' : null;
+
+  /// Páginas legales estables (ver capability `web-legal-pages`): se muestran
+  /// en el paywall y en la ficha de la app en App Store Connect.
+  static const String termsUrl = 'https://getreevo.co/terms';
+  static const String privacyUrl = 'https://getreevo.co/privacy';
+
+  /// Página de Apple donde el usuario gestiona o cancela sus suscripciones.
+  static const String manageSubscriptionsUrl =
+      'https://apps.apple.com/account/subscriptions';
 }

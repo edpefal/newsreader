@@ -9,7 +9,7 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/entities/article_summary.dart';
 import 'package:newsreader/core/errors/app_error_code.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
-import 'package:newsreader/core/subscription/subscription_status_provider.dart';
+import 'package:newsreader/core/subscription/paywall_launcher.dart';
 import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
 import 'package:newsreader/features/article_summary/presentation/widgets/article_summary_bottom_sheet.dart';
 import 'package:newsreader/features/article_summary/presentation/widgets/mention_card.dart';
@@ -21,8 +21,9 @@ class MockArticleSummaryCubit extends MockCubit<ArticleSummaryState>
 
 class MockExternalLinkLauncher extends Mock implements ExternalLinkLauncher {}
 
-class MockSubscriptionStatusProvider extends Mock
-    implements SubscriptionStatusProvider {}
+class MockPaywallLauncher extends Mock implements PaywallLauncher {}
+
+class FakeBuildContext extends Fake implements BuildContext {}
 
 final tArticle = Article(
   id: 'a1',
@@ -36,7 +37,7 @@ final tArticle = Article(
 Widget _buildSubject(
   ArticleSummaryCubit cubit,
   ExternalLinkLauncher launcher, {
-  SubscriptionStatusProvider? subscriptionStatusProvider,
+  PaywallLauncher? paywallLauncher,
   double? maxHeight,
 }) {
   final content = BlocProvider<ArticleSummaryCubit>.value(
@@ -45,8 +46,7 @@ Widget _buildSubject(
       article: tArticle,
       language: 'es',
       externalLinkLauncher: launcher,
-      subscriptionStatusProvider:
-          subscriptionStatusProvider ?? MockSubscriptionStatusProvider(),
+      paywallLauncher: paywallLauncher ?? MockPaywallLauncher(),
     ),
   );
   return MaterialApp(
@@ -67,8 +67,11 @@ Widget _buildSubject(
 void main() {
   late MockArticleSummaryCubit cubit;
   late MockExternalLinkLauncher launcher;
+  late MockPaywallLauncher paywallLauncher;
 
   setUpAll(() {
+    registerFallbackValue(FakeBuildContext());
+    registerFallbackValue(PaywallTrigger.settings);
     registerFallbackValue(const ArticleSummaryLoading());
     registerFallbackValue(
       Article(
@@ -85,23 +88,31 @@ void main() {
   setUp(() {
     cubit = MockArticleSummaryCubit();
     launcher = MockExternalLinkLauncher();
+    paywallLauncher = MockPaywallLauncher();
     when(() => launcher.open(any())).thenAnswer((_) async {});
   });
 
   group('ArticleSummarySheetContent', () {
     testWidgets('estado Loading muestra un progress indicator', (tester) async {
-      whenListen(cubit, const Stream<ArticleSummaryState>.empty(),
-          initialState: const ArticleSummaryLoading());
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: const ArticleSummaryLoading(),
+      );
 
       await tester.pumpWidget(_buildSubject(cubit, launcher));
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('estado Error muestra el texto localizado del error',
-        (tester) async {
-      whenListen(cubit, const Stream<ArticleSummaryState>.empty(),
-          initialState: const ArticleSummaryError(AppErrorCode.generationFailed));
+    testWidgets('estado Error muestra el texto localizado del error', (
+      tester,
+    ) async {
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: const ArticleSummaryError(AppErrorCode.generationFailed),
+      );
 
       await tester.pumpWidget(_buildSubject(cubit, launcher));
 
@@ -115,8 +126,11 @@ void main() {
         mentions: const [],
         createdAt: DateTime(2024, 3, 15),
       );
-      whenListen(cubit, const Stream<ArticleSummaryState>.empty(),
-          initialState: ArticleSummaryLoaded(summary));
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: ArticleSummaryLoaded(summary),
+      );
 
       await tester.pumpWidget(_buildSubject(cubit, launcher));
 
@@ -124,55 +138,81 @@ void main() {
       expect(find.byType(MentionCard), findsNothing);
     });
 
-    testWidgets('estado Loaded con menciones muestra una MentionCard por cada una',
-        (tester) async {
-      final summary = ArticleSummary(
-        articleId: 'a1',
-        summary: 'Resumen',
-        mentions: const [
-          (
-            type: MentionType.book,
-            name: 'Project Hail Mary',
-            imageUrl: 'https://books.example/cover.jpg',
-            link: 'https://books.example/info',
-          ),
-          (type: MentionType.podcast, name: 'Radiolab', imageUrl: null, link: null),
-        ],
-        createdAt: DateTime(2024, 3, 15),
-      );
-      whenListen(cubit, const Stream<ArticleSummaryState>.empty(),
-          initialState: ArticleSummaryLoaded(summary));
+    testWidgets(
+      'estado Loaded con menciones muestra una MentionCard por cada una',
+      (tester) async {
+        final summary = ArticleSummary(
+          articleId: 'a1',
+          summary: 'Resumen',
+          mentions: const [
+            (
+              type: MentionType.book,
+              name: 'Project Hail Mary',
+              imageUrl: 'https://books.example/cover.jpg',
+              link: 'https://books.example/info',
+            ),
+            (
+              type: MentionType.podcast,
+              name: 'Radiolab',
+              imageUrl: null,
+              link: null,
+            ),
+          ],
+          createdAt: DateTime(2024, 3, 15),
+        );
+        whenListen(
+          cubit,
+          const Stream<ArticleSummaryState>.empty(),
+          initialState: ArticleSummaryLoaded(summary),
+        );
 
-      await tester.pumpWidget(_buildSubject(cubit, launcher));
+        await tester.pumpWidget(_buildSubject(cubit, launcher));
 
-      expect(find.byType(MentionCard), findsNWidgets(2));
-    });
+        expect(find.byType(MentionCard), findsNWidgets(2));
+      },
+    );
 
     testWidgets(
-        'estado Loaded con resumen largo en un alto acotado scrollea en vez '
-        'de desbordar (regresión REEVO-PROD-8)', (tester) async {
-      final summary = ArticleSummary(
-        articleId: 'a1',
-        summary: 'Párrafo largo. ' * 200,
-        mentions: const [
-          (type: MentionType.book, name: 'Libro A', imageUrl: null, link: 'https://a.example'),
-          (type: MentionType.podcast, name: 'Podcast B', imageUrl: null, link: null),
-        ],
-        createdAt: DateTime(2024, 3, 15),
-      );
-      whenListen(cubit, const Stream<ArticleSummaryState>.empty(),
-          initialState: ArticleSummaryLoaded(summary));
+      'estado Loaded con resumen largo en un alto acotado scrollea en vez '
+      'de desbordar (regresión REEVO-PROD-8)',
+      (tester) async {
+        final summary = ArticleSummary(
+          articleId: 'a1',
+          summary: 'Párrafo largo. ' * 200,
+          mentions: const [
+            (
+              type: MentionType.book,
+              name: 'Libro A',
+              imageUrl: null,
+              link: 'https://a.example',
+            ),
+            (
+              type: MentionType.podcast,
+              name: 'Podcast B',
+              imageUrl: null,
+              link: null,
+            ),
+          ],
+          createdAt: DateTime(2024, 3, 15),
+        );
+        whenListen(
+          cubit,
+          const Stream<ArticleSummaryState>.empty(),
+          initialState: ArticleSummaryLoaded(summary),
+        );
 
-      // Mismo alto acotado que tendría un bottom sheet real -- antes del
-      // fix, esto disparaba "A RenderFlex overflowed" (ver REEVO-PROD-8).
-      await tester.pumpWidget(_buildSubject(cubit, launcher, maxHeight: 300));
+        // Mismo alto acotado que tendría un bottom sheet real -- antes del
+        // fix, esto disparaba "A RenderFlex overflowed" (ver REEVO-PROD-8).
+        await tester.pumpWidget(_buildSubject(cubit, launcher, maxHeight: 300));
 
-      expect(tester.takeException(), isNull);
-      expect(find.byType(SingleChildScrollView), findsOneWidget);
-    });
+        expect(tester.takeException(), isNull);
+        expect(find.byType(SingleChildScrollView), findsOneWidget);
+      },
+    );
 
-    testWidgets('tocar una mención enriquecida abre el link con el launcher',
-        (tester) async {
+    testWidgets('tocar una mención enriquecida abre el link con el launcher', (
+      tester,
+    ) async {
       final summary = ArticleSummary(
         articleId: 'a1',
         summary: 'Resumen',
@@ -186,8 +226,11 @@ void main() {
         ],
         createdAt: DateTime(2024, 3, 15),
       );
-      whenListen(cubit, const Stream<ArticleSummaryState>.empty(),
-          initialState: ArticleSummaryLoaded(summary));
+      whenListen(
+        cubit,
+        const Stream<ArticleSummaryState>.empty(),
+        initialState: ArticleSummaryLoaded(summary),
+      );
 
       await tester.pumpWidget(_buildSubject(cubit, launcher));
       await tester.tap(find.byType(MentionCard));
@@ -197,167 +240,167 @@ void main() {
     });
 
     testWidgets(
-        'estado Loaded con muchos restantes igual muestra el indicador de uso',
-        (tester) async {
-      final summary = ArticleSummary(
-        articleId: 'a1',
-        summary: 'Resumen',
-        mentions: const [],
-        createdAt: DateTime(2024, 3, 15),
-      );
-      whenListen(
-        cubit,
-        const Stream<ArticleSummaryState>.empty(),
-        initialState: ArticleSummaryLoaded(summary, remainingToday: 24),
-      );
+      'estado Loaded con muchos restantes igual muestra el indicador de uso',
+      (tester) async {
+        final summary = ArticleSummary(
+          articleId: 'a1',
+          summary: 'Resumen',
+          mentions: const [],
+          createdAt: DateTime(2024, 3, 15),
+        );
+        whenListen(
+          cubit,
+          const Stream<ArticleSummaryState>.empty(),
+          initialState: ArticleSummaryLoaded(summary, remainingToday: 24),
+        );
 
-      await tester.pumpWidget(_buildSubject(cubit, launcher));
+        await tester.pumpWidget(_buildSubject(cubit, launcher));
 
-      expect(find.text('Quedan 24 hoy'), findsOneWidget);
-    });
-
-    testWidgets(
-        'estado Loaded con pocos restantes muestra el indicador de uso',
-        (tester) async {
-      final summary = ArticleSummary(
-        articleId: 'a1',
-        summary: 'Resumen',
-        mentions: const [],
-        createdAt: DateTime(2024, 3, 15),
-      );
-      whenListen(
-        cubit,
-        const Stream<ArticleSummaryState>.empty(),
-        initialState: ArticleSummaryLoaded(summary, remainingToday: 3),
-      );
-
-      await tester.pumpWidget(_buildSubject(cubit, launcher));
-
-      expect(find.text('Quedan 3 hoy'), findsOneWidget);
-    });
+        expect(find.text('Quedan 24 hoy'), findsOneWidget);
+      },
+    );
 
     testWidgets(
-        'estado LimitReached muestra un estado neutro, sin color de error',
-        (tester) async {
-      whenListen(
-        cubit,
-        const Stream<ArticleSummaryState>.empty(),
-        initialState: const ArticleSummaryLimitReached(dailyLimit: 25),
-      );
+      'estado Loaded con pocos restantes muestra el indicador de uso',
+      (tester) async {
+        final summary = ArticleSummary(
+          articleId: 'a1',
+          summary: 'Resumen',
+          mentions: const [],
+          createdAt: DateTime(2024, 3, 15),
+        );
+        whenListen(
+          cubit,
+          const Stream<ArticleSummaryState>.empty(),
+          initialState: ArticleSummaryLoaded(summary, remainingToday: 3),
+        );
 
-      await tester.pumpWidget(_buildSubject(cubit, launcher));
+        await tester.pumpWidget(_buildSubject(cubit, launcher));
 
-      expect(
-        find.text('Ya usaste tus 25 resúmenes de hoy'),
-        findsOneWidget,
-      );
-      expect(find.text('Vuelven mañana a las 00:00.'), findsOneWidget);
-    });
-
-    testWidgets(
-        'estado LimitReached sin suscripción muestra el límite gratis (2), no 25',
-        (tester) async {
-      whenListen(
-        cubit,
-        const Stream<ArticleSummaryState>.empty(),
-        initialState: const ArticleSummaryLimitReached(dailyLimit: 2),
-      );
-
-      await tester.pumpWidget(_buildSubject(cubit, launcher));
-
-      expect(
-        find.text('Ya usaste tus 2 resúmenes de hoy'),
-        findsOneWidget,
-      );
-    });
+        expect(find.text('Quedan 3 hoy'), findsOneWidget);
+      },
+    );
 
     testWidgets(
-        'estado FreeTierExhausted muestra el mensaje y el botón de premium',
-        (tester) async {
+      'estado LimitReached muestra un estado neutro, sin color de error',
+      (tester) async {
+        whenListen(
+          cubit,
+          const Stream<ArticleSummaryState>.empty(),
+          initialState: const ArticleSummaryLimitReached(dailyLimit: 25),
+        );
+
+        await tester.pumpWidget(_buildSubject(cubit, launcher));
+
+        expect(find.text('Ya usaste tus 25 resúmenes de hoy'), findsOneWidget);
+        expect(find.text('Vuelven mañana a las 00:00.'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'estado LimitReached sin suscripción muestra el límite gratis (2), no 25',
+      (tester) async {
+        whenListen(
+          cubit,
+          const Stream<ArticleSummaryState>.empty(),
+          initialState: const ArticleSummaryLimitReached(dailyLimit: 2),
+        );
+
+        await tester.pumpWidget(_buildSubject(cubit, launcher));
+
+        expect(find.text('Ya usaste tus 2 resúmenes de hoy'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'estado FreeTierExhausted muestra el mensaje y el botón de premium',
+      (tester) async {
+        whenListen(
+          cubit,
+          const Stream<ArticleSummaryState>.empty(),
+          initialState: const ArticleSummaryFreeTierExhausted(),
+        );
+
+        await tester.pumpWidget(_buildSubject(cubit, launcher));
+
+        expect(find.text('Ya usaste tu resumen gratis de hoy'), findsOneWidget);
+        expect(find.text('Obtener Premium'), findsOneWidget);
+      },
+    );
+
+    testWidgets('estado FreeTierExhausted, tocar el botón dispara el paywall', (
+      tester,
+    ) async {
       whenListen(
         cubit,
         const Stream<ArticleSummaryState>.empty(),
         initialState: const ArticleSummaryFreeTierExhausted(),
       );
-
-      await tester.pumpWidget(_buildSubject(cubit, launcher));
-
-      expect(
-        find.text('Ya usaste tu resumen gratis de hoy'),
-        findsOneWidget,
-      );
-      expect(find.text('Obtener Premium'), findsOneWidget);
-    });
-
-    testWidgets(
-        'estado FreeTierExhausted, tocar el botón dispara el paywall',
-        (tester) async {
-      whenListen(
-        cubit,
-        const Stream<ArticleSummaryState>.empty(),
-        initialState: const ArticleSummaryFreeTierExhausted(),
-      );
-      final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
-      when(() => mockSubscriptionStatusProvider.isSubscribed)
-          .thenReturn(false);
       when(
-        () => mockSubscriptionStatusProvider.showPaywall(
-          onSubscribed: any(named: 'onSubscribed'),
-        ),
-      ).thenAnswer((_) async {});
+        () => paywallLauncher.show(any(), trigger: any(named: 'trigger')),
+      ).thenAnswer((_) async => false);
 
-      await tester.pumpWidget(_buildSubject(
-        cubit,
-        launcher,
-        subscriptionStatusProvider: mockSubscriptionStatusProvider,
-      ));
+      await tester.pumpWidget(
+        _buildSubject(cubit, launcher, paywallLauncher: paywallLauncher),
+      );
       await tester.tap(find.text('Obtener Premium'));
       await tester.pumpAndSettle();
 
       verify(
-        () => mockSubscriptionStatusProvider.showPaywall(
-          onSubscribed: any(named: 'onSubscribed'),
-        ),
+        () =>
+            paywallLauncher.show(any(), trigger: PaywallTrigger.articleSummary),
       ).called(1);
     });
 
     testWidgets(
-        'estado FreeTierExhausted, completar la compra dispara generate()',
-        (tester) async {
-      whenListen(
-        cubit,
-        const Stream<ArticleSummaryState>.empty(),
-        initialState: const ArticleSummaryFreeTierExhausted(),
-      );
-      when(() => cubit.generate(any(), any())).thenAnswer((_) async {});
-      final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
-      when(() => mockSubscriptionStatusProvider.isSubscribed)
-          .thenReturn(true);
-      when(
-        () => mockSubscriptionStatusProvider.showPaywall(
-          onSubscribed: any(named: 'onSubscribed'),
-        ),
-      ).thenAnswer((invocation) async {
-        final onSubscribed = invocation.namedArguments[#onSubscribed]
-            as Future<void> Function();
-        await onSubscribed();
-      });
+      'estado FreeTierExhausted, cerrar el paywall sin comprar no dispara generate()',
+      (tester) async {
+        whenListen(
+          cubit,
+          const Stream<ArticleSummaryState>.empty(),
+          initialState: const ArticleSummaryFreeTierExhausted(),
+        );
+        when(
+          () => paywallLauncher.show(any(), trigger: any(named: 'trigger')),
+        ).thenAnswer((_) async => false);
 
-      await tester.pumpWidget(_buildSubject(
-        cubit,
-        launcher,
-        subscriptionStatusProvider: mockSubscriptionStatusProvider,
-      ));
-      await tester.tap(find.text('Obtener Premium'));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _buildSubject(cubit, launcher, paywallLauncher: paywallLauncher),
+        );
+        await tester.tap(find.text('Obtener Premium'));
+        await tester.pumpAndSettle();
 
-      verify(() => cubit.generate(tArticle, 'es')).called(1);
-    });
+        verifyNever(() => cubit.generate(any(), any()));
+        expect(find.text('Obtener Premium'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'estado FreeTierExhausted, completar la compra dispara generate()',
+      (tester) async {
+        whenListen(
+          cubit,
+          const Stream<ArticleSummaryState>.empty(),
+          initialState: const ArticleSummaryFreeTierExhausted(),
+        );
+        when(() => cubit.generate(any(), any())).thenAnswer((_) async {});
+        when(
+          () => paywallLauncher.show(any(), trigger: any(named: 'trigger')),
+        ).thenAnswer((_) async => true);
+
+        await tester.pumpWidget(
+          _buildSubject(cubit, launcher, paywallLauncher: paywallLauncher),
+        );
+        await tester.tap(find.text('Obtener Premium'));
+        await tester.pumpAndSettle();
+
+        verify(() => cubit.generate(tArticle, 'es')).called(1);
+      },
+    );
   });
 
   group('showArticleSummarySheet', () {
-    testWidgets(
-        'el sheet nunca tapa el status bar, ni con un resumen muy largo '
+    testWidgets('el sheet nunca tapa el status bar, ni con un resumen muy largo '
         '(regresión del fix de REEVO-PROD-8)', (tester) async {
       // Simula un dispositivo con status bar/notch (mismo criterio que
       // `MediaQuery.paddingOf(context).top` que usa `showArticleSummarySheet`).
@@ -381,25 +424,27 @@ void main() {
         ),
       );
 
-      await tester.pumpWidget(MaterialApp(
-        locale: testLocale,
-        localizationsDelegates: testLocalizationsDelegates,
-        supportedLocales: testSupportedLocales,
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: ElevatedButton(
-              onPressed: () => showArticleSummarySheet(
-                context,
-                article: tArticle,
-                createCubit: () => cubit,
-                externalLinkLauncher: launcher,
-                subscriptionStatusProvider: MockSubscriptionStatusProvider(),
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: testLocale,
+          localizationsDelegates: testLocalizationsDelegates,
+          supportedLocales: testSupportedLocales,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () => showArticleSummarySheet(
+                  context,
+                  article: tArticle,
+                  createCubit: () => cubit,
+                  externalLinkLauncher: launcher,
+                  paywallLauncher: MockPaywallLauncher(),
+                ),
+                child: const Text('Abrir'),
               ),
-              child: const Text('Abrir'),
             ),
           ),
         ),
-      ));
+      );
       await tester.tap(find.text('Abrir'));
       await tester.pumpAndSettle();
 

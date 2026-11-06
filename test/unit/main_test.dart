@@ -18,10 +18,41 @@ void main() {
     mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
     mockTelemetryClient = MockTelemetryClient();
 
-    when(() => mockSubscriptionStatusProvider.identify(any()))
-        .thenAnswer((_) async {});
+    when(
+      () => mockSubscriptionStatusProvider.identify(any()),
+    ).thenAnswer((_) async {});
     when(() => mockSubscriptionStatusProvider.reset()).thenAnswer((_) async {});
   });
+
+  test(
+    'al iniciar sesión, identifica al usuario ante el proveedor de suscripciones',
+    () {
+      handleAuthStateChange(
+        true,
+        'user-1',
+        mockSubscriptionStatusProvider,
+        mockTelemetryClient,
+      );
+
+      verify(() => mockSubscriptionStatusProvider.identify('user-1')).called(1);
+      verifyNever(() => mockSubscriptionStatusProvider.reset());
+    },
+  );
+
+  test(
+    'al cerrar sesión, desvincula al usuario del proveedor de suscripciones',
+    () {
+      handleAuthStateChange(
+        false,
+        null,
+        mockSubscriptionStatusProvider,
+        mockTelemetryClient,
+      );
+
+      verify(() => mockSubscriptionStatusProvider.reset()).called(1);
+      verifyNever(() => mockSubscriptionStatusProvider.identify(any()));
+    },
+  );
 
   test('al iniciar sesión, asocia el userId a observabilidad', () {
     handleAuthStateChange(

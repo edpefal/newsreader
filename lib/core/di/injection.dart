@@ -7,6 +7,7 @@ import 'package:newsreader/core/ai/mention_enricher.dart';
 import 'package:newsreader/core/ai/remote_mention_enricher.dart';
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/auth/supabase_auth_client.dart';
+import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/constants/app_constants.dart';
 import 'package:newsreader/core/email_feed/email_feed_generator.dart';
 import 'package:newsreader/core/email_feed/supabase_email_feed_generator.dart';
@@ -58,7 +59,9 @@ import 'package:newsreader/core/domain/repositories/summary_repository.dart';
 import 'package:newsreader/core/sharing/file_sharer.dart';
 import 'package:newsreader/core/sharing/share_plus_file_sharer.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
-import 'package:newsreader/core/subscription/superwall_subscription_status_provider.dart';
+import 'package:newsreader/core/subscription/paywall_launcher.dart';
+import 'package:newsreader/core/subscription/revenuecat_subscription_status_provider.dart';
+import 'package:newsreader/core/subscription/sdk_purchases_gateway.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_favorites_json.dart';
 import 'package:newsreader/features/account/domain/usecases/export_sources_opml.dart';
@@ -97,8 +100,11 @@ import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_ar
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_sources.dart';
 import 'package:newsreader/features/summaries/domain/usecases/get_latest_daily_summary.dart';
 import 'package:newsreader/features/summaries/presentation/cubit/summaries_cubit.dart';
+import 'package:newsreader/features/settings/domain/usecases/restore_purchases.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
+import 'package:newsreader/features/sync/domain/usecases/sync_entitlement.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
+import 'package:newsreader/presentation/paywall/app_paywall_launcher.dart';
 import 'package:newsreader/presentation/theme/theme_cubit.dart';
 
 final getIt = GetIt.instance;
@@ -134,11 +140,22 @@ Future<void> setupDependencies() async {
     () => SupabaseEmailFeedGenerator(getIt(), getIt(), getIt()),
   );
   getIt.registerLazySingleton<FileSharer>(() => SharePlusFileSharer());
+  // Se registra también por su tipo concreto para que `main.dart` pueda
+  // llamar `init()` (configurar el SDK) sin ampliar la interfaz.
+  getIt.registerLazySingleton<RevenueCatSubscriptionStatusProvider>(
+    () => RevenueCatSubscriptionStatusProvider(
+      gateway: const SdkPurchasesGateway(),
+      apiKey: AppConfig.revenueCatApiKey,
+    ),
+  );
   getIt.registerLazySingleton<SubscriptionStatusProvider>(
-    () => SuperwallSubscriptionStatusProvider(),
+    () => getIt<RevenueCatSubscriptionStatusProvider>(),
   );
   getIt.registerLazySingleton<TelemetryClient>(
     () => DefaultTelemetryClient(),
+  );
+  getIt.registerLazySingleton<PaywallLauncher>(
+    () => AppPaywallLauncher(getIt(), getIt(), getIt(), getIt(), getIt()),
   );
   getIt.registerLazySingleton<PostHogFeatureFlagClient>(
     () => PostHogFeatureFlagClient(),
@@ -262,6 +279,8 @@ Future<void> setupDependencies() async {
       Hive.box<dynamic>(AppConstants.hiveSettingsBox),
     ),
   );
+  getIt.registerLazySingleton(() => SyncEntitlement(getIt()));
+  getIt.registerLazySingleton(() => RestorePurchases(getIt(), getIt(), getIt()));
   getIt.registerLazySingleton(
     () => ClearLocalUserData(
       getIt(),

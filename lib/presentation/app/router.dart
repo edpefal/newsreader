@@ -17,6 +17,7 @@ import 'package:newsreader/core/navigation/external_link_launcher.dart';
 import 'package:newsreader/core/navigation/route_extra_resolver.dart';
 import 'package:newsreader/core/observability/screen_view_observer.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
+import 'package:newsreader/core/subscription/paywall_launcher.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/utils/window_size_class.dart';
 import 'package:newsreader/core/widgets/adaptive_list_detail_scaffold.dart';
@@ -49,6 +50,7 @@ import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_ar
 import 'package:newsreader/features/summaries/domain/usecases/resolve_summary_sources.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summaries_screen.dart';
 import 'package:newsreader/features/summaries/presentation/screens/summary_detail_screen.dart';
+import 'package:newsreader/features/settings/domain/usecases/restore_purchases.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
@@ -176,6 +178,7 @@ GoRoute _articleRoute({required String paramName}) {
         markAsRead: getIt<MarkArticleAsRead>(),
         toggleFavorite: getIt<ToggleFavorite>(),
         subscriptionStatusProvider: getIt<SubscriptionStatusProvider>(),
+        paywallLauncher: getIt<PaywallLauncher>(),
         aiUsageRepository: getIt<AiUsageRepository>(),
         createArticleSummaryCubit: () => getIt<ArticleSummaryCubit>(),
         externalLinkLauncher: getIt<ExternalLinkLauncher>(),
@@ -326,6 +329,9 @@ final appRouter = GoRouter(
         syncUserData: getIt<SyncUserData>(),
         authClient: getIt<AuthClient>(),
         subscriptionStatusProvider: getIt<SubscriptionStatusProvider>(),
+        paywallLauncher: getIt<PaywallLauncher>(),
+        restorePurchases: getIt<RestorePurchases>(),
+        externalLinkLauncher: getIt<ExternalLinkLauncher>(),
       ),
     ),
     GoRoute(

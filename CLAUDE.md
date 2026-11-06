@@ -47,7 +47,9 @@ Al desplegar una Edge Function (`supabase functions deploy <nombre>`), por defec
 | `enrich-mentions` | Proxy a Google Books / iTunes Search para enriquecer menciones (requiere `GOOGLE_BOOKS_API_KEY`) |
 | `create-feed`, `feed`, `inbound-email` | Feeds generados a partir de emails (dirección única, feed RSS, webhook de entrada) |
 | `delete-account` | Borra la cuenta y sus datos |
-| `superwall-webhook` | Eventos de suscripción de Superwall |
+| `revenuecat-webhook` | Avisos de suscripción de RevenueCat: ante cualquier evento consulta el estado del entitlement `pro` por la API REST y hace upsert en `entitlements` (secrets `REVENUECAT_WEBHOOK_AUTH`, `REVENUECAT_SECRET_API_KEY`) |
+| `sync-entitlement` | Con JWT: el cliente la llama tras comprar o restaurar para reflejar el entitlement en `entitlements` antes de generar un resumen |
+| `superwall-webhook` | Legado: eventos de suscripción de Superwall. Sigue desplegado hasta cumplir el criterio de retiro de `migrate-to-revenuecat` (ver más abajo) |
 
 Las migraciones se aplican con `apply_migration` (MCP de Supabase), no con `supabase db push`: las versiones del repo y de Supabase están desfasadas desde 2026-09-16 y `db push` reaplicaría migraciones viejas.
 
@@ -68,6 +70,8 @@ Antes de aplicar una migración o desplegar una Edge Function que quite o cambie
 3. Si todavía hay clientes anteriores con sesión, mantener una compatibilidad temporal (por ejemplo, una tabla vacía) con criterio de retiro documentado, en vez de eliminar el recurso. Ver la capability `legacy-client-compatibility` (change `add-legacy-free-usage-table-shim`).
 
 Al revés también cuenta: un cambio del servidor que **rechaza** algo que un cliente viejo aún envía (por ejemplo, un índice único) se aplica **después** de publicar el cliente que sabe manejar ese rechazo.
+
+`superwall-webhook` y el campaign de Superwall siguen vivos mientras haya clientes 1.9.x/1.10.x que compren por Superwall: no se eliminan hasta que la versión con RevenueCat esté en `READY_FOR_DISTRIBUTION` y ninguna 1.9.x/1.10.x tenga actividad en PostHog en 30 días (ver `migrate-to-revenuecat`). La URL de notificaciones del servidor de Apple (una sola por app) se mueve a RevenueCat solo después de publicar. Las funciones `revenuecat-webhook`, `sync-entitlement` y `delete-account` necesitan los secrets `REVENUECAT_SECRET_API_KEY` y `REVENUECAT_WEBHOOK_AUTH` en `reevo` y en `reevo-dev` antes de desplegarse.
 
 Contexto: el 2 de octubre de 2026 se eliminó `daily_summary_free_usage` antes de que la `1.9.0` estuviera pública; el build `1.8.0+18`, que la consultaba en cada sincronización y espera el login sin manejar errores, dejó a un usuario nuevo con el Inbox cargando indefinidamente.
 
@@ -100,7 +104,7 @@ lib/
 │   ├── observability/             # TelemetryClient (Sentry + PostHog), ScreenViewObserver
 │   ├── opml/                      # OpmlParser
 │   ├── sharing/                   # FileSharer
-│   ├── subscription/              # SubscriptionStatusProvider (Superwall)
+│   ├── subscription/              # SubscriptionStatusProvider (RevenueCat), PaywallLauncher, SubscriptionPlan
 │   ├── sync/                      # CloudSyncClient, RemoteSourceChecker (Supabase)
 │   ├── theme/                     # ReevoAccent (acento óxido, ThemeExtension)
 │   ├── utils/                     # IdGenerator, FeedContentChecker, LocalizedDateFormatter, is_local_today…
@@ -139,6 +143,7 @@ lib/
 │       └── domain/usecases/       # SyncUserData, ClearLocalUserData
 └── presentation/                  # elementos a nivel de app (no de feature)
     ├── app/                       # App widget + go_router config
+    ├── paywall/                   # PaywallScreen + PaywallCubit + AppPaywallLauncher (paywall propio)
     └── theme/                     # AppTheme + ThemeCubit
 ```
 
@@ -179,7 +184,7 @@ Ninguna librería de infraestructura se importa directamente en `domain/` o `pre
 | `supabase_flutter` | `AuthClient`, `CloudSyncClient`, `RemoteSourceChecker`, `FeedSyncTrigger`, `EmailFeedGenerator`, `ArticleSummaryGenerator`, `MentionEnricher` (`core/auth`, `core/sync`, `core/feed`, `core/email_feed`, `core/ai`) |
 | `google_sign_in`, `sign_in_with_apple` | Solo dentro de `SupabaseAuthClient`. |
 | `sentry_flutter`, `posthog_flutter` | `TelemetryClient` (`core/observability/`) — errores, eventos de producto y `screen_view`. Los feature flags de PostHog van por `FeatureFlagClient` (`core/feature_flags/`), nunca por `TelemetryClient`. |
-| `superwallkit_flutter` | `SubscriptionStatusProvider` (`core/subscription/`). Excepción: `main.dart` lo configura. |
+| `purchases_flutter` (RevenueCat) | `SubscriptionStatusProvider` (`core/subscription/`); solo `RevenueCatSubscriptionStatusProvider` y `SdkPurchasesGateway` lo importan. `main.dart` llama `init()` del provider, no al SDK. |
 | `share_plus` | `FileSharer` (`core/sharing/`) |
 | `url_launcher` | `ExternalLinkLauncher` (`core/navigation/`) |
 | `xml` (OPML) | `OpmlParser` (`core/opml/`); `ExportSourcesOpml` también genera XML en `features/account`. |
@@ -303,6 +308,7 @@ Inbox, Favoritos, Archivo, Fuentes y Resúmenes son `StatefulShellBranch` con `S
 - El parseo de RSS/Atom no vive en el cliente: lo hace la Edge Function `sync-feeds` (`supabase/functions/sync-feeds/`), disparada por `FeedSyncTrigger`/`SupabaseFeedSyncTrigger` (`core/feed/`) desde el cliente. El cliente solo pide el fetch y espera la respuesta; no existe un `SyncSources` del lado del cliente. Timeout por feed del lado del servidor: 10 segundos (`FEED_FETCH_TIMEOUT_MS`). Un fallo no interrumpe las demás fuentes.
 - Resumen diario: lo genera el servidor (`generate-daily-summaries`), como máximo uno por fecha local por usuario y sin regeneración. Es elegible quien tiene suscripción activa (cualquier día) o, sin suscripción, solo los lunes. El cliente solo lo recibe por `SyncUserData` y lo muestra: tarjeta del Inbox (resumen de hoy sin `dismissed_at`; abrirlo lo descarta), lista y detalle en la tab Resúmenes. Cada resumen guarda su agrupación por fuente (`sourceBlocks`); los anteriores a esa funcionalidad no la tienen y se muestran sin tarjetas ni íconos. Ver `openspec/specs/daily-summaries/spec.md` y `inbox-daily-summary-card`.
 - Resumen con IA de un artículo (`article_summary`) y menciones: pasan por Edge Functions (Gemini, Google Books, iTunes), con presupuesto diario por usuario (`AiUsageRepository`, ver `ai-usage-budget`) y acceso según suscripción (`SubscriptionStatusProvider`, ver `subscription-entitlements`).
+- Suscripciones: RevenueCat (un solo proyecto para dev y prod; entitlement `pro`, offering `default` con paquetes `$rc_monthly` y `$rc_annual`). El cliente solo conoce `SubscriptionStatusProvider` (`isSubscribed` desde la caché del SDK, `getPlans`/`purchase`/`restore`); el paywall es propio de Flutter y se abre únicamente por `PaywallLauncher` (modal bajo 840dp, diálogo desde 840dp). La fuente de verdad del servidor es `entitlements`, que mantienen `revenuecat-webhook` y `sync-entitlement`; ver `subscription-entitlements` y `subscription-paywall`. Android no tiene compras (el provider no configura el SDK y reporta `isSubscribed = false`).
 - Preferencias de usuario (idioma, offset horario) se sincronizan (`user-preferences`): el servidor las usa para generar el resumen en el idioma y el día local correctos. Hay una sola fila por usuario que reescribe cada dispositivo en cada sync (el último en sincronizar gana): con dispositivos en idiomas distintos, el resumen sale en el idioma del último que sincronizó antes de la generación. Un ajuste explícito de idioma del resumen está explorado pero no implementado.
 - La sincronización con la nube (subir/bajar fuentes, artículos y resúmenes) vive en `features/sync/domain/usecases/SyncUserData`, independiente del fetch de feeds — ver capability `openspec/specs/cloud-sync/spec.md`.
 

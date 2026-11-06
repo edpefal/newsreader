@@ -402,3 +402,20 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/superwall-webhook/deno.json"
 entrypoint = "./functions/superwall-webhook/index.ts"
+
+[functions.revenuecat-webhook]
+enabled = true
+# RevenueCat llama a este endpoint sin sesión de usuario (no hay JWT que
+# verificar) -- la autenticidad del request se valida con el valor de la
+# cabecera Authorization (REVENUECAT_WEBHOOK_AUTH) dentro de la función, no con
+# el JWT de Supabase.
+verify_jwt = false
+import_map = "./functions/revenuecat-webhook/deno.json"
+entrypoint = "./functions/revenuecat-webhook/index.ts"
+
+[functions.sync-entitlement]
+enabled = true
+# La llama el cliente tras comprar o restaurar; el user_id sale del JWT.
+verify_jwt = true
+import_map = "./functions/sync-entitlement/deno.json"
+entrypoint = "./functions/sync-entitlement/index.ts"

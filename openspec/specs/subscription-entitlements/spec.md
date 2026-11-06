@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Mantener, del lado del servidor, el estado de suscripción de cada usuario sincronizado desde Superwall, para que otras capabilities (como `daily-summaries`) puedan verificar de forma confiable y local si un usuario tiene acceso pago activo, sin depender de una llamada en vivo a Superwall en cada request.
+Mantener, del lado del servidor, el estado de suscripción de cada usuario sincronizado desde RevenueCat, para que otras capabilities (como `daily-summaries`) puedan verificar de forma confiable y local si un usuario tiene acceso pago activo, sin depender de una llamada en vivo a RevenueCat en cada request.
 
 ## Requirements
 

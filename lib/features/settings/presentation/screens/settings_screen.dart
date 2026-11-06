@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:newsreader/core/auth/auth_client.dart';
+import 'package:newsreader/core/config/app_config.dart';
 import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/core/errors/app_exception.dart';
+import 'package:newsreader/core/navigation/external_link_launcher.dart';
+import 'package:newsreader/core/subscription/paywall_launcher.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/theme/reevo_accent.dart';
 import 'package:newsreader/features/account/domain/usecases/delete_account.dart';
 import 'package:newsreader/features/account/domain/usecases/export_user_data.dart';
 import 'package:newsreader/features/account/presentation/widgets/delete_account_dialog.dart';
+import 'package:newsreader/features/settings/domain/usecases/restore_purchases.dart';
 import 'package:newsreader/features/settings/presentation/widgets/sign_out_unsynced_changes_dialog.dart';
 import 'package:newsreader/features/sync/domain/usecases/clear_local_user_data.dart';
 import 'package:newsreader/features/sync/domain/usecases/sync_user_data.dart';
@@ -27,6 +31,9 @@ class SettingsScreen extends StatefulWidget {
   final SyncUserData syncUserData;
   final AuthClient authClient;
   final SubscriptionStatusProvider subscriptionStatusProvider;
+  final PaywallLauncher paywallLauncher;
+  final RestorePurchases restorePurchases;
+  final ExternalLinkLauncher externalLinkLauncher;
 
   const SettingsScreen({
     super.key,
@@ -36,6 +43,9 @@ class SettingsScreen extends StatefulWidget {
     required this.syncUserData,
     required this.authClient,
     required this.subscriptionStatusProvider,
+    required this.paywallLauncher,
+    required this.restorePurchases,
+    required this.externalLinkLauncher,
   });
 
   @override
@@ -49,16 +59,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   TextStyle? _rowTextStyle(BuildContext context) =>
       Theme.of(context).textTheme.bodyLarge;
 
-  TextStyle? _secondaryTextStyle(BuildContext context) =>
-      Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          );
+  TextStyle? _secondaryTextStyle(BuildContext context) => Theme.of(context)
+      .textTheme
+      .bodyMedium
+      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final accent =
-        Theme.of(context).extension<ReevoAccent>()!.unreadFavoriteAccent;
+    final accent = Theme.of(
+      context,
+    ).extension<ReevoAccent>()!.unreadFavoriteAccent;
     final errorColor = Theme.of(context).colorScheme.error;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsScreenTitle)),
@@ -66,7 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: kSettingsMaxContentWidth),
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,41 +91,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text(email, style: _secondaryTextStyle(context)),
                 ],
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    if (widget.subscriptionStatusProvider.isSubscribed)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: accent,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          l10n.settingsAccountTierPremium.toUpperCase(),
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.5,
+                // Se reconstruye al cambiar la suscripción (compra desde el
+                // paywall, restauración, expiración) sin salir de Ajustes.
+                StreamBuilder<bool>(
+                  stream: widget.subscriptionStatusProvider.isSubscribedChanges,
+                  initialData: widget.subscriptionStatusProvider.isSubscribed,
+                  builder: (context, snapshot) {
+                    final isSubscribed = snapshot.data ?? false;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            if (isSubscribed)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: accent,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  l10n.settingsAccountTierPremium.toUpperCase(),
+                                  style: Theme.of(context).textTheme.labelLarge
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimary,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.5,
+                                      ),
+                                ),
+                              )
+                            else
+                              Text(
+                                l10n.settingsAccountTierFree,
+                                style: _rowTextStyle(context),
                               ),
+                            if (!isSubscribed) ...[
+                              const SizedBox(width: 12),
+                              OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: accent,
+                                  side: BorderSide(color: accent),
+                                ),
+                                onPressed: () => _upgradeToPremium(context),
+                                child: Text(
+                                  l10n.settingsAccountTierUpgradeButton,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                      )
-                    else
-                      Text(l10n.settingsAccountTierFree, style: _rowTextStyle(context)),
-                    if (!widget.subscriptionStatusProvider.isSubscribed) ...[
-                      const SizedBox(width: 12),
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: accent,
-                          side: BorderSide(color: accent),
+                        const SizedBox(height: 4),
+                        if (isSubscribed)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.credit_card),
+                            title: Text(
+                              l10n.commonManageSubscription,
+                              style: _rowTextStyle(context),
+                            ),
+                            onTap: () => widget.externalLinkLauncher.open(
+                              AppConfig.manageSubscriptionsUrl,
+                            ),
+                          ),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.restore),
+                          title: Text(
+                            l10n.commonRestorePurchases,
+                            style: _rowTextStyle(context),
+                          ),
+                          onTap: () => _restorePurchases(context),
                         ),
-                        onPressed: () => _upgradeToPremium(context),
-                        child: Text(l10n.settingsAccountTierUpgradeButton),
-                      ),
-                    ],
-                  ],
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -155,7 +210,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.ios_share),
-                  title: Text(l10n.navExportData, style: _rowTextStyle(context)),
+                  title: Text(
+                    l10n.navExportData,
+                    style: _rowTextStyle(context),
+                  ),
                   onTap: () => _exportUserData(context),
                 ),
                 ListTile(
@@ -181,12 +239,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _upgradeToPremium(BuildContext context) async {
-    await widget.subscriptionStatusProvider.showPaywall(
-      onSubscribed: () async {
-        if (mounted) setState(() {});
-      },
+  Future<void> _upgradeToPremium(BuildContext context) {
+    // El estado de la cuenta se actualiza solo: la sección escucha
+    // `isSubscribedChanges`.
+    return widget.paywallLauncher.show(
+      context,
+      trigger: PaywallTrigger.settings,
     );
+  }
+
+  Future<void> _restorePurchases(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    try {
+      final found = await widget.restorePurchases.execute();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            found ? l10n.commonRestoreSuccess : l10n.commonRestoreNothingFound,
+          ),
+        ),
+      );
+    } on AppException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.code.localize(l10n))));
+    }
   }
 
   Future<void> _signOut(BuildContext context) async {
@@ -230,8 +306,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _confirmDeleteAccount(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (_) =>
-          DeleteAccountDialog(onConfirm: () => _deleteAccount(context)),
+      builder: (_) => DeleteAccountDialog(
+        onConfirm: () => _deleteAccount(context),
+        // Eliminar la cuenta no cancela la suscripción de Apple: solo a quien
+        // la tiene se le avisa, con acceso directo a gestionarla.
+        showSubscriptionNotice: widget.subscriptionStatusProvider.isSubscribed,
+        onManageSubscription: () => widget.externalLinkLauncher.open(
+          AppConfig.manageSubscriptionsUrl,
+        ),
+      ),
     );
   }
 

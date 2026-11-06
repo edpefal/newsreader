@@ -58,6 +58,12 @@ extension AppErrorCodeL10n on AppErrorCode {
         return l10n.errorTooManyAuthRequests;
       case AppErrorCode.invalidEmail:
         return l10n.errorInvalidEmail;
+      case AppErrorCode.subscriptionOffersUnavailable:
+        return l10n.errorSubscriptionOffersUnavailable;
+      case AppErrorCode.purchaseFailed:
+        return l10n.errorPurchaseFailed;
+      case AppErrorCode.restoreFailed:
+        return l10n.errorRestoreFailed;
       case AppErrorCode.unknown:
         return l10n.errorUnknown;
     }

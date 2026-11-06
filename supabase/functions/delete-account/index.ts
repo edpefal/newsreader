@@ -7,6 +7,7 @@
 // Ver openspec/changes/add-account-deletion-and-data-export/design.md.
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { deleteRevenueCatCustomer } from "./revenuecat.ts";
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
@@ -34,6 +35,13 @@ Deno.serve(async (req) => {
     });
   }
   const userId = data.user.id;
+
+  // Antes de borrar `auth.users`, mientras el user_id aún existe. Un fallo no
+  // bloquea el borrado de la cuenta (ver revenuecat.ts).
+  await deleteRevenueCatCustomer({
+    appUserId: userId,
+    secretKey: Deno.env.get("REVENUECAT_SECRET_API_KEY"),
+  });
 
   const admin = createClient(supabaseUrl, serviceRoleKey);
   const { error: deleteError } = await admin.auth.admin.deleteUser(userId);

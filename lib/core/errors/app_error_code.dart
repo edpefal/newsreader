@@ -92,6 +92,17 @@ enum AppErrorCode {
   /// El correo ingresado para recibir el código no tiene un formato válido.
   invalidEmail,
 
+  /// No se pudieron obtener los planes de suscripción de la tienda (sin red,
+  /// sin productos disponibles). Ver capability `subscription-paywall`.
+  subscriptionOffersUnavailable,
+
+  /// La compra de una suscripción falló por un error de la tienda (no por
+  /// cancelación del usuario, que no es un error).
+  purchaseFailed,
+
+  /// No se pudieron restaurar las compras.
+  restoreFailed,
+
   /// Cualquier error no anticipado por los demás códigos.
   unknown,
 }

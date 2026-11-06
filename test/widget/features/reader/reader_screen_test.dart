@@ -9,6 +9,7 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
+import 'package:newsreader/core/subscription/paywall_launcher.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/article_summary/domain/usecases/generate_article_summary.dart';
 import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
@@ -26,6 +27,10 @@ class MockSubscriptionStatusProvider extends Mock
     implements SubscriptionStatusProvider {}
 
 class MockExternalLinkLauncher extends Mock implements ExternalLinkLauncher {}
+
+class MockPaywallLauncher extends Mock implements PaywallLauncher {}
+
+class FakeBuildContext extends Fake implements BuildContext {}
 
 class MockGenerateArticleSummary extends Mock
     implements GenerateArticleSummary {}
@@ -47,6 +52,7 @@ Widget _buildSubject(
   MarkArticleAsRead markAsRead,
   ToggleFavorite toggleFavorite, {
   SubscriptionStatusProvider? subscriptionStatusProvider,
+  PaywallLauncher? paywallLauncher,
   AiUsageRepository? aiUsageRepository,
 }) {
   final router = GoRouter(
@@ -59,6 +65,7 @@ Widget _buildSubject(
           toggleFavorite: toggleFavorite,
           subscriptionStatusProvider:
               subscriptionStatusProvider ?? MockSubscriptionStatusProvider(),
+          paywallLauncher: paywallLauncher ?? MockPaywallLauncher(),
           aiUsageRepository: aiUsageRepository ?? _fakeAiUsageRepository(),
           createArticleSummaryCubit: () => ArticleSummaryCubit(
             MockGenerateArticleSummary(),
@@ -86,6 +93,11 @@ Widget _buildSubject(
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(FakeBuildContext());
+    registerFallbackValue(PaywallTrigger.settings);
+  });
+
   late MockMarkArticleAsRead mockMarkAsRead;
   late MockToggleFavorite mockToggleFavorite;
 
@@ -124,72 +136,85 @@ void main() {
   group('ReaderScreen', () {
     testWidgets('muestra el nombre de la fuente en el AppBar', (tester) async {
       await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+        _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+      );
 
       expect(find.text('Newsletter A'), findsOneWidget);
     });
 
     testWidgets(
-        'limita el ancho del cuerpo del artículo a ~680pt cuando hay más espacio disponible',
-        (tester) async {
-      tester.view.physicalSize = const Size(1200, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+      'limita el ancho del cuerpo del artículo a ~680pt cuando hay más espacio disponible',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+        await tester.pumpWidget(
+          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+        );
 
-      final headerBox = tester.widget<ConstrainedBox>(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is ConstrainedBox &&
-              widget.constraints.maxWidth == kReaderMaxContentWidth,
-        ).first,
-      );
-      expect(headerBox.constraints.maxWidth, kReaderMaxContentWidth);
-      final renderedSize = tester.getSize(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is ConstrainedBox &&
-              widget.constraints.maxWidth == kReaderMaxContentWidth,
-        ).first,
-      );
-      expect(renderedSize.width, lessThanOrEqualTo(kReaderMaxContentWidth));
-    });
+        final headerBox = tester.widget<ConstrainedBox>(
+          find
+              .byWidgetPredicate(
+                (widget) =>
+                    widget is ConstrainedBox &&
+                    widget.constraints.maxWidth == kReaderMaxContentWidth,
+              )
+              .first,
+        );
+        expect(headerBox.constraints.maxWidth, kReaderMaxContentWidth);
+        final renderedSize = tester.getSize(
+          find
+              .byWidgetPredicate(
+                (widget) =>
+                    widget is ConstrainedBox &&
+                    widget.constraints.maxWidth == kReaderMaxContentWidth,
+              )
+              .first,
+        );
+        expect(renderedSize.width, lessThanOrEqualTo(kReaderMaxContentWidth));
+      },
+    );
 
     testWidgets(
-        'ocupa todo el ancho disponible cuando la pantalla es más angosta que el máximo',
-        (tester) async {
-      tester.view.physicalSize = const Size(400, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+      'ocupa todo el ancho disponible cuando la pantalla es más angosta que el máximo',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+        await tester.pumpWidget(
+          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+        );
 
-      final renderedSize = tester.getSize(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is ConstrainedBox &&
-              widget.constraints.maxWidth == kReaderMaxContentWidth,
-        ).first,
-      );
-      // 400 de ancho de pantalla - 20*2 de padding del scroll view.
-      expect(renderedSize.width, 360);
-    });
+        final renderedSize = tester.getSize(
+          find
+              .byWidgetPredicate(
+                (widget) =>
+                    widget is ConstrainedBox &&
+                    widget.constraints.maxWidth == kReaderMaxContentWidth,
+              )
+              .first,
+        );
+        // 400 de ancho de pantalla - 20*2 de padding del scroll view.
+        expect(renderedSize.width, 360);
+      },
+    );
 
     testWidgets('muestra el título del artículo', (tester) async {
       await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+        _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+      );
 
       expect(find.text('Un artículo interesante'), findsOneWidget);
     });
 
     testWidgets('muestra el autor y la fecha', (tester) async {
       await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+        _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+      );
 
       expect(find.textContaining('Juan Pérez'), findsOneWidget);
       expect(find.textContaining('15 mar 2024'), findsOneWidget);
@@ -197,39 +222,107 @@ void main() {
 
     testWidgets('muestra HtmlWidget cuando hay contentHtml', (tester) async {
       await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+        _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+      );
       await tester.pump();
 
       expect(find.byType(HtmlWidget), findsOneWidget);
     });
 
     testWidgets(
-        'muestra excerpt y el aviso de contenido truncado cuando contentHtml es nulo',
-        (tester) async {
-      final articleSinHtml = Article(
-        id: 'a2',
-        sourceId: 's1',
-        sourceName: 'Newsletter A',
-        title: 'Sin HTML',
-        excerpt: 'Solo el resumen.',
-        publishedAt: DateTime(2024, 3, 15),
-        articleUrl: 'https://example.com/article',
-      );
+      'muestra excerpt y el aviso de contenido truncado cuando contentHtml es nulo',
+      (tester) async {
+        final articleSinHtml = Article(
+          id: 'a2',
+          sourceId: 's1',
+          sourceName: 'Newsletter A',
+          title: 'Sin HTML',
+          excerpt: 'Solo el resumen.',
+          publishedAt: DateTime(2024, 3, 15),
+          articleUrl: 'https://example.com/article',
+        );
 
-      await tester.pumpWidget(
-          _buildSubject(articleSinHtml, mockMarkAsRead, mockToggleFavorite));
+        await tester.pumpWidget(
+          _buildSubject(articleSinHtml, mockMarkAsRead, mockToggleFavorite),
+        );
 
-      expect(find.text('Solo el resumen.'), findsOneWidget);
-      expect(find.byType(HtmlWidget), findsNothing);
-      expect(
-        find.textContaining('Este feed no incluye el artículo completo'),
-        findsOneWidget,
-      );
-    });
+        expect(find.text('Solo el resumen.'), findsOneWidget);
+        expect(find.byType(HtmlWidget), findsNothing);
+        expect(
+          find.textContaining('Este feed no incluye el artículo completo'),
+          findsOneWidget,
+        );
+      },
+    );
 
     testWidgets(
-        'muestra el aviso de contenido truncado cuando no hay contentHtml ni excerpt',
-        (tester) async {
+      'muestra el aviso de contenido truncado cuando no hay contentHtml ni excerpt',
+      (tester) async {
+        final articleMinimal = Article(
+          id: 'a3',
+          sourceId: 's1',
+          sourceName: 'Newsletter A',
+          title: 'Sin contenido',
+          publishedAt: DateTime(2024, 3, 15),
+          articleUrl: 'https://example.com/article',
+        );
+
+        await tester.pumpWidget(
+          _buildSubject(articleMinimal, mockMarkAsRead, mockToggleFavorite),
+        );
+
+        expect(find.byType(HtmlWidget), findsNothing);
+        expect(
+          find.textContaining('Este feed no incluye el artículo completo'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'muestra el aviso cuando contentHtml está por debajo del umbral de truncamiento',
+      (tester) async {
+        final articleCorto = Article(
+          id: 'a4',
+          sourceId: 's1',
+          sourceName: 'Newsletter A',
+          title: 'Contenido corto',
+          contentHtml: '<p>Un teaser breve antes del paywall.</p>',
+          publishedAt: DateTime(2024, 3, 15),
+          articleUrl: 'https://example.com/article',
+        );
+
+        await tester.pumpWidget(
+          _buildSubject(articleCorto, mockMarkAsRead, mockToggleFavorite),
+        );
+        await tester.pump();
+
+        expect(find.byType(HtmlWidget), findsOneWidget);
+        expect(
+          find.textContaining('Este feed no incluye el artículo completo'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'no muestra el aviso cuando contentHtml tiene 500+ caracteres',
+      (tester) async {
+        await tester.pumpWidget(
+          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+        );
+        await tester.pump();
+
+        expect(
+          find.textContaining('Este feed no incluye el artículo completo'),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets('tocar el aviso de contenido truncado navega al WebView', (
+      tester,
+    ) async {
       final articleMinimal = Article(
         id: 'a3',
         sourceId: 's1',
@@ -240,65 +333,8 @@ void main() {
       );
 
       await tester.pumpWidget(
-          _buildSubject(articleMinimal, mockMarkAsRead, mockToggleFavorite));
-
-      expect(find.byType(HtmlWidget), findsNothing);
-      expect(
-        find.textContaining('Este feed no incluye el artículo completo'),
-        findsOneWidget,
+        _buildSubject(articleMinimal, mockMarkAsRead, mockToggleFavorite),
       );
-    });
-
-    testWidgets(
-        'muestra el aviso cuando contentHtml está por debajo del umbral de truncamiento',
-        (tester) async {
-      final articleCorto = Article(
-        id: 'a4',
-        sourceId: 's1',
-        sourceName: 'Newsletter A',
-        title: 'Contenido corto',
-        contentHtml: '<p>Un teaser breve antes del paywall.</p>',
-        publishedAt: DateTime(2024, 3, 15),
-        articleUrl: 'https://example.com/article',
-      );
-
-      await tester.pumpWidget(
-          _buildSubject(articleCorto, mockMarkAsRead, mockToggleFavorite));
-      await tester.pump();
-
-      expect(find.byType(HtmlWidget), findsOneWidget);
-      expect(
-        find.textContaining('Este feed no incluye el artículo completo'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets(
-        'no muestra el aviso cuando contentHtml tiene 500+ caracteres',
-        (tester) async {
-      await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
-      await tester.pump();
-
-      expect(
-        find.textContaining('Este feed no incluye el artículo completo'),
-        findsNothing,
-      );
-    });
-
-    testWidgets('tocar el aviso de contenido truncado navega al WebView',
-        (tester) async {
-      final articleMinimal = Article(
-        id: 'a3',
-        sourceId: 's1',
-        sourceName: 'Newsletter A',
-        title: 'Sin contenido',
-        publishedAt: DateTime(2024, 3, 15),
-        articleUrl: 'https://example.com/article',
-      );
-
-      await tester.pumpWidget(
-          _buildSubject(articleMinimal, mockMarkAsRead, mockToggleFavorite));
       await tester.tap(
         find.textContaining('Este feed no incluye el artículo completo'),
       );
@@ -307,10 +343,12 @@ void main() {
       expect(find.text('WebView'), findsOneWidget);
     });
 
-    testWidgets('llama a markAsRead con el id del artículo al abrir',
-        (tester) async {
+    testWidgets('llama a markAsRead con el id del artículo al abrir', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+        _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+      );
       await tester.pump();
 
       verify(() => mockMarkAsRead.execute('a1')).called(1);
@@ -318,20 +356,17 @@ void main() {
 
     testWidgets('muestra botón Ver en navegador en el AppBar', (tester) async {
       await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
-
-      expect(
-        find.widgetWithIcon(IconButton, Icons.public),
-        findsOneWidget,
+        _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
       );
+
+      expect(find.widgetWithIcon(IconButton, Icons.public), findsOneWidget);
     });
 
     testWidgets('botón Ver en navegador navega al WebView', (tester) async {
       await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
-      await tester.tap(
-        find.widgetWithIcon(IconButton, Icons.public),
+        _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
       );
+      await tester.tap(find.widgetWithIcon(IconButton, Icons.public));
       await tester.pumpAndSettle();
 
       expect(find.text('WebView'), findsOneWidget);
@@ -339,7 +374,8 @@ void main() {
 
     testWidgets('muestra botón de resumen en el AppBar', (tester) async {
       await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+        _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+      );
 
       expect(
         find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
@@ -348,121 +384,142 @@ void main() {
     });
 
     testWidgets(
-        'sin suscripción y con cupo gratis, tap en resumen abre el sheet '
-        'sin mostrar el paywall', (tester) async {
-      final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
-      when(() => mockSubscriptionStatusProvider.isSubscribed)
-          .thenReturn(false);
-      final mockAiUsageRepository = MockAiUsageRepository();
-      when(() => mockAiUsageRepository.getStatus()).thenAnswer(
-        (_) async => const AiUsageStatus(summariesUsedToday: 0, dailyLimit: 2),
-      );
+      'sin suscripción y con cupo gratis, tap en resumen abre el sheet '
+      'sin mostrar el paywall',
+      (tester) async {
+        final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
+        final mockPaywallLauncher = MockPaywallLauncher();
+        when(
+          () => mockSubscriptionStatusProvider.isSubscribed,
+        ).thenReturn(false);
+        final mockAiUsageRepository = MockAiUsageRepository();
+        when(() => mockAiUsageRepository.getStatus()).thenAnswer(
+          (_) async =>
+              const AiUsageStatus(summariesUsedToday: 0, dailyLimit: 2),
+        );
 
-      await tester.pumpWidget(_buildSubject(
-        tArticle,
-        mockMarkAsRead,
-        mockToggleFavorite,
-        subscriptionStatusProvider: mockSubscriptionStatusProvider,
-        aiUsageRepository: mockAiUsageRepository,
-      ));
-      await tester.tap(
-        find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _buildSubject(
+            tArticle,
+            mockMarkAsRead,
+            mockToggleFavorite,
+            subscriptionStatusProvider: mockSubscriptionStatusProvider,
+            paywallLauncher: mockPaywallLauncher,
+            aiUsageRepository: mockAiUsageRepository,
+          ),
+        );
+        await tester.tap(
+          find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
+        );
+        await tester.pumpAndSettle();
 
-      verify(() => mockAiUsageRepository.getStatus()).called(1);
-      verifyNever(
-        () => mockSubscriptionStatusProvider.showPaywall(
-          onSubscribed: any(named: 'onSubscribed'),
-        ),
-      );
-      expect(find.byType(BottomSheet), findsOneWidget);
-    });
-
-    testWidgets(
-        'sin suscripción y sin cupo gratis, tap en resumen abre el sheet '
-        'con el estado de cupo agotado, sin mostrar el paywall automático',
-        (tester) async {
-      final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
-      when(() => mockSubscriptionStatusProvider.isSubscribed)
-          .thenReturn(false);
-      final mockAiUsageRepository = MockAiUsageRepository();
-      when(() => mockAiUsageRepository.getStatus()).thenAnswer(
-        (_) async => const AiUsageStatus(summariesUsedToday: 2, dailyLimit: 2),
-      );
-
-      await tester.pumpWidget(_buildSubject(
-        tArticle,
-        mockMarkAsRead,
-        mockToggleFavorite,
-        subscriptionStatusProvider: mockSubscriptionStatusProvider,
-        aiUsageRepository: mockAiUsageRepository,
-      ));
-      await tester.tap(
-        find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
-      );
-      await tester.pumpAndSettle();
-
-      verifyNever(
-        () => mockSubscriptionStatusProvider.showPaywall(
-          onSubscribed: any(named: 'onSubscribed'),
-        ),
-      );
-      expect(find.byType(BottomSheet), findsOneWidget);
-      expect(
-        find.text('Ya usaste tu resumen gratis de hoy'),
-        findsOneWidget,
-      );
-    });
+        verify(() => mockAiUsageRepository.getStatus()).called(1);
+        verifyNever(
+          () => mockPaywallLauncher.show(any(), trigger: any(named: 'trigger')),
+        );
+        expect(find.byType(BottomSheet), findsOneWidget);
+      },
+    );
 
     testWidgets(
-        'con suscripción activa, tap en resumen abre el sheet directo sin '
-        'consultar el cupo gratis', (tester) async {
-      final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
-      when(() => mockSubscriptionStatusProvider.isSubscribed)
-          .thenReturn(true);
-      final mockAiUsageRepository = MockAiUsageRepository();
+      'sin suscripción y sin cupo gratis, tap en resumen abre el sheet '
+      'con el estado de cupo agotado, sin mostrar el paywall automático',
+      (tester) async {
+        final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
+        final mockPaywallLauncher = MockPaywallLauncher();
+        when(
+          () => mockSubscriptionStatusProvider.isSubscribed,
+        ).thenReturn(false);
+        final mockAiUsageRepository = MockAiUsageRepository();
+        when(() => mockAiUsageRepository.getStatus()).thenAnswer(
+          (_) async =>
+              const AiUsageStatus(summariesUsedToday: 2, dailyLimit: 2),
+        );
 
-      await tester.pumpWidget(_buildSubject(
-        tArticle,
-        mockMarkAsRead,
-        mockToggleFavorite,
-        subscriptionStatusProvider: mockSubscriptionStatusProvider,
-        aiUsageRepository: mockAiUsageRepository,
-      ));
-      await tester.tap(
-        find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _buildSubject(
+            tArticle,
+            mockMarkAsRead,
+            mockToggleFavorite,
+            subscriptionStatusProvider: mockSubscriptionStatusProvider,
+            paywallLauncher: mockPaywallLauncher,
+            aiUsageRepository: mockAiUsageRepository,
+          ),
+        );
+        await tester.tap(
+          find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
+        );
+        await tester.pumpAndSettle();
 
-      verifyNever(() => mockAiUsageRepository.getStatus());
-      expect(find.byType(BottomSheet), findsOneWidget);
-    });
+        verifyNever(
+          () => mockPaywallLauncher.show(any(), trigger: any(named: 'trigger')),
+        );
+        expect(find.byType(BottomSheet), findsOneWidget);
+        expect(find.text('Ya usaste tu resumen gratis de hoy'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'con suscripción activa, tap en resumen abre el sheet directo sin '
+      'consultar el cupo gratis',
+      (tester) async {
+        final mockSubscriptionStatusProvider = MockSubscriptionStatusProvider();
+        final mockPaywallLauncher = MockPaywallLauncher();
+        when(
+          () => mockSubscriptionStatusProvider.isSubscribed,
+        ).thenReturn(true);
+        final mockAiUsageRepository = MockAiUsageRepository();
+
+        await tester.pumpWidget(
+          _buildSubject(
+            tArticle,
+            mockMarkAsRead,
+            mockToggleFavorite,
+            subscriptionStatusProvider: mockSubscriptionStatusProvider,
+            paywallLauncher: mockPaywallLauncher,
+            aiUsageRepository: mockAiUsageRepository,
+          ),
+        );
+        await tester.tap(
+          find.widgetWithIcon(IconButton, Icons.auto_awesome_outlined),
+        );
+        await tester.pumpAndSettle();
+
+        verifyNever(() => mockAiUsageRepository.getStatus());
+        expect(find.byType(BottomSheet), findsOneWidget);
+      },
+    );
 
     // --- US-13/14: Favoritos ---
 
-    testWidgets('muestra star_outline cuando el artículo no es favorito',
-        (tester) async {
+    testWidgets('muestra star_outline cuando el artículo no es favorito', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+        _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+      );
 
       expect(find.byIcon(Icons.star_outline), findsOneWidget);
       expect(find.byIcon(Icons.star), findsNothing);
     });
 
-    testWidgets('muestra star cuando el artículo ya es favorito',
-        (tester) async {
+    testWidgets('muestra star cuando el artículo ya es favorito', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-          _buildSubject(tArticleFavorito, mockMarkAsRead, mockToggleFavorite));
+        _buildSubject(tArticleFavorito, mockMarkAsRead, mockToggleFavorite),
+      );
 
       expect(find.byIcon(Icons.star), findsOneWidget);
       expect(find.byIcon(Icons.star_outline), findsNothing);
     });
 
-    testWidgets('tap en star_outline llama toggleFavorite y muestra star',
-        (tester) async {
+    testWidgets('tap en star_outline llama toggleFavorite y muestra star', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+        _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+      );
 
       await tester.tap(find.byIcon(Icons.star_outline));
       await tester.pumpAndSettle();
@@ -472,10 +529,12 @@ void main() {
       expect(find.byIcon(Icons.star_outline), findsNothing);
     });
 
-    testWidgets('tap en star llama toggleFavorite y vuelve a star_outline',
-        (tester) async {
+    testWidgets('tap en star llama toggleFavorite y vuelve a star_outline', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-          _buildSubject(tArticleFavorito, mockMarkAsRead, mockToggleFavorite));
+        _buildSubject(tArticleFavorito, mockMarkAsRead, mockToggleFavorite),
+      );
 
       await tester.tap(find.byIcon(Icons.star));
       await tester.pumpAndSettle();
@@ -487,41 +546,43 @@ void main() {
     // --- Indicador de progreso de scroll (reader-scroll-indicator) ---
 
     testWidgets(
-        'la barra de progreso aparece cuando el contenido pasa a exceder '
-        'el viewport sin que el usuario haga scroll', (tester) async {
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+      'la barra de progreso aparece cuando el contenido pasa a exceder '
+      'el viewport sin que el usuario haga scroll',
+      (tester) async {
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
 
-      // Viewport alto: el contenido cabe completo, la barra no se muestra.
-      tester.view.physicalSize = const Size(400, 20000);
-      await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
-      await tester.pumpAndSettle();
+        // Viewport alto: el contenido cabe completo, la barra no se muestra.
+        tester.view.physicalSize = const Size(400, 20000);
+        await tester.pumpWidget(
+          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+        );
+        await tester.pumpAndSettle();
 
-      expect(
-        find.byWidgetPredicate(
-          (widget) => widget is Positioned && widget.width == 4,
-        ),
-        findsNothing,
-      );
+        expect(
+          find.byWidgetPredicate(
+            (widget) => widget is Positioned && widget.width == 4,
+          ),
+          findsNothing,
+        );
 
-      // El viewport se achica (equivalente, para el `Scrollable`, a que el
-      // contenido crezca): dispara `ScrollMetricsNotification` sin que el
-      // test haga ningún scroll manual.
-      tester.view.physicalSize = const Size(400, 400);
-      await tester.pumpAndSettle();
+        // El viewport se achica (equivalente, para el `Scrollable`, a que el
+        // contenido crezca): dispara `ScrollMetricsNotification` sin que el
+        // test haga ningún scroll manual.
+        tester.view.physicalSize = const Size(400, 400);
+        await tester.pumpAndSettle();
 
-      expect(
-        find.byWidgetPredicate(
-          (widget) => widget is Positioned && widget.width == 4,
-        ),
-        findsOneWidget,
-      );
-    });
+        expect(
+          find.byWidgetPredicate(
+            (widget) => widget is Positioned && widget.width == 4,
+          ),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets(
-        'la barra de progreso desaparece cuando el contenido deja de '
+    testWidgets('la barra de progreso desaparece cuando el contenido deja de '
         'exceder el viewport', (tester) async {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -531,7 +592,8 @@ void main() {
       // muestra.
       tester.view.physicalSize = const Size(400, 400);
       await tester.pumpWidget(
-          _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite));
+        _buildSubject(tArticle, mockMarkAsRead, mockToggleFavorite),
+      );
       await tester.pumpAndSettle();
 
       expect(

@@ -607,6 +607,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'We couldn\'t sync with the server. Please try again.';
 
   @override
+  String get errorSubscriptionOffersUnavailable =>
+      'We couldn\'t load the subscription plans. Check your connection and try again.';
+
+  @override
+  String get errorPurchaseFailed =>
+      'The purchase couldn\'t be completed. Please try again.';
+
+  @override
+  String get errorRestoreFailed =>
+      'We couldn\'t restore your purchases. Please try again.';
+
+  @override
   String get errorInvalidEmailCode =>
       'That code is invalid or has expired. Check it or request a new one.';
 
@@ -619,4 +631,93 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorUnknown => 'Something unexpected happened';
+
+  @override
+  String get paywallTitle => 'Reevo Premium';
+
+  @override
+  String get paywallSubtitle =>
+      'Your daily summary every day, and up to 25 article summaries a day.';
+
+  @override
+  String get paywallPlanMonthly => 'Monthly';
+
+  @override
+  String get paywallPlanAnnual => 'Annual';
+
+  @override
+  String paywallPricePerMonth(String price) {
+    return '$price / month';
+  }
+
+  @override
+  String paywallPricePerYear(String price) {
+    return '$price / year';
+  }
+
+  @override
+  String paywallFreeTrialBadge(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days free',
+      one: '1 day free',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String paywallCtaStartTrial(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Start $days-day free trial',
+      one: 'Start 1-day free trial',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get paywallCtaSubscribe => 'Subscribe';
+
+  @override
+  String paywallLegalTrial(int days, String price) {
+    return 'After your $days-day free trial, the subscription renews automatically at $price per year unless you cancel at least 24 hours before the trial ends. Payment is charged to your Apple ID account.';
+  }
+
+  @override
+  String paywallLegalMonthly(String price) {
+    return 'The subscription renews automatically at $price per month unless you cancel at least 24 hours before the end of the current period. Payment is charged to your Apple ID account.';
+  }
+
+  @override
+  String paywallLegalAnnual(String price) {
+    return 'The subscription renews automatically at $price per year unless you cancel at least 24 hours before the end of the current period. Payment is charged to your Apple ID account.';
+  }
+
+  @override
+  String get paywallTermsLink => 'Terms of Service';
+
+  @override
+  String get paywallPrivacyLink => 'Privacy Policy';
+
+  @override
+  String get paywallRetry => 'Retry';
+
+  @override
+  String get commonRestorePurchases => 'Restore purchases';
+
+  @override
+  String get commonRestoreNothingFound =>
+      'We couldn\'t find any purchases to restore.';
+
+  @override
+  String get commonRestoreSuccess => 'Purchases restored.';
+
+  @override
+  String get commonManageSubscription => 'Manage subscription';
+
+  @override
+  String get accountDeleteSubscriptionNotice =>
+      'Deleting your account doesn\'t cancel your Apple subscription. Cancel it in your Apple ID settings so you aren\'t charged again.';
 }
