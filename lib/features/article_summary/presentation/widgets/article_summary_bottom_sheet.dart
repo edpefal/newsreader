@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/errors/app_error_code_localizations.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
-import 'package:newsreader/core/subscription/subscription_status_provider.dart';
+import 'package:newsreader/core/subscription/paywall_launcher.dart';
 import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
 import 'package:newsreader/features/article_summary/presentation/widgets/mention_card.dart';
 import 'package:newsreader/l10n/app_localizations.dart';
@@ -23,7 +23,7 @@ void showArticleSummarySheet(
   required Article article,
   required ArticleSummaryCubit Function() createCubit,
   required ExternalLinkLauncher externalLinkLauncher,
-  required SubscriptionStatusProvider subscriptionStatusProvider,
+  required PaywallLauncher paywallLauncher,
   bool openFreeTierExhausted = false,
 }) {
   final language = Localizations.localeOf(context).languageCode;
@@ -36,7 +36,9 @@ void showArticleSummarySheet(
   // de que el contenido que no entra en ese alto scrollee, en vez de
   // desbordar ni de empujar el sheet más allá de este tope.
   final maxHeight =
-      MediaQuery.sizeOf(context).height - MediaQuery.paddingOf(context).top - 24;
+      MediaQuery.sizeOf(context).height -
+      MediaQuery.paddingOf(context).top -
+      24;
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -55,7 +57,7 @@ void showArticleSummarySheet(
         article: article,
         language: language,
         externalLinkLauncher: externalLinkLauncher,
-        subscriptionStatusProvider: subscriptionStatusProvider,
+        paywallLauncher: paywallLauncher,
       ),
     ),
   );
@@ -68,14 +70,14 @@ class ArticleSummarySheetContent extends StatelessWidget {
   final Article article;
   final String language;
   final ExternalLinkLauncher externalLinkLauncher;
-  final SubscriptionStatusProvider subscriptionStatusProvider;
+  final PaywallLauncher paywallLauncher;
 
   const ArticleSummarySheetContent({
     super.key,
     required this.article,
     required this.language,
     required this.externalLinkLauncher,
-    required this.subscriptionStatusProvider,
+    required this.paywallLauncher,
   });
 
   @override
@@ -104,7 +106,7 @@ class ArticleSummarySheetContent extends StatelessWidget {
                   l10n: l10n,
                   article: article,
                   language: language,
-                  subscriptionStatusProvider: subscriptionStatusProvider,
+                  paywallLauncher: paywallLauncher,
                 ),
                 ArticleSummaryError(:final code) => SizedBox(
                   height: 120,
@@ -249,23 +251,25 @@ class _FreeTierExhaustedContent extends StatelessWidget {
   final AppLocalizations l10n;
   final Article article;
   final String language;
-  final SubscriptionStatusProvider subscriptionStatusProvider;
+  final PaywallLauncher paywallLauncher;
 
   const _FreeTierExhaustedContent({
     required this.l10n,
     required this.article,
     required this.language,
-    required this.subscriptionStatusProvider,
+    required this.paywallLauncher,
   });
 
   Future<void> _onUpgradePressed(BuildContext context) async {
     final cubit = context.read<ArticleSummaryCubit>();
-    await subscriptionStatusProvider.showPaywall(
-      onSubscribed: () async {
-        if (!subscriptionStatusProvider.isSubscribed) return;
-        cubit.generate(article, language);
-      },
+    final subscribed = await paywallLauncher.show(
+      context,
+      trigger: PaywallTrigger.articleSummary,
     );
+    // Cerrar el paywall sin comprar no dispara la generación; tras comprar o
+    // restaurar sí, a continuación y sin que el usuario repita la acción.
+    if (!subscribed) return;
+    cubit.generate(article, language);
   }
 
   @override

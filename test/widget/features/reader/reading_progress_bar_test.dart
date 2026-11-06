@@ -8,6 +8,7 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
+import 'package:newsreader/core/subscription/paywall_launcher.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/features/article_summary/domain/usecases/generate_article_summary.dart';
 import 'package:newsreader/features/article_summary/presentation/cubit/article_summary_cubit.dart';
@@ -20,7 +21,9 @@ import 'package:newsreader/presentation/theme/app_theme.dart';
 import '../../../support/pump_localized_app.dart';
 
 int _filledSegmentCount(WidgetTester tester) {
-  final accentColor = AppTheme.light.extension<ReevoAccent>()!.unreadFavoriteAccent;
+  final accentColor = AppTheme.light
+      .extension<ReevoAccent>()!
+      .unreadFavoriteAccent;
   return tester
       .widgetList<ColoredBox>(
         find.descendant(
@@ -40,6 +43,8 @@ class MockSubscriptionStatusProvider extends Mock
     implements SubscriptionStatusProvider {}
 
 class MockExternalLinkLauncher extends Mock implements ExternalLinkLauncher {}
+
+class MockPaywallLauncher extends Mock implements PaywallLauncher {}
 
 class MockGenerateArticleSummary extends Mock
     implements GenerateArticleSummary {}
@@ -70,6 +75,7 @@ Widget _buildSubject(
           markAsRead: markAsRead,
           toggleFavorite: toggleFavorite,
           subscriptionStatusProvider: MockSubscriptionStatusProvider(),
+          paywallLauncher: MockPaywallLauncher(),
           aiUsageRepository: _fakeAiUsageRepository(),
           createArticleSummaryCubit: () => ArticleSummaryCubit(
             MockGenerateArticleSummary(),
@@ -103,59 +109,63 @@ void main() {
 
   group('ReadingProgressBar en ReaderScreen', () {
     testWidgets(
-        'no se muestra cuando el contenido cabe completamente en el viewport',
-        (tester) async {
-      final articleCorto = Article(
-        id: 'short',
-        sourceId: 's1',
-        sourceName: 'Newsletter A',
-        title: 'Artículo corto',
-        excerpt: 'Un resumen breve.',
-        publishedAt: DateTime(2024, 3, 15),
-        articleUrl: 'https://example.com/article',
-      );
+      'no se muestra cuando el contenido cabe completamente en el viewport',
+      (tester) async {
+        final articleCorto = Article(
+          id: 'short',
+          sourceId: 's1',
+          sourceName: 'Newsletter A',
+          title: 'Artículo corto',
+          excerpt: 'Un resumen breve.',
+          publishedAt: DateTime(2024, 3, 15),
+          articleUrl: 'https://example.com/article',
+        );
 
-      await tester.pumpWidget(
-          _buildSubject(articleCorto, mockMarkAsRead, mockToggleFavorite));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _buildSubject(articleCorto, mockMarkAsRead, mockToggleFavorite),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.byType(ReadingProgressBar), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byType(ReadingProgressBar),
-          matching: find.byType(ColoredBox),
-        ),
-        findsNothing,
-      );
-    });
+        expect(find.byType(ReadingProgressBar), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(ReadingProgressBar),
+            matching: find.byType(ColoredBox),
+          ),
+          findsNothing,
+        );
+      },
+    );
 
     testWidgets(
-        'se muestra y avanza el progreso al hacer scroll en contenido largo',
-        (tester) async {
-      final articleLargo = Article(
-        id: 'long',
-        sourceId: 's1',
-        sourceName: 'Newsletter A',
-        title: 'Artículo largo',
-        excerpt: 'Párrafo de contenido. ' * 300,
-        publishedAt: DateTime(2024, 3, 15),
-        articleUrl: 'https://example.com/article',
-      );
+      'se muestra y avanza el progreso al hacer scroll en contenido largo',
+      (tester) async {
+        final articleLargo = Article(
+          id: 'long',
+          sourceId: 's1',
+          sourceName: 'Newsletter A',
+          title: 'Artículo largo',
+          excerpt: 'Párrafo de contenido. ' * 300,
+          publishedAt: DateTime(2024, 3, 15),
+          articleUrl: 'https://example.com/article',
+        );
 
-      await tester.pumpWidget(
-          _buildSubject(articleLargo, mockMarkAsRead, mockToggleFavorite));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _buildSubject(articleLargo, mockMarkAsRead, mockToggleFavorite),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.byType(ReadingProgressBar), findsOneWidget);
-      expect(_filledSegmentCount(tester), 0);
+        expect(find.byType(ReadingProgressBar), findsOneWidget);
+        expect(_filledSegmentCount(tester), 0);
 
-      await tester.drag(
-        find.byType(SingleChildScrollView),
-        const Offset(0, -2000),
-      );
-      await tester.pump();
+        await tester.drag(
+          find.byType(SingleChildScrollView),
+          const Offset(0, -2000),
+        );
+        await tester.pump();
 
-      expect(_filledSegmentCount(tester), greaterThan(0));
-    });
+        expect(_filledSegmentCount(tester), greaterThan(0));
+      },
+    );
   });
 }

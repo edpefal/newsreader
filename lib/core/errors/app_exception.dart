@@ -47,3 +47,15 @@ class CloudSyncException extends AppException {
   @override
   String toString() => 'CloudSyncException: $message';
 }
+
+/// Error del proveedor de suscripciones al cargar planes, comprar o restaurar.
+/// [reason] es el código del SDK/tienda (sin texto libre del usuario) y solo
+/// se usa para telemetría; lo que ve el usuario sale de [code].
+class SubscriptionException extends AppException {
+  final String reason;
+
+  const SubscriptionException(super.code, this.reason);
+
+  @override
+  String toString() => 'SubscriptionException: $code ($reason)';
+}

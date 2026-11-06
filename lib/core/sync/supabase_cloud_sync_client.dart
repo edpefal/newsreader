@@ -151,6 +151,17 @@ class SupabaseCloudSyncClient implements CloudSyncClient {
     }
   }
 
+  @override
+  Future<void> syncEntitlement() async {
+    try {
+      await _supabase.functions
+          .invoke('sync-entitlement')
+          .timeout(_cloudSyncTimeout);
+    } catch (e) {
+      _throwClassified(e);
+    }
+  }
+
   /// Relanza [e] como `CloudSyncException` con su `AppErrorCode`
   /// correspondiente -- así los callers pueden tratar un fallo de
   /// sincronización con la nube igual que cualquier otro error de red de la

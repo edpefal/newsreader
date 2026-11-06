@@ -1024,6 +1024,24 @@ abstract class AppLocalizations {
   /// **'We couldn\'t sync with the server. Please try again.'**
   String get errorCloudSyncFailed;
 
+  /// No description provided for @errorSubscriptionOffersUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the subscription plans. Check your connection and try again.'**
+  String get errorSubscriptionOffersUnavailable;
+
+  /// No description provided for @errorPurchaseFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The purchase couldn\'t be completed. Please try again.'**
+  String get errorPurchaseFailed;
+
+  /// No description provided for @errorRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t restore your purchases. Please try again.'**
+  String get errorRestoreFailed;
+
   /// No description provided for @errorInvalidEmailCode.
   ///
   /// In en, this message translates to:
@@ -1047,6 +1065,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Something unexpected happened'**
   String get errorUnknown;
+
+  /// No description provided for @paywallTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reevo Premium'**
+  String get paywallTitle;
+
+  /// No description provided for @paywallSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your daily summary every day, and up to 25 article summaries a day.'**
+  String get paywallSubtitle;
+
+  /// No description provided for @paywallPlanMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get paywallPlanMonthly;
+
+  /// No description provided for @paywallPlanAnnual.
+  ///
+  /// In en, this message translates to:
+  /// **'Annual'**
+  String get paywallPlanAnnual;
+
+  /// No description provided for @paywallPricePerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} / month'**
+  String paywallPricePerMonth(String price);
+
+  /// No description provided for @paywallPricePerYear.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} / year'**
+  String paywallPricePerYear(String price);
+
+  /// No description provided for @paywallFreeTrialBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{1 day free} other{{days} days free}}'**
+  String paywallFreeTrialBadge(int days);
+
+  /// No description provided for @paywallCtaStartTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Start 1-day free trial} other{Start {days}-day free trial}}'**
+  String paywallCtaStartTrial(int days);
+
+  /// No description provided for @paywallCtaSubscribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe'**
+  String get paywallCtaSubscribe;
+
+  /// No description provided for @paywallLegalTrial.
+  ///
+  /// In en, this message translates to:
+  /// **'After your {days}-day free trial, the subscription renews automatically at {price} per year unless you cancel at least 24 hours before the trial ends. Payment is charged to your Apple ID account.'**
+  String paywallLegalTrial(int days, String price);
+
+  /// No description provided for @paywallLegalMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'The subscription renews automatically at {price} per month unless you cancel at least 24 hours before the end of the current period. Payment is charged to your Apple ID account.'**
+  String paywallLegalMonthly(String price);
+
+  /// No description provided for @paywallLegalAnnual.
+  ///
+  /// In en, this message translates to:
+  /// **'The subscription renews automatically at {price} per year unless you cancel at least 24 hours before the end of the current period. Payment is charged to your Apple ID account.'**
+  String paywallLegalAnnual(String price);
+
+  /// No description provided for @paywallTermsLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get paywallTermsLink;
+
+  /// No description provided for @paywallPrivacyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get paywallPrivacyLink;
+
+  /// No description provided for @paywallRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get paywallRetry;
+
+  /// No description provided for @commonRestorePurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore purchases'**
+  String get commonRestorePurchases;
+
+  /// No description provided for @commonRestoreNothingFound.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find any purchases to restore.'**
+  String get commonRestoreNothingFound;
+
+  /// No description provided for @commonRestoreSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases restored.'**
+  String get commonRestoreSuccess;
+
+  /// No description provided for @commonManageSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage subscription'**
+  String get commonManageSubscription;
+
+  /// No description provided for @accountDeleteSubscriptionNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting your account doesn\'t cancel your Apple subscription. Cancel it in your Apple ID settings so you aren\'t charged again.'**
+  String get accountDeleteSubscriptionNotice;
 }
 
 class _AppLocalizationsDelegate

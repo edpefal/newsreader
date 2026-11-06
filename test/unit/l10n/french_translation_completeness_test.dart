@@ -26,6 +26,7 @@ void main() {
       'inboxSummaryCardSources', // "source"/"sources" es igual en francés
       'settingsAccountTierFree', // "Free" se usa igual como nombre de tier
       'settingsAccountTierPremium', // "Premium" se usa igual como nombre de tier
+      'paywallTitle', // nombre del producto ("Reevo Premium")
     };
 
     final untranslated = <String>[];

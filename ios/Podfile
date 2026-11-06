@@ -1,5 +1,4 @@
-# superwallkit_flutter requiere iOS 14.0+; ver
-# openspec/changes/gate-daily-summary-behind-superwall-paywall/.
+# Mínimo de iOS del proyecto (purchases_flutter requiere 13.0+).
 platform :ios, '14.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.

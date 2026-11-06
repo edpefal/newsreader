@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:superwallkit_flutter/superwallkit_flutter.dart';
 
 import 'package:newsreader/core/auth/auth_client.dart';
 import 'package:newsreader/core/config/app_config.dart';
@@ -14,6 +12,7 @@ import 'package:newsreader/core/di/injection.dart';
 import 'package:newsreader/core/feature_flags/posthog_feature_flag_client.dart';
 import 'package:newsreader/core/observability/telemetry_client.dart';
 import 'package:newsreader/core/observability/default_telemetry_client.dart';
+import 'package:newsreader/core/subscription/revenuecat_subscription_status_provider.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/data/models/ai_usage_daily_model.dart';
 import 'package:newsreader/core/data/models/article_model.dart';
@@ -44,7 +43,7 @@ void handleAuthStateChange(
     subscriptionStatusProvider.identify(userId);
     observabilityClient.setUserId(userId);
   } else {
-    // Desvincula al usuario de Superwall en logout/borrado de cuenta, para
+    // Desvincula al usuario de RevenueCat en logout/borrado de cuenta, para
     // que la próxima cuenta que inicie sesión en este dispositivo no
     // arrastre por un instante el estado de suscripción de la anterior.
     subscriptionStatusProvider.reset();
@@ -58,7 +57,7 @@ void main() async {
   // explícitamente en el postFrameCallback de más abajo, una vez que el
   // primer frame ya se pintó con datos locales, en vez de depender del
   // primer frame que Flutter dibuja mientras todavía hay I/O de red
-  // pendiente (Superwall/DI). Ver design.md del change
+  // pendiente (DI). Ver design.md del change
   // `speed-up-app-startup`.
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
@@ -66,32 +65,14 @@ void main() async {
   // resultado del otro.
   await Future.wait([_initHive(), _initSupabase()]);
 
-  // 2.5. Configurar Superwall. Cada plataforma tiene su propia public API
-  // key (no son secretas -- son client-side, análogas a una publishable
-  // key). Android todavía no tiene la suya: falta agregar esa plataforma en
-  // el dashboard de Superwall (ver
-  // openspec/changes/gate-daily-summary-behind-superwall-paywall/proposal.md).
-  //
-  // Se mantiene bloqueante (no se difiere junto con el resto de la sección
-  // 3): el lado nativo recién registra el event channel de
-  // `subscriptionStatus` dentro del handler de `configure`, así que hay que
-  // esperar a que termine antes de armar el DI -- si
-  // `SuperwallSubscriptionStatusProvider` se suscribe al stream antes de que
-  // el nativo lo registre, tira MissingPluginException. Diferirlo
-  // requeriría registrar ese provider como singleton async en get_it (ver
-  // design.md, Non-Goals).
-  final superwallApiKey = Platform.isIOS
-      ? 'pk_JmLJquLYADH1dqyDv8aH1'
-      : 'SUPERWALL_API_KEY_PLACEHOLDER_ANDROID';
-  final superwallConfigured = Completer<void>();
-  Superwall.configure(
-    superwallApiKey,
-    completion: () => superwallConfigured.complete(),
-  );
-  await superwallConfigured.future;
-
   // 3. Setup dependency injection
   await setupDependencies();
+
+  // 3.5. Configurar RevenueCat. `configure` no usa la red y el estado inicial
+  // de suscripción sale de la caché del SDK sin esperarla, así que no retrasa
+  // el arranque. Sin llave (Android) no configura nada. Ver
+  // openspec/changes/migrate-to-revenuecat/design.md (D6, D10).
+  await getIt<RevenueCatSubscriptionStatusProvider>().init();
 
   // 4. Cargar datos locales (Hive) para el primer render -- no depende del
   // sync con la nube, que corre después del primer frame (ver
@@ -175,7 +156,7 @@ Future<void> _runDeferredStartupWork() async {
       onFeatureFlags: getIt<PostHogFeatureFlagClient>().notifyChanged,
     );
 
-    // Identificar al usuario ante Superwall con el mismo user_id de
+    // Identificar al usuario ante RevenueCat con el mismo user_id de
     // Supabase Auth, tanto en la sesión ya activa al abrir la app como en
     // cada login posterior (LoginCubit usa el mismo AuthClient, así que esta
     // suscripción cubre ambos casos sin duplicar la llamada en cada flujo).

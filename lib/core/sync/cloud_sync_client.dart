@@ -25,4 +25,10 @@ abstract class CloudSyncClient {
     String table,
     DateTime? since,
   );
+
+  /// Pide al backend (`sync-entitlement`) que refleje en `entitlements` el
+  /// estado vigente de la suscripción del usuario de la sesión. Se invoca tras
+  /// una compra o restauración, para que el gate del servidor no rechace una
+  /// solicitud por la carrera con el webhook del proveedor de suscripciones.
+  Future<void> syncEntitlement();
 }

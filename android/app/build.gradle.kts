@@ -33,9 +33,9 @@ android {
         applicationId = "com.artlab.reevo"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // superwallkit_flutter requiere Android 8.0+ (API 26); no soportamos
-        // Android 7.x desde que se integró Superwall (paywall del resumen
-        // diario), ver openspec/changes/gate-daily-summary-behind-superwall-paywall/.
+        // Se mantiene en Android 8.0+ (API 26), el mínimo que exigía el SDK de
+        // suscripciones anterior; purchases_flutter acepta API 21+, así que
+        // bajarlo es posible pero fuera del alcance de migrate-to-revenuecat.
         minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

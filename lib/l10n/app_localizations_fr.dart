@@ -612,6 +612,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Nous n\'avons pas pu synchroniser avec le serveur. Réessaie.';
 
   @override
+  String get errorSubscriptionOffersUnavailable =>
+      'Nous n\'avons pas pu charger les abonnements. Vérifie ta connexion et réessaie.';
+
+  @override
+  String get errorPurchaseFailed =>
+      'L\'achat n\'a pas pu être finalisé. Réessaie.';
+
+  @override
+  String get errorRestoreFailed =>
+      'Nous n\'avons pas pu restaurer tes achats. Réessaie.';
+
+  @override
   String get errorInvalidEmailCode =>
       'Ce code est invalide ou a expiré. Vérifie-le ou demande-en un nouveau.';
 
@@ -624,4 +636,93 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get errorUnknown => 'Une erreur inattendue s\'est produite';
+
+  @override
+  String get paywallTitle => 'Reevo Premium';
+
+  @override
+  String get paywallSubtitle =>
+      'Ton résumé quotidien chaque jour et jusqu\'à 25 résumés d\'articles par jour.';
+
+  @override
+  String get paywallPlanMonthly => 'Mensuel';
+
+  @override
+  String get paywallPlanAnnual => 'Annuel';
+
+  @override
+  String paywallPricePerMonth(String price) {
+    return '$price / mois';
+  }
+
+  @override
+  String paywallPricePerYear(String price) {
+    return '$price / an';
+  }
+
+  @override
+  String paywallFreeTrialBadge(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days jours offerts',
+      one: '1 jour offert',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String paywallCtaStartTrial(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Commencer l\'essai gratuit de $days jours',
+      one: 'Commencer l\'essai gratuit de 1 jour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get paywallCtaSubscribe => 'S\'abonner';
+
+  @override
+  String paywallLegalTrial(int days, String price) {
+    return 'Après ton essai gratuit de $days jours, l\'abonnement se renouvelle automatiquement à $price par an, sauf si tu l\'annules au moins 24 heures avant la fin de l\'essai. Le paiement est prélevé sur ton compte Apple ID.';
+  }
+
+  @override
+  String paywallLegalMonthly(String price) {
+    return 'L\'abonnement se renouvelle automatiquement à $price par mois, sauf si tu l\'annules au moins 24 heures avant la fin de la période en cours. Le paiement est prélevé sur ton compte Apple ID.';
+  }
+
+  @override
+  String paywallLegalAnnual(String price) {
+    return 'L\'abonnement se renouvelle automatiquement à $price par an, sauf si tu l\'annules au moins 24 heures avant la fin de la période en cours. Le paiement est prélevé sur ton compte Apple ID.';
+  }
+
+  @override
+  String get paywallTermsLink => 'Conditions d\'utilisation';
+
+  @override
+  String get paywallPrivacyLink => 'Politique de confidentialité';
+
+  @override
+  String get paywallRetry => 'Réessayer';
+
+  @override
+  String get commonRestorePurchases => 'Restaurer les achats';
+
+  @override
+  String get commonRestoreNothingFound =>
+      'Nous n\'avons trouvé aucun achat à restaurer.';
+
+  @override
+  String get commonRestoreSuccess => 'Achats restaurés.';
+
+  @override
+  String get commonManageSubscription => 'Gérer l\'abonnement';
+
+  @override
+  String get accountDeleteSubscriptionNotice =>
+      'Supprimer ton compte n\'annule pas ton abonnement Apple. Annule-le dans les réglages de ton identifiant Apple pour ne plus être facturé.';
 }

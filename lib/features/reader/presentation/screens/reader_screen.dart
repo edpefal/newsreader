@@ -5,6 +5,7 @@ import 'package:newsreader/core/domain/entities/article.dart';
 import 'package:newsreader/core/domain/repositories/ai_usage_repository.dart';
 import 'package:newsreader/core/navigation/external_link_launcher.dart';
 import 'package:newsreader/core/navigation/route_path.dart';
+import 'package:newsreader/core/subscription/paywall_launcher.dart';
 import 'package:newsreader/core/subscription/subscription_status_provider.dart';
 import 'package:newsreader/core/utils/feed_content_checker.dart';
 import 'package:newsreader/core/utils/localized_date_formatter.dart';
@@ -48,6 +49,7 @@ class ReaderScreen extends StatefulWidget {
   final MarkArticleAsRead markAsRead;
   final ToggleFavorite toggleFavorite;
   final SubscriptionStatusProvider subscriptionStatusProvider;
+  final PaywallLauncher paywallLauncher;
   final AiUsageRepository aiUsageRepository;
   final ArticleSummaryCubit Function() createArticleSummaryCubit;
   final ExternalLinkLauncher externalLinkLauncher;
@@ -58,6 +60,7 @@ class ReaderScreen extends StatefulWidget {
     required this.markAsRead,
     required this.toggleFavorite,
     required this.subscriptionStatusProvider,
+    required this.paywallLauncher,
     required this.aiUsageRepository,
     required this.createArticleSummaryCubit,
     required this.externalLinkLauncher,
@@ -153,7 +156,7 @@ class _ReaderScreenState extends State<ReaderScreen>
       article: widget.article,
       createCubit: widget.createArticleSummaryCubit,
       externalLinkLauncher: widget.externalLinkLauncher,
-      subscriptionStatusProvider: widget.subscriptionStatusProvider,
+      paywallLauncher: widget.paywallLauncher,
       openFreeTierExhausted: openFreeTierExhausted,
     );
   }
