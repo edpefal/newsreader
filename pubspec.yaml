@@ -2,7 +2,7 @@ name: newsreader
 description: Reevo — centralize your RSS feeds and newsletters outside of email.
 publish_to: 'none'
 
-version: 1.10.0+11
+version: 1.11.0+12
 
 environment:
   sdk: ^3.8.1
