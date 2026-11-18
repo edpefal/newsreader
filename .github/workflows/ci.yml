@@ -16,7 +16,12 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Versión fija: con `stable` sin más, una Flutter nueva marcó como
+          # obsoleto `package:flutter/material.dart` (86 avisos) y rompió el CI
+          # de todos los PRs. Subirla es una decisión explícita, junto con la
+          # migración a `material_ui`.
           channel: stable
+          flutter-version: 3.44.6
 
       - run: flutter pub get
 
