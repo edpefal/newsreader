@@ -177,3 +177,198 @@ Deno.test("body que no es JSON: 400", async () => {
   const res = await handleWebhook(req, deps);
   assertEquals(res.status, 400);
 });
+
+// --- Traspaso de suscripción (TRANSFER): sin app_user_id, con listas de usuarios
+
+const ORIGIN_ID = "11111111-1111-4111-8111-111111111111";
+const DEST_ID = "22222222-2222-4222-8222-222222222222";
+
+const transferEvent = (from: unknown, to: unknown) => ({
+  event: {
+    type: "TRANSFER",
+    transferred_from: from,
+    transferred_to: to,
+  },
+});
+
+/** Estado vigente que informa RevenueCat para cada usuario. */
+function depsWithStates(
+  states: Record<string, boolean>,
+  overrides: Partial<WebhookDeps> = {},
+) {
+  const made = makeDeps(overrides);
+  if (!overrides.fetchEntitlementActive) {
+    made.deps.fetchEntitlementActive = (id) => {
+      made.calls.fetchActive.push(id);
+      return Promise.resolve(states[id] ?? false);
+    };
+  }
+  return made;
+}
+
+Deno.test("traspaso: el origen pierde el acceso y el destino lo recibe", async () => {
+  const { deps, calls } = depsWithStates({
+    [ORIGIN_ID]: false,
+    [DEST_ID]: true,
+  });
+  const res = await handleWebhook(
+    request(transferEvent([ORIGIN_ID], [DEST_ID])),
+    deps,
+  );
+  assertEquals(res.status, 200);
+  assertEquals(
+    calls.upserts.sort((a, b) => a.userId.localeCompare(b.userId)),
+    [
+      { userId: ORIGIN_ID, isActive: false },
+      { userId: DEST_ID, isActive: true },
+    ],
+  );
+});
+
+Deno.test("traspaso: el estado sale de RevenueCat, no de ser origen o destino", async () => {
+  // Si el origen conserva otra suscripción vigente, sigue activo.
+  const { deps, calls } = depsWithStates({
+    [ORIGIN_ID]: true,
+    [DEST_ID]: true,
+  });
+  await handleWebhook(request(transferEvent([ORIGIN_ID], [DEST_ID])), deps);
+  assertEquals(calls.upserts.every((u) => u.isActive), true);
+});
+
+Deno.test("traspaso: ignora anónimos, no-uuid e inexistentes y sincroniza a los demás", async () => {
+  const GHOST_ID = "33333333-3333-4333-8333-333333333333";
+  const { deps, calls } = depsWithStates(
+    { [DEST_ID]: true },
+    {
+      userExists: (id) => {
+        calls.userExists.push(id);
+        return Promise.resolve(id !== GHOST_ID);
+      },
+    },
+  );
+  const res = await handleWebhook(
+    request(
+      transferEvent(
+        ["$RCAnonymousID:abc", "no-es-uuid", GHOST_ID],
+        [DEST_ID],
+      ),
+    ),
+    deps,
+  );
+  assertEquals(res.status, 200);
+  assertEquals(calls.upserts, [{ userId: DEST_ID, isActive: true }]);
+  assertEquals(calls.fetchActive, [DEST_ID]);
+});
+
+Deno.test("traspaso: si falla uno responde 500 pero sincroniza al otro", async () => {
+  const { deps, calls } = depsWithStates(
+    { [DEST_ID]: true },
+    {
+      fetchEntitlementActive: (id) => {
+        if (id === ORIGIN_ID) {
+          return Promise.reject(
+            new RevenueCatApiError("RevenueCat respondió 500"),
+          );
+        }
+        calls.fetchActive.push(id);
+        return Promise.resolve(true);
+      },
+    },
+  );
+  const res = await handleWebhook(
+    request(transferEvent([ORIGIN_ID], [DEST_ID])),
+    deps,
+  );
+  assertEquals(res.status, 500);
+  assertEquals(calls.upserts, [{ userId: DEST_ID, isActive: true }]);
+});
+
+Deno.test("traspaso: falla al escribir uno responde 500 e intenta el otro", async () => {
+  const attempted: string[] = [];
+  const { deps } = depsWithStates(
+    { [ORIGIN_ID]: false, [DEST_ID]: true },
+    {
+      upsertEntitlement: (userId) => {
+        attempted.push(userId);
+        return userId === ORIGIN_ID
+          ? Promise.reject(new Error("db caída"))
+          : Promise.resolve();
+      },
+    },
+  );
+  const res = await handleWebhook(
+    request(transferEvent([ORIGIN_ID], [DEST_ID])),
+    deps,
+  );
+  assertEquals(res.status, 500);
+  assertEquals(attempted.sort(), [ORIGIN_ID, DEST_ID].sort());
+});
+
+Deno.test("traspaso: reenviarlo deja el mismo estado, sin duplicar", async () => {
+  const states = { [ORIGIN_ID]: false, [DEST_ID]: true };
+  const { deps, calls } = depsWithStates(states);
+  const event = transferEvent([ORIGIN_ID], [DEST_ID]);
+  await handleWebhook(request(event), deps);
+  await handleWebhook(request(event), deps);
+  // Dos entregas: cada una escribe el estado vigente de cada usuario.
+  assertEquals(calls.upserts.length, 4);
+  const lastByUser = new Map(calls.upserts.map((u) => [u.userId, u.isActive]));
+  assertEquals(lastByUser.get(ORIGIN_ID), false);
+  assertEquals(lastByUser.get(DEST_ID), true);
+});
+
+Deno.test("traspaso: un usuario repetido en ambas listas se procesa una vez", async () => {
+  const { deps, calls } = depsWithStates({ [DEST_ID]: true });
+  await handleWebhook(request(transferEvent([DEST_ID], [DEST_ID])), deps);
+  assertEquals(calls.fetchActive, [DEST_ID]);
+});
+
+Deno.test("traspaso con listas que no son arreglos: 200 sin consultar ni escribir", async () => {
+  const { deps, calls } = makeDeps();
+  const res = await handleWebhook(
+    request(transferEvent("no-es-lista", { 0: DEST_ID })),
+    deps,
+  );
+  assertEquals(res.status, 200);
+  assertEquals(calls.userExists, []);
+  assertEquals(calls.fetchActive, []);
+  assertEquals(calls.upserts, []);
+});
+
+Deno.test("evento sin app_user_id ni listas: 200 sin consultar ni escribir", async () => {
+  const { deps, calls } = makeDeps();
+  const res = await handleWebhook(
+    request({ event: { type: "TEST" } }),
+    deps,
+  );
+  assertEquals(res.status, 200);
+  assertEquals(calls.fetchActive, []);
+  assertEquals(calls.upserts, []);
+});
+
+Deno.test("traspaso sin la autorización correcta: 401 sin consultar ni escribir", async () => {
+  const { deps, calls } = makeDeps();
+  const res = await handleWebhook(
+    request(transferEvent([ORIGIN_ID], [DEST_ID]), { authorization: "otro" }),
+    deps,
+  );
+  assertEquals(res.status, 401);
+  assertEquals(calls.userExists, []);
+  assertEquals(calls.fetchActive, []);
+  assertEquals(calls.upserts, []);
+});
+
+Deno.test("evento normal con app_user_id: sigue sincronizando solo a ese usuario", async () => {
+  const { deps, calls } = makeDeps();
+  await handleWebhook(
+    request({
+      event: {
+        type: "RENEWAL",
+        app_user_id: DEST_ID,
+        transferred_from: [ORIGIN_ID],
+      },
+    }),
+    deps,
+  );
+  assertEquals(calls.fetchActive, [DEST_ID]);
+});

@@ -1,8 +1,11 @@
 // Lógica del webhook de RevenueCat, separada de `index.ts` para poder probarla
-// con dependencias simuladas. Ante cualquier evento de un usuario consulta a
-// RevenueCat el estado vigente del entitlement `pro` y lo refleja en
+// con dependencias simuladas. Ante cualquier evento consulta a RevenueCat el
+// estado vigente del entitlement `pro` de cada usuario involucrado (uno en un
+// evento normal; origen y destino en un traspaso) y lo refleja en
 // `entitlements`; no deduce nada del tipo de evento.
-// Ver openspec/changes/migrate-to-revenuecat/design.md (D3).
+// Ver openspec/changes/migrate-to-revenuecat/design.md (D3) y
+// openspec/changes/handle-revenuecat-transfer-events/design.md.
+import { resolveEventUsers } from "./event_users.ts";
 import { secureEqual } from "./secure_equal.ts";
 
 export interface WebhookDeps {
@@ -26,9 +29,6 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-/** Responde 200 para que RevenueCat no reintente un evento que no aplica. */
-const ignored = () => json({ received: true });
-
 export async function handleWebhook(
   req: Request,
   deps: WebhookDeps,
@@ -42,39 +42,55 @@ export async function handleWebhook(
     return json({ error: "No autorizado" }, 401);
   }
 
-  let appUserId: string | undefined;
+  let event: unknown;
   try {
-    const payload = await req.json();
-    appUserId = payload?.event?.app_user_id;
+    event = (await req.json())?.event;
   } catch {
     return json({ error: "Body inválido" }, 400);
   }
 
-  // Sin id, con id anónimo de RevenueCat o que no es un uuid de Supabase Auth:
-  // no hay a quién actualizarle el entitlement.
-  if (
-    typeof appUserId !== "string" ||
-    appUserId.startsWith(ANONYMOUS_PREFIX) ||
-    !UUID_PATTERN.test(appUserId)
-  ) {
-    return ignored();
+  // Sin usuarios identificables (p. ej. un evento de prueba sin `app_user_id`
+  // ni listas de traspaso): no hay a quién actualizarle el entitlement.
+  const { userIds, truncated } = resolveEventUsers(event);
+  if (truncated) {
+    console.warn(
+      "Evento con más usuarios que el tope: se ignoran los sobrantes",
+    );
   }
 
-  try {
-    // Un único proyecto de RevenueCat envía los eventos de `reevo` y de
-    // `reevo-dev` a ambos webhooks: quien no existe aquí se ignora, y además
-    // `entitlements.user_id` tiene FK a `auth.users`.
-    if (!(await deps.userExists(appUserId))) return ignored();
-
-    const isActive = await deps.fetchEntitlementActive(appUserId);
-    await deps.upsertEntitlement(appUserId, isActive);
-  } catch (e) {
-    // 500 para que RevenueCat reintente; `entitlements` queda sin modificar.
-    console.error(
-      `No se pudo sincronizar el entitlement: ${(e as Error).message}`,
-    );
+  // Se intenta con todos aunque alguno falle, para no dejar sin sincronizar a
+  // quien sí se podía. Si hubo algún fallo se responde 500 y RevenueCat
+  // reintenta el evento completo; es seguro porque cada escritura refleja el
+  // estado vigente, no el contenido del evento.
+  let failures = 0;
+  for (const userId of userIds) {
+    try {
+      await syncUser(userId, deps);
+    } catch (e) {
+      failures++;
+      console.error(
+        `No se pudo sincronizar el entitlement: ${(e as Error).message}`,
+      );
+    }
+  }
+  if (failures > 0) {
     return json({ error: "No se pudo procesar el evento" }, 500);
   }
 
   return json({ received: true });
+}
+
+/** Sincroniza `entitlements` de un usuario; omite los que no aplican. */
+async function syncUser(userId: string, deps: WebhookDeps): Promise<void> {
+  // Id anónimo de RevenueCat o que no es un uuid de Supabase Auth: no hay a
+  // quién actualizarle el entitlement.
+  if (userId.startsWith(ANONYMOUS_PREFIX) || !UUID_PATTERN.test(userId)) return;
+
+  // Un único proyecto de RevenueCat envía los eventos de `reevo` y de
+  // `reevo-dev` a ambos webhooks: quien no existe aquí se ignora, y además
+  // `entitlements.user_id` tiene FK a `auth.users`.
+  if (!(await deps.userExists(userId))) return;
+
+  const isActive = await deps.fetchEntitlementActive(userId);
+  await deps.upsertEntitlement(userId, isActive);
 }
