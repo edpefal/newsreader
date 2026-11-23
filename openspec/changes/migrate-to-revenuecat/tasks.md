@@ -15,7 +15,7 @@
 - [x] 2.4 Registrar `revenuecat-webhook` (sin JWT) y `sync-entitlement` (con JWT) en `supabase/config.toml`
 - [x] 2.5 Extender `delete-account` para borrar al cliente en RevenueCat sin bloquear el borrado si falla (reporte a Sentry sin PII) y cubrirlo con un test
 - [x] 2.6 Correr `(cd supabase/functions/<nombre> && deno test --allow-env)` en las tres funciones
-- [ ] 2.7 Desplegar las tres funciones a `reevo-dev`, verificar con una compra sandbox, y confirmar con el usuario antes de desplegar a `reevo` (prod)
+- [x] 2.7 Desplegar las tres funciones a `reevo-dev`, verificar con una compra sandbox, y confirmar con el usuario antes de desplegar a `reevo` (prod) (las tres funciones están desplegadas en `reevo-dev` y `reevo`; la compra sandbox se hizo contra producción vía TestFlight)
 
 ## 3. Cliente: proveedor de suscripciones
 
@@ -54,7 +54,7 @@
 ## 7. Verificación
 
 - [x] 7.1 `flutter analyze` sin warnings y `flutter test` en verde
-- [ ] 7.2 Build de TestFlight con RevenueCat: compra mensual, compra anual con prueba, cancelar durante la prueba, restauración, expiración, y que el resumen de un artículo funcione justo después de comprar (a cargo del usuario)
-- [ ] 7.3 Probar el borrado de cuenta con y sin suscripción y la presentación del paywall en iPhone y en iPad (a cargo del usuario)
+- [x] 7.2 Build de TestFlight con RevenueCat: compra mensual, compra anual con prueba, cancelar durante la prueba, restauración, expiración, y que el resumen de un artículo funcione justo después de comprar (a cargo del usuario) (probados el 2026-11-23: compra mensual, restauración, transferencia entre cuentas y resumen justo después de comprar. Sin probar con compra real y aceptado por el usuario: anual con prueba, cancelar durante la prueba y expiración; el paywall sí mostró "7 días gratis" en el anual con una cuenta sandbox elegible)
+- [x] 7.3 Probar el borrado de cuenta con y sin suscripción y la presentación del paywall en iPhone y en iPad (a cargo del usuario) (verificado el 2026-11-23: borrado con aviso y enlace de Apple, borrado sin aviso, y paywall en iPad Air de 11 pulgadas, a pantalla completa en vertical y diálogo en horizontal)
 - [ ] 7.4 Tras `READY_FOR_DISTRIBUTION`: mover la URL de notificaciones de Apple a RevenueCat y archivar el campaign de Superwall (a cargo del usuario)
 - [ ] 7.5 Documentar el criterio de retiro de `superwall-webhook` (ninguna 1.9.x/1.10.x activa en PostHog en 30 días) y abrir su change/PR posterior
